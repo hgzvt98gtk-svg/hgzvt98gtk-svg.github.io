@@ -1,0 +1,13 @@
+# Hussam Faroug
+
+> Personal website of Hussam Faroug.
+
+## About
+- Hussam Faroug — personal site and contact page.
+
+## Pages
+- [Home](https://hussamfaroug.com/): Personal landing page.
+- [Privacy](https://hussamfaroug.com/Privacy.html): Privacy policy.
+
+## Contact
+- Email: admin@hussamfaroug.com
