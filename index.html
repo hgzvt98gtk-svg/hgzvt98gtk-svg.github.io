@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#f5f5f7">
+  <meta name="theme-color" content="#0b0b0d">
 
   <!-- Primary SEO -->
   <title>Hussam Faroug | Personal Website</title>
-  <meta name="description" content="The personal website of Hussam Faroug.">
+  <meta name="description" content="The personal website of Hussam Faroug — a place for ideas, work, and things worth sharing.">
   <meta name="author" content="Hussam Faroug">
   <meta name="robots" content="index, follow">
   <meta name="googlebot" content="index, follow">
@@ -19,17 +19,17 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://hussamfaroug.com/">
   <meta property="og:title" content="Hussam Faroug | Personal Website">
-  <meta property="og:description" content="The personal website of Hussam Faroug.">
+  <meta property="og:description" content="The personal website of Hussam Faroug — a place for ideas, work, and things worth sharing.">
   <meta property="og:site_name" content="Hussam Faroug">
-  <meta property="og:image" content="https://hussamfaroug.com/HF.svg">
-  <meta property="og:image:alt" content="HF logo for Hussam Faroug">
+  <meta property="og:image" content="https://hussamfaroug.com/social-preview.png">
+  <meta property="og:image:alt" content="Hussam Faroug — HF monogram on a black background">
 
   <!-- X / Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Hussam Faroug | Personal Website">
-  <meta name="twitter:description" content="The personal website of Hussam Faroug.">
-  <meta name="twitter:image" content="https://hussamfaroug.com/HF.svg">
-  <meta name="twitter:image:alt" content="HF logo for Hussam Faroug">
+  <meta name="twitter:description" content="The personal website of Hussam Faroug — a place for ideas, work, and things worth sharing.">
+  <meta name="twitter:image" content="https://hussamfaroug.com/social-preview.png">
+  <meta name="twitter:image:alt" content="Hussam Faroug — HF monogram on a black background">
 
   <!-- Icons -->
   <link rel="icon" type="image/svg+xml" href="/HF.svg">
@@ -54,12 +54,39 @@
 </head>
 <body>
   <main>
-    <img src="/HF.svg" alt="HF logo" width="120" height="120">
-    <h1>Hussam Faroug</h1>
-    <p>Welcome to my personal website.</p>
+    <section class="hero" aria-labelledby="hero-title">
+      <img class="logo" src="/HF.svg" alt="HF logo" width="120" height="120">
+      <p class="eyebrow">Welcome to my corner of the internet</p>
+      <h1 id="hero-title">Ideas, work, and what comes next.</h1>
+      <p class="hero-text">I’m Hussam Faroug. This is my personal space for sharing what I’m building, learning, and thinking about.</p>
+    </section>
+
+    <section class="section" id="about" aria-labelledby="about-title">
+      <p class="section-label">About</p>
+      <h2 id="about-title">A little about me</h2>
+      <p>I’m curious by nature and always interested in turning good ideas into useful, thoughtful experiences. This website is where I collect my work, document my progress, and share the things I find worth exploring.</p>
+      <p>More details about my projects and interests will be added here over time.</p>
+    </section>
+
+    <section class="section" id="contact" aria-labelledby="contact-title">
+      <p class="section-label">Contact</p>
+      <h2 id="contact-title">Let’s connect</h2>
+      <p>Have a question, an idea, or simply want to say hello? I’d be happy to hear from you.</p>
+      <a class="button" href="mailto:hello@hussamfaroug.com">Send me an email <span aria-hidden="true">↗</span></a>
+    </section>
+
+    <section class="section" id="links" aria-labelledby="links-title">
+      <p class="section-label">Elsewhere</p>
+      <h2 id="links-title">Find me online</h2>
+      <div class="social-links">
+        <a href="https://github.com/hgzvt98gtk-svg" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+        <a href="https://hussamfaroug.com/" rel="me">Website <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
   </main>
 
   <footer>
+    <span>© Hussam Faroug</span>
     <a href="/Privacy.html">Privacy Policy</a>
   </footer>
 </body>
