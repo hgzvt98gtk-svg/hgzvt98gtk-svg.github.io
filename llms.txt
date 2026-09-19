@@ -7,7 +7,7 @@
 
 ## Pages
 - [Home](https://hussamfaroug.com/): Personal landing page.
-- [Privacy](https://hussamfaroug.com/Privacy): Privacy policy.
+- [Privacy](https://hussamfaroug.com/Privacy.html): Privacy policy.
 
 ## Contact
 - Email: admin@hussamfaroug.com

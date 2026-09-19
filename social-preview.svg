@@ -1,15 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
-  <title id="title">Hussam Faroug social preview</title>
-  <desc id="desc">A minimal black social preview for hussamfaroug.com with a light monogram and URL.</desc>
-
-  <rect width="1280" height="640" fill="#000000"/>
-
-  <g transform="translate(640 255)">
-    <rect x="-120" y="-120" width="240" height="240" rx="52" fill="#f5f5f2"/>
-    <text x="0" y="42" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="150" font-weight="700" fill="#000000" letter-spacing="-10">HF</text>
-  </g>
-
-  <text x="640" y="440" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="36" font-weight="600" fill="#f5f5f2" letter-spacing="1.4">hussamfaroug.com</text>
-
-  <line x1="420" y1="485" x2="860" y2="485" stroke="#cfcfca" stroke-width="2"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Hussam Faroug</title>
+  <desc id="desc">Personal website of Hussam Faroug</desc>
+  <rect width="1200" height="630" fill="#0b0b0d"/>
+  <text x="600" y="315" text-anchor="middle" dominant-baseline="middle" fill="#f5f5f2" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="600">hussamfaroug.com</text>
 </svg>
