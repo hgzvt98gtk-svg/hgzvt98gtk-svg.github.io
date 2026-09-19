@@ -34,6 +34,12 @@ jobs:
           grep -q 'https://hussamfaroug.com/Privacy.html' sitemap.xml
           grep -q 'https://hussamfaroug.com/Privacy.html' llms.txt
           ! grep -R 'social-preview.png\|https://hussamfaroug.com/Privacy[^.]' --include='*.html' --include='*.xml' --include='*.txt' .
+      - name: Install xmllint
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y libxml2-utils
       - name: Validate XML and SVG syntax
         shell: bash
         run: |
