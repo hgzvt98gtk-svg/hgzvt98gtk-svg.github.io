@@ -14,6 +14,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build site
+        run: npm run build
+      - name: Validate dist build output
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d dist
+          test -f dist/index.html
+          test -f dist/Privacy.html
+          test -f dist/style.css
+          test -f dist/HF.svg
+          test -f dist/Background.jpeg
+          test -f dist/social-preview.svg
+          test -f dist/sitemap.xml
+          test -f dist/robots.txt
+          test -f dist/llms.txt
+          test -f dist/CNAME
       - name: Validate local files and cross-references
         shell: bash
         run: |

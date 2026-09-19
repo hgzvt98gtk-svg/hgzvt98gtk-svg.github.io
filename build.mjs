@@ -7,7 +7,15 @@ import { minify as minifyJs } from "terser";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const output = join(root, "dist");
-const excluded = new Set([".git", ".github", "dist", "node_modules"]);
+const excluded = new Set([
+  ".git",
+  ".github",
+  "dist",
+  "node_modules",
+  "build.mjs",
+  "package.json",
+  "package-lock.json"
+]);
 
 async function filesIn(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -31,6 +39,17 @@ for (const source of await filesIn(root)) {
   await mkdir(dirname(destination), { recursive: true });
 
   const extension = extname(source).toLowerCase();
+  if (
+    extension !== ".html" &&
+    extension !== ".htm" &&
+    extension !== ".css" &&
+    extension !== ".js" &&
+    extension !== ".mjs"
+  ) {
+    await cp(source, destination);
+    continue;
+  }
+
   const contents = await readFile(source, "utf8");
   let result = contents;
 
