@@ -2,8 +2,8 @@
 :root {
   color-scheme: dark;
   --text: #f5f5f2;
-  --muted: #c8c8c4;
-  --surface: rgba(11, 11, 13, 0.78);
+  --muted: #d8d8d3;
+  --surface: rgba(11, 11, 13, 0.72);
 }
 
 * {
