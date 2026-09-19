@@ -1,9 +1,10 @@
 /* Security headers for hosts that support the _headers convention (for example, Cloudflare Pages). */
-/* If GitHub Pages serves this site directly, configure equivalent headers at the CDN/proxy. */
-/*:*/
+/* GitHub Pages does not apply this file directly; configure equivalent headers at the CDN/proxy if needed. */
+/*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   Permissions-Policy: accelerometer=(), autoplay=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), usb=()
   Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'none'; upgrade-insecure-requests
-  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Strict-Transport-Security: max-age=31536000
+*/
