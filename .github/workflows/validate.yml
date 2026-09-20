@@ -40,6 +40,7 @@ jobs:
           grep -q 'href="/HF.svg"' index.html
           grep -Eq '<script[^>]*type[[:space:]]*=[[:space:]]*"module"[^>]*src[[:space:]]*=[[:space:]]*"(\./|/)?model-context\.js"|<script[^>]*src[[:space:]]*=[[:space:]]*"(\./|/)?model-context\.js"[^>]*type[[:space:]]*=[[:space:]]*"module"' index.html
           ! grep -q 'nonce=' index.html
+          ! grep '<script' ./*.html | grep -v 'src='
           grep -q 'url("/Background.jpeg")' style.css
           grep -q 'https://hussamfaroug.com/social-preview.svg' index.html
           grep -q 'https://hussamfaroug.com/Privacy.html' sitemap.xml
