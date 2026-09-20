@@ -41,7 +41,37 @@ jobs:
         run: |
           set -euo pipefail
           ! grep -R "HF2026SecureNonce\\|'unsafe-inline'\\|'unsafe-eval'" index.html site.js _headers
-          awk 'BEGIN{IGNORECASE=1} /<script[^>]*>/ { if ($0 !~ /<\/script>/ && $0 !~ /src=/ && $0 !~ /type=["'"'"'"'"'"'"'"'"']application\/(ld\+json|json)["'"'"'"'"'"'"'"'"']/) { print FILENAME ":" FNR ":" $0; bad=1 } } END { exit bad }' ./*.html
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import sys
+
+          violations = []
+
+          class ScriptTagChecker(HTMLParser):
+              def __init__(self, file_name):
+                  super().__init__()
+                  self.file_name = file_name
+
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower() != "script":
+                      return
+                  attributes = {k.lower(): (v or "").lower() for k, v in attrs}
+                  if "src" in attributes:
+                      return
+                  script_type = attributes.get("type", "").strip()
+                  if script_type in ("application/ld+json", "application/json"):
+                      return
+                  violations.append(f"{self.file_name}:{self.getpos()[0]}: executable inline <script> is not allowed")
+
+          for html_path in Path(".").glob("*.html"):
+              checker = ScriptTagChecker(str(html_path))
+              checker.feed(html_path.read_text(encoding="utf-8"))
+
+          if violations:
+              print("\n".join(violations))
+              sys.exit(1)
+          PY
           ! grep -R 'http://' --include='*.html' --include='*.txt' --include='*.css' .
       - name: Validate XML and SVG syntax
         shell: bash
