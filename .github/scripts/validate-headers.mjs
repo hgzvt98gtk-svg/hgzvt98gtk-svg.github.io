@@ -84,10 +84,14 @@ for (const required of [
   "script-src 'self' https://challenges.cloudflare.com",
   "style-src 'self'",
   "img-src 'self'",
+  "font-src 'self'",
   "connect-src 'self'",
   "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
   "frame-ancestors 'self'",
-  "frame-src https://challenges.cloudflare.com"
+  "frame-src https://challenges.cloudflare.com",
+  "upgrade-insecure-requests"
 ]) {
   if (!csp.includes(required)) {
     throw new Error(`CSP is missing ${required}.`);
@@ -98,8 +102,8 @@ if (siteBlock.headers.has("Cross-Origin-Embedder-Policy")) {
   throw new Error("Cross-Origin-Embedder-Policy is too strict for Cloudflare challenge compatibility.");
 }
 
-if (!/script[^>]+src="\/index\.js"/.test(indexContents)) {
-  throw new Error("index.html must load the external module script.");
+if (!/script[^>]+type="module"[^>]+src="\/index\.js"/.test(indexContents)) {
+  throw new Error('index.html must load /index.js as a module script.');
 }
 
 if (/<script\b(?![^>]*\bsrc=)[^>]*>[\s\S]*?<\/script>/i.test(indexContents)) {
