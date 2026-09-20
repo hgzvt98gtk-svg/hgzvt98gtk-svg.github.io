@@ -72,9 +72,8 @@ jobs:
               print("\n".join(violations))
               sys.exit(1)
           PY
-          if find . -type f \( -name '*.html' -o -name '*.txt' -o -name '*.css' -o -name '*.js' -o -name '*.xml' \) -print0 \
-            | xargs -0 -r grep -H 'http://' \
-            | grep -E -v 'http://www\.sitemaps\.org/schemas/sitemap/0\.9(/sitemap\.xsd)?'; then
+          if find . -type f \( -name '*.html' -o -name '*.txt' -o -name '*.css' -o -name '*.js' -o \( -name '*.xml' ! -name 'sitemap.xml' \) \) -print0 \
+            | xargs -0 -r grep -H 'http://'; then
             echo "Disallowed mixed-content http:// URL found"
             exit 1
           fi
