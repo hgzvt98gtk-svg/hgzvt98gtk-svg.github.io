@@ -161,9 +161,14 @@ if (!externalModuleScript) {
 
 for (const [pagePath, contents] of htmlPagePaths.map((path, index) => [path, htmlPages[index]])) {
   const scriptTags = [...contents.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
-  for (const [, , scriptContents] of scriptTags) {
-    if (scriptContents.trim()) {
-      throw new Error(`${pagePath} contains inline script content, which requires a CSP hash or nonce.`);
+  for (const [, attributeText, scriptContents] of scriptTags) {
+    const attributes = parseAttributes(attributeText);
+    const type = (attributes.get("type") ?? "").toLowerCase();
+    const hasSrc = attributes.has("src");
+    const isExecutable = !type || type === "module" || type === "text/javascript" || type === "application/javascript";
+
+    if (!hasSrc && isExecutable && scriptContents.trim()) {
+      throw new Error(`${pagePath} contains inline executable script content, which requires a CSP hash or nonce.`);
     }
   }
 }
