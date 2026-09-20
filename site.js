@@ -1,6 +1,11 @@
 if ("modelContext" in navigator) {
   const agentCardUrl = new URL("./.well-known/agent-card.json", import.meta.url);
   const apiCatalogUrl = new URL("./.well-known/api-catalog", import.meta.url);
+  const fetchRequired = async (url) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Request failed for ${url.pathname}: ${response.status}`);
+    return response;
+  };
 
   navigator.modelContext.provideContext({
     tools: [
@@ -17,7 +22,7 @@ if ("modelContext" in navigator) {
         description: "Get the AI agent card for this site",
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
-          const response = await fetch(agentCardUrl);
+          const response = await fetchRequired(agentCardUrl);
           return await response.json();
         }
       },
@@ -26,7 +31,7 @@ if ("modelContext" in navigator) {
         description: "Get the API catalog for this site",
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
-          const response = await fetch(apiCatalogUrl);
+          const response = await fetchRequired(apiCatalogUrl);
           return await response.text();
         }
       }
