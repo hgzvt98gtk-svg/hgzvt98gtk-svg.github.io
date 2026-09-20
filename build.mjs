@@ -33,13 +33,11 @@ function renderHead({ title, description, canonical, social = false }) {
     `  <meta name="theme-color" content="${site.themeColor}">`,
     `  <title>${title}</title>`,
     `  <meta name="description" content="${description}">`,
-    `  <link rel="canonical" href="${canonical}">`,
-    '  <link rel="icon" href="/HF.svg" type="image/svg+xml">',
-    '  <link rel="stylesheet" href="/style.css">'
+    `  <link rel="canonical" href="${canonical}">`
   ];
 
   if (social) {
-    lines.splice(6, 0,
+    lines.push(
       '  <meta property="og:type" content="website">',
       `  <meta property="og:url" content="${site.url}">`,
       `  <meta property="og:title" content="${title}">`,
@@ -53,6 +51,8 @@ function renderHead({ title, description, canonical, social = false }) {
     );
   }
 
+  lines.push('  <link rel="icon" href="/HF.svg" type="image/svg+xml">');
+  lines.push('  <link rel="stylesheet" href="/style.css">');
   lines.push("</head>");
   return lines.join("\n");
 }

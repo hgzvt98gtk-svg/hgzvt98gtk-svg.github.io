@@ -27,8 +27,8 @@ const requiredMatches = [
   ["index.html", 'href="/HF.svg"'],
   ["index.html", 'src="/site.js"'],
   ["index.html", "https://hussamfaroug.com/social-preview.svg"],
-  ["index.html", "/.well-known/agent-card.json"],
-  ["index.html", "/.well-known/api-catalog"],
+  ["site.js", "/.well-known/agent-card.json"],
+  ["site.js", "/.well-known/api-catalog"],
   ["style.css", 'url("/Background.jpeg")'],
   ["sitemap.xml", "https://hussamfaroug.com/Privacy.html"],
   ["llms.txt", "https://hussamfaroug.com/Privacy.html"]
