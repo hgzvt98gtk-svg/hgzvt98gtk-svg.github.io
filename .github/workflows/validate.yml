@@ -14,6 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install build dependencies
+        run: npm install
       - name: Validate local files and cross-references
         shell: bash
         run: |
@@ -29,11 +34,27 @@ jobs:
           test -f llms.txt
           grep -q 'href="/style.css"' index.html
           grep -q 'href="/HF.svg"' index.html
+          grep -q 'src="/model-context.js"' index.html
+          ! grep -q 'nonce=' index.html
           grep -q 'url("/Background.jpeg")' style.css
           grep -q 'https://hussamfaroug.com/social-preview.svg' index.html
           grep -q 'https://hussamfaroug.com/Privacy.html' sitemap.xml
           grep -q 'https://hussamfaroug.com/Privacy.html' llms.txt
+          ! grep -q '^/auth.md$' _headers
+          ! grep -q 'nonce-' _headers
           ! grep -R 'social-preview.png\|https://hussamfaroug.com/Privacy[^.]' --include='*.html' --include='*.xml' --include='*.txt' .
+      - name: Validate build output
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build
+          test -f dist/CNAME
+          test -f dist/model-context.js
+          test -f dist/.well-known/mta-sts.txt
+          test -f dist/.well-known/bimi/logo.svg
+          grep -qx 'hussamfaroug.com' dist/CNAME
+          cmp CNAME dist/CNAME
+          cmp Background.jpeg dist/Background.jpeg
       - name: Validate XML and SVG syntax
         shell: bash
         run: |
