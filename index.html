@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b0b0d">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>Hussam Faroug | Personal Website</title>
   <meta name="description" content="The personal website of Hussam Faroug.">
   <link rel="canonical" href="https://hussamfaroug.com/">
@@ -24,39 +26,6 @@
   <main class="landing" aria-label="Hussam Faroug personal website">
     <h1>hussamfaroug.com</h1>
   </main>
-  <script type="module" nonce="HF2026SecureNonce">
-    if ('modelContext' in navigator) {
-      navigator.modelContext.provideContext({
-        tools: [
-          {
-            name: 'get-site-info',
-            description: 'Get information about hussamfaroug.com',
-            inputSchema: { type: 'object', properties: {} },
-            execute: async () => {
-              return { host: 'hussamfaroug.com', status: 'agent-ready' };
-            }
-          },
-          {
-            name: 'get-agent-card',
-            description: 'Get the AI agent card for this site',
-            inputSchema: { type: 'object', properties: {} },
-            execute: async () => {
-              const res = await fetch('/.well-known/agent-card.json');
-              return await res.json();
-            }
-          },
-          {
-            name: 'get-api-catalog',
-            description: 'Get the API catalog for this site',
-            inputSchema: { type: 'object', properties: {} },
-            execute: async () => {
-              const res = await fetch('/.well-known/api-catalog');
-              return await res.json();
-            }
-          }
-        ]
-      });
-    }
-  </script>
+  <script type="module" src="/site.js"></script>
 </body>
 </html>

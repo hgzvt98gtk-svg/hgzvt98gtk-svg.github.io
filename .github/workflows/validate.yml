@@ -20,6 +20,7 @@ jobs:
           set -euo pipefail
           test -f index.html
           test -f Privacy.html
+          test -f site.js
           test -f style.css
           test -f HF.svg
           test -f Background.jpeg
@@ -27,13 +28,28 @@ jobs:
           test -f sitemap.xml
           test -f robots.txt
           test -f llms.txt
+          grep -q 'http-equiv="Content-Security-Policy"' index.html
+          grep -q 'http-equiv="Content-Security-Policy"' Privacy.html
           grep -q 'href="/style.css"' index.html
           grep -q 'href="/HF.svg"' index.html
+          grep -q 'src="/site.js"' index.html
           grep -q 'url("/Background.jpeg")' style.css
           grep -q 'https://hussamfaroug.com/social-preview.svg' index.html
           grep -q 'https://hussamfaroug.com/Privacy.html' sitemap.xml
           grep -q 'https://hussamfaroug.com/Privacy.html' llms.txt
+          ! grep -R 'HF2026SecureNonce' --include='*.html' --include='*.js' --include='_headers' .
           ! grep -R 'social-preview.png\|https://hussamfaroug.com/Privacy[^.]' --include='*.html' --include='*.xml' --include='*.txt' .
+      - name: Build site and verify deployable output
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install
+          npm run build
+          test -f dist/_headers
+          test -f dist/site.js
+          cmp Background.jpeg dist/Background.jpeg
+          grep -q 'src="/site.js"' dist/index.html
+          ! grep -R 'HF2026SecureNonce' dist
       - name: Validate XML and SVG syntax
         shell: bash
         run: |
@@ -42,6 +58,14 @@ jobs:
           xmllint --noout HF.svg
           xmllint --noout social-preview.svg
           xmllint --noout .well-known/bimi/logo.svg
+      - name: Validate host header rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(grep -n '^/\*$' _headers | cut -d: -f1)" -lt "$(grep -n '^/\.well-known/\*$' _headers | cut -d: -f1)"
+          test "$(grep -n '^/\.well-known/\*$' _headers | cut -d: -f1)" -lt "$(grep -n '^/auth\.md$' _headers | cut -d: -f1)"
+          grep -q "Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests" _headers
+          ! grep -q 'Cross-Origin-Resource-Policy: same-origin' _headers
       - name: Validate MTA-STS policy syntax
         shell: bash
         run: |
