@@ -42,7 +42,7 @@ for (const source of await filesIn(root)) {
 
   const extension = extname(source).toLowerCase();
   if (![".html", ".htm", ".css", ".js", ".mjs"].includes(extension)) {
-    await cp(source, destination);
+    await cp(source, destination, { dereference: true });
     continue;
   }
 
