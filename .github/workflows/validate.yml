@@ -27,13 +27,23 @@ jobs:
           test -f sitemap.xml
           test -f robots.txt
           test -f llms.txt
+          test -f .well-known/agent-card.json
+          test -f .well-known/api-catalog
           grep -q 'href="/style.css"' index.html
           grep -q 'href="/HF.svg"' index.html
           grep -q 'url("/Background.jpeg")' style.css
           grep -q 'https://hussamfaroug.com/social-preview.svg' index.html
           grep -q 'https://hussamfaroug.com/Privacy.html' sitemap.xml
           grep -q 'https://hussamfaroug.com/Privacy.html' llms.txt
+          grep -q '/.well-known/agent-card.json' index.html
+          grep -q '/.well-known/api-catalog' index.html
           ! grep -R 'social-preview.png\|https://hussamfaroug.com/Privacy[^.]' --include='*.html' --include='*.xml' --include='*.txt' .
+      - name: Validate JSON resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m json.tool .well-known/agent-card.json >/dev/null
+          python -m json.tool .well-known/api-catalog >/dev/null
       - name: Validate XML and SVG syntax
         shell: bash
         run: |
@@ -49,3 +59,15 @@ jobs:
           grep -q '^version: STSv1$' .well-known/mta-sts.txt
           grep -q '^mode: testing$' .well-known/mta-sts.txt
           test "$(grep -c '^mx: ' .well-known/mta-sts.txt)" -eq 2
+      - name: Validate production build
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-package-lock
+          npm run build
+          test -f dist/index.html
+          test -f dist/Privacy.html
+          test -f dist/style.css
+          test -f dist/.well-known/agent-card.json
+          test -f dist/.well-known/api-catalog
+          test -f dist/Background.jpeg

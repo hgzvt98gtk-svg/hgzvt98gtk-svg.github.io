@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import CleanCSS from "clean-css";
@@ -7,7 +7,8 @@ import { minify as minifyJs } from "terser";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const output = join(root, "dist");
-const excluded = new Set([".git", ".github", "dist", "node_modules"]);
+const excluded = new Set([".git", ".github", "build.mjs", "dist", "node_modules", "package-lock.json", "package.json"]);
+const textExtensions = new Set([".css", ".htm", ".html", ".js", ".json", ".mjs", ".svg", ".txt", ".xml"]);
 
 async function filesIn(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -31,6 +32,11 @@ for (const source of await filesIn(root)) {
   await mkdir(dirname(destination), { recursive: true });
 
   const extension = extname(source).toLowerCase();
+  if (!textExtensions.has(extension)) {
+    await copyFile(source, destination);
+    continue;
+  }
+
   const contents = await readFile(source, "utf8");
   let result = contents;
 
