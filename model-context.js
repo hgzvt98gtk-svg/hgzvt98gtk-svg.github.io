@@ -15,6 +15,9 @@ if ("modelContext" in navigator) {
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
           const response = await fetch("/.well-known/agent-card.json");
+          if (!response.ok) {
+            throw new Error(`Failed to fetch /.well-known/agent-card.json: ${response.status}`);
+          }
           return await response.json();
         }
       },
@@ -24,6 +27,9 @@ if ("modelContext" in navigator) {
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
           const response = await fetch("/.well-known/api-catalog");
+          if (!response.ok) {
+            throw new Error(`Failed to fetch /.well-known/api-catalog: ${response.status}`);
+          }
           return await response.json();
         }
       }
