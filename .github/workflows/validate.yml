@@ -32,7 +32,9 @@ jobs:
           grep -q 'http-equiv="Content-Security-Policy"' Privacy.html
           grep -q 'href="/style.css"' index.html
           grep -q 'href="/HF.svg"' index.html
-          grep -q 'src="/site.js"' index.html
+          grep -q 'src="./site.js"' index.html
+          grep -q 'new URL("./.well-known/agent-card.json", import.meta.url)' site.js
+          grep -q 'new URL("./.well-known/api-catalog", import.meta.url)' site.js
           grep -q 'url("/Background.jpeg")' style.css
           grep -q 'https://hussamfaroug.com/social-preview.svg' index.html
           grep -q 'https://hussamfaroug.com/Privacy.html' sitemap.xml
@@ -48,7 +50,7 @@ jobs:
           test -f dist/_headers
           test -f dist/site.js
           cmp Background.jpeg dist/Background.jpeg
-          grep -q 'src="/site.js"' dist/index.html
+          grep -q 'src="./site.js"' dist/index.html
           ! grep -R 'HF2026SecureNonce' dist
       - name: Validate XML and SVG syntax
         shell: bash

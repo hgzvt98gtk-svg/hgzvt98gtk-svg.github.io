@@ -1,4 +1,7 @@
 if ("modelContext" in navigator) {
+  const agentCardUrl = new URL("./.well-known/agent-card.json", import.meta.url);
+  const apiCatalogUrl = new URL("./.well-known/api-catalog", import.meta.url);
+
   navigator.modelContext.provideContext({
     tools: [
       {
@@ -14,7 +17,7 @@ if ("modelContext" in navigator) {
         description: "Get the AI agent card for this site",
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
-          const response = await fetch("/.well-known/agent-card.json");
+          const response = await fetch(agentCardUrl);
           return await response.json();
         }
       },
@@ -23,7 +26,7 @@ if ("modelContext" in navigator) {
         description: "Get the API catalog for this site",
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
-          const response = await fetch("/.well-known/api-catalog");
+          const response = await fetch(apiCatalogUrl);
           return await response.json();
         }
       }
