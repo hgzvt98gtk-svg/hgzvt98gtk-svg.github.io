@@ -149,7 +149,7 @@ if (siteBlock.headers.has("Cross-Origin-Embedder-Policy")) {
 }
 
 const [indexContents] = htmlPages;
-const indexScripts = [...indexContents.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
+const indexScripts = [...indexContents.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)];
 const externalModuleScript = indexScripts.find(([, attributeText]) => {
   const attributes = parseAttributes(attributeText);
   return attributes.get("src") === "/index.js" && attributes.get("type") === "module";
@@ -160,7 +160,7 @@ if (!externalModuleScript) {
 }
 
 for (const [pagePath, contents] of htmlPagePaths.map((path, index) => [path, htmlPages[index]])) {
-  const scriptTags = [...contents.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
+  const scriptTags = [...contents.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)];
   for (const [, attributeText, scriptContents] of scriptTags) {
     const attributes = parseAttributes(attributeText);
     const type = (attributes.get("type") ?? "").toLowerCase();

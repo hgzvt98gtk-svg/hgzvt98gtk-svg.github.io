@@ -4,6 +4,7 @@
 
 /.well-known/mta-sts.txt
   Cross-Origin-Resource-Policy: cross-origin
+  Access-Control-Allow-Origin: *
 
 /*
   Cross-Origin-Resource-Policy: same-origin
