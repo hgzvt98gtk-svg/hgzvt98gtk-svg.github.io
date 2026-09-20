@@ -15,6 +15,7 @@ if ("modelContext" in navigator) {
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
           const res = await fetch("/.well-known/agent-card.json");
+          if (!res.ok) throw new Error(`Failed to load agent card: ${res.status}`);
           return await res.json();
         }
       },
@@ -24,6 +25,7 @@ if ("modelContext" in navigator) {
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
           const res = await fetch("/.well-known/api-catalog");
+          if (!res.ok) throw new Error(`Failed to load API catalog: ${res.status}`);
           return await res.json();
         }
       }
