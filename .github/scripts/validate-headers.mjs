@@ -67,6 +67,14 @@ function parseAttributes(value) {
   return attributes;
 }
 
+function sameSources(actualSources, expectedSources) {
+  if (actualSources.length !== expectedSources.length) return false;
+
+  const actual = [...actualSources].sort();
+  const expected = [...expectedSources].sort();
+  return actual.every((value, index) => value === expected[index]);
+}
+
 const [headersContents, indexContents] = await Promise.all([
   readFile(headersPath, "utf8"),
   readFile(indexPath, "utf8")
@@ -121,10 +129,8 @@ for (const [name, expectedSources] of [
     throw new Error(`CSP is missing ${name}.`);
   }
 
-  for (const source of expectedSources) {
-    if (!actualSources.includes(source)) {
-      throw new Error(`CSP ${name} must include ${source}.`);
-    }
+  if (!sameSources(actualSources, expectedSources)) {
+    throw new Error(`CSP ${name} must be exactly: ${expectedSources.join(" ")}.`);
   }
 }
 
