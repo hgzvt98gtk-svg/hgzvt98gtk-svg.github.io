@@ -105,9 +105,15 @@ const csp = siteBlock.headers.get("Content-Security-Policy");
 if (!csp) throw new Error("Missing Content-Security-Policy for /*.");
 const directives = parseCsp(csp);
 
-for (const forbidden of ["'unsafe-inline'", "'unsafe-eval'", "'nonce-"]) {
+for (const forbidden of ["'unsafe-inline'", "'unsafe-eval'"]) {
   if (csp.includes(forbidden)) {
     throw new Error(`CSP must not include ${forbidden}.`);
+  }
+}
+
+for (const sources of directives.values()) {
+  if (sources.some((source) => /^'nonce-[^']+'$/.test(source))) {
+    throw new Error("CSP must not include nonce sources.");
   }
 }
 
