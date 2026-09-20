@@ -30,6 +30,9 @@ const requiredMatches = [
   ["index.html", "https://hussamfaroug.com/social-preview.svg"],
   ["site.js", "/.well-known/agent-card.json"],
   ["site.js", "/.well-known/api-catalog"],
+  ["_headers", "/.well-known/agent-card.json"],
+  ["_headers", "/.well-known/api-catalog"],
+  ["_headers", "X-Robots-Tag: noindex, nofollow, noarchive"],
   ["style.css", 'url("/Background.jpeg")'],
   ["sitemap.xml", "https://hussamfaroug.com/Privacy.html"],
   ["llms.txt", "https://hussamfaroug.com/Privacy.html"]
