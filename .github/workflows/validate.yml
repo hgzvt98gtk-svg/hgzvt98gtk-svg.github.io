@@ -34,6 +34,37 @@ jobs:
           grep -q 'https://hussamfaroug.com/Privacy.html' sitemap.xml
           grep -q 'https://hussamfaroug.com/Privacy.html' llms.txt
           ! grep -R 'social-preview.png\|https://hussamfaroug.com/Privacy[^.]' --include='*.html' --include='*.xml' --include='*.txt' .
+      - name: Validate security header configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f _headers
+          ! grep -q 'nonce-' _headers
+          ! grep -q 'Cross-Origin-Embedder-Policy:' _headers
+          ! grep -q 'Cross-Origin-Opener-Policy:' _headers
+          ! grep -q '/auth.md' _headers
+          ! grep -q 'challenges.cloudflare.com' _headers
+          python <<'PY'
+          from pathlib import Path
+          import base64
+          import hashlib
+          import re
+
+          index = Path("index.html").read_text()
+          headers = Path("_headers").read_text()
+
+          if 'nonce=' in index:
+              raise SystemExit("index.html should not rely on a static CSP nonce")
+
+          match = re.search(r'<script type="module">\n(.*?)\n  </script>', index, re.S)
+          if not match:
+              raise SystemExit("inline module script not found")
+
+          digest = base64.b64encode(hashlib.sha256(match.group(1).encode()).digest()).decode()
+          expected = f\"'sha256-{digest}'\"
+          if expected not in headers:
+              raise SystemExit(f\"_headers is missing {expected}\")
+          PY
       - name: Validate XML and SVG syntax
         shell: bash
         run: |
