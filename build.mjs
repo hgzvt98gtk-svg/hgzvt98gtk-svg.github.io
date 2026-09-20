@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import CleanCSS from "clean-css";
 import { minify as minifyHtml } from "html-minifier-terser";
 import { minify as minifyJs } from "terser";
+import { pageByPath, readSiteConfig } from "./site-config.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const output = join(root, "dist");
@@ -16,10 +17,11 @@ const excluded = new Set([
   "package-lock.json",
   "package.json",
   "site.config.json",
+  "site-config.mjs",
   "validate.mjs"
 ]);
 const textExtensions = new Set([".css", ".htm", ".html", ".js", ".json", ".mjs", ".svg", ".txt", ".xml"]);
-const site = JSON.parse(await readFile(join(root, "site.config.json"), "utf8"));
+const site = await readSiteConfig();
 
 function escapeHtml(value) {
   return String(value)
@@ -40,12 +42,6 @@ function escapeMarkdown(value) {
 
 function escapeMarkdownUrl(value) {
   return String(value).replace(/([\\()\s])/g, "\\$1");
-}
-
-function pageByPath(pathname) {
-  const page = site.pages.find((entry) => entry.path === pathname);
-  if (!page) throw new Error(`Missing page config for ${pathname}`);
-  return page;
 }
 
 function renderHead({ title, description, canonical, social = false }) {
@@ -81,7 +77,7 @@ function renderHead({ title, description, canonical, social = false }) {
 }
 
 function renderIndex() {
-  const page = pageByPath("/");
+  const page = pageByPath(site, "/");
   return [
     "<!doctype html>",
     '<html lang="en">',
@@ -98,7 +94,7 @@ function renderIndex() {
 }
 
 function renderPrivacy() {
-  const page = pageByPath("/Privacy.html");
+  const page = pageByPath(site, "/Privacy.html");
   const sections = site.privacy.sections
     .map((section) => `    <h2>${escapeHtml(section.heading)}</h2>\n    <p>${escapeHtml(section.body)}</p>`)
     .join("\n");
@@ -182,18 +178,14 @@ async function writeGeneratedSources() {
   await writeGeneratedSource("llms.txt", renderLlms());
 }
 
-await writeGeneratedSources();
-await rm(output, { recursive: true, force: true });
-await mkdir(output, { recursive: true });
-
-for (const source of await filesIn(root)) {
+async function processFile(source) {
   const destination = join(output, relative(root, source));
   await mkdir(dirname(destination), { recursive: true });
 
   const extension = extname(source).toLowerCase();
   if (!textExtensions.has(extension)) {
     await copyFile(source, destination);
-    continue;
+    return;
   }
 
   const contents = await readFile(source, "utf8");
@@ -217,5 +209,10 @@ for (const source of await filesIn(root)) {
 
   await writeFile(destination, result);
 }
+
+await writeGeneratedSources();
+await rm(output, { recursive: true, force: true });
+await mkdir(output, { recursive: true });
+await Promise.all((await filesIn(root)).map(processFile));
 
 console.log(`Built minified site in ${relative(root, output)}/`);

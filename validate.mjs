@@ -1,10 +1,12 @@
 import { access, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readSiteConfig, requiredMatchesForSite } from "./site-config.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const mode = process.argv[2] === "dist" ? "dist" : "source";
 const base = mode === "dist" ? join(root, "dist") : root;
+const site = await readSiteConfig();
 
 const requiredFiles = [
   "index.html",
@@ -23,20 +25,7 @@ const requiredFiles = [
   ".well-known/mta-sts.txt"
 ];
 
-const requiredMatches = [
-  ["index.html", 'href="/style.css"'],
-  ["index.html", 'href="/HF.svg"'],
-  ["index.html", 'src="/site.js"'],
-  ["index.html", "https://hussamfaroug.com/social-preview.svg"],
-  ["site.js", "/.well-known/agent-card.json"],
-  ["site.js", "/.well-known/api-catalog"],
-  ["_headers", "/.well-known/agent-card.json"],
-  ["_headers", "/.well-known/api-catalog"],
-  ["_headers", "X-Robots-Tag: noindex, nofollow, noarchive"],
-  ["style.css", 'url("/Background.jpeg")'],
-  ["sitemap.xml", "https://hussamfaroug.com/Privacy.html"],
-  ["llms.txt", "https://hussamfaroug.com/Privacy.html"]
-];
+const requiredMatches = requiredMatchesForSite(site);
 
 const forbiddenMatches = [
   ["_headers", "Access-Control-Allow-Origin: *"],
