@@ -40,7 +40,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ! grep -R "HF2026SecureNonce\\|'unsafe-inline'\\|'unsafe-eval'" index.html site.js _headers
+          ! grep -R -E "HF2026SecureNonce|'unsafe-inline'|'unsafe-eval'" index.html site.js _headers
           python3 - <<'PY'
           from html.parser import HTMLParser
           from pathlib import Path
