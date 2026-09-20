@@ -34,6 +34,14 @@ function escapeAttribute(value) {
     .replaceAll("'", "&#39;");
 }
 
+function escapeMarkdown(value) {
+  return String(value).replace(/([\\`*_{}[\]()#+\-!>|])/g, "\\$1");
+}
+
+function escapeMarkdownUrl(value) {
+  return String(value).replace(/([\\()\s])/g, "\\$1");
+}
+
 function pageByPath(pathname) {
   const page = site.pages.find((entry) => entry.path === pathname);
   if (!page) throw new Error(`Missing page config for ${pathname}`);
@@ -132,16 +140,16 @@ function renderSitemap() {
 
 function renderLlms() {
   const pages = site.pages
-    .map((page) => `- [${page.label}](${page.canonical}): ${page.listDescription}`)
+    .map((page) => `- [${escapeMarkdown(page.label)}](${escapeMarkdownUrl(page.canonical)}): ${escapeMarkdown(page.listDescription)}`)
     .join("\n");
 
   return [
-    `# ${site.owner}`,
+    `# ${escapeMarkdown(site.owner)}`,
     "",
-    `> ${site.llms.summary}`,
+    `> ${escapeMarkdown(site.llms.summary)}`,
     "",
     "## About",
-    `- ${site.llms.about}`,
+    `- ${escapeMarkdown(site.llms.about)}`,
     "",
     "## Pages",
     pages,
