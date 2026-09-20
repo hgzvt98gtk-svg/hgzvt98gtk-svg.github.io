@@ -68,6 +68,8 @@ jobs:
           test "$(grep -n '^/\.well-known/\*$' _headers | cut -d: -f1)" -lt "$(grep -n '^/auth\.md$' _headers | cut -d: -f1)"
           test "$(grep -n '^/auth\.md$' _headers | cut -d: -f1)" -lt "$(grep -n '^/\*$' _headers | cut -d: -f1)"
           grep -q "Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests" _headers
+          ! grep -q 'Cross-Origin-Embedder-Policy' _headers
+          ! grep -q 'Cross-Origin-Opener-Policy' _headers
           ! grep -q 'Cross-Origin-Resource-Policy: same-origin' _headers
       - name: Validate MTA-STS policy syntax
         shell: bash
