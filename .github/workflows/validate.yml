@@ -14,6 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Validate local files and cross-references
         shell: bash
         run: |
@@ -40,6 +43,21 @@ jobs:
           grep -q 'https://hussamfaroug.com/Privacy.html' sitemap.xml
           grep -q 'https://hussamfaroug.com/Privacy.html' llms.txt
           ! grep -R 'social-preview.png\|https://hussamfaroug.com/Privacy[^.]' --include='*.html' --include='*.xml' --include='*.txt' .
+      - name: Build site output
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install
+          npm run build
+          test -f dist/index.html
+          test -f dist/site.js
+          test -f dist/_headers
+          grep -q 'src="/site.js"' dist/index.html
+          ! grep -q 'nonce=' dist/index.html
+          grep -q '^/site.js$' dist/_headers
+          grep -q 'Content-Type: text/javascript; charset=utf-8' dist/_headers
+          grep -q "script-src 'self'" dist/_headers
+          grep -q "connect-src 'self'" dist/_headers
       - name: Validate XML and SVG syntax
         shell: bash
         run: |
