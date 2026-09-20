@@ -72,7 +72,7 @@ jobs:
               print("\n".join(violations))
               sys.exit(1)
           PY
-          ! grep -R 'http://' --include='*.html' --include='*.txt' --include='*.css' --include='*.js' .
+          ! grep -R 'http://' --include='*.html' --include='*.txt' --include='*.css' --include='*.js' --include='*.xml' . | grep -v 'http://www.sitemaps.org/schemas/sitemap/0.9'
       - name: Validate XML and SVG syntax
         shell: bash
         run: |
