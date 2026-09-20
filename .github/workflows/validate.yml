@@ -46,7 +46,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm install
+          npm ci
           npm run build
           test -f dist/_headers
           test -f dist/site.js
