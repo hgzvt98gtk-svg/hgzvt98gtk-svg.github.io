@@ -6,6 +6,9 @@
   Cross-Origin-Resource-Policy: cross-origin
   Access-Control-Allow-Origin: *
 
+/site.js
+  Content-Type: text/javascript; charset=utf-8
+
 /*
   Cross-Origin-Resource-Policy: same-origin
   Cross-Origin-Embedder-Policy: require-corp

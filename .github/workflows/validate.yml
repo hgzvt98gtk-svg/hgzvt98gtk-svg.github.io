@@ -33,6 +33,8 @@ jobs:
           grep -q 'src="/site.js"' index.html
           ! grep -q 'nonce=' index.html
           ! grep -q "nonce-" _headers
+          grep -q '^/site.js$' _headers
+          grep -q 'Content-Type: text/javascript; charset=utf-8' _headers
           grep -q 'url("/Background.jpeg")' style.css
           grep -q 'https://hussamfaroug.com/social-preview.svg' index.html
           grep -q 'https://hussamfaroug.com/Privacy.html' sitemap.xml

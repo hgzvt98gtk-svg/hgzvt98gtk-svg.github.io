@@ -1,3 +1,12 @@
+async function fetchJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+  }
+
+  return await response.json();
+}
+
 if ("modelContext" in navigator) {
   navigator.modelContext.provideContext({
     tools: [
@@ -13,19 +22,13 @@ if ("modelContext" in navigator) {
         name: "get-agent-card",
         description: "Get the AI agent card for this site",
         inputSchema: { type: "object", properties: {} },
-        execute: async () => {
-          const res = await fetch("/.well-known/agent-card.json");
-          return await res.json();
-        }
+        execute: async () => await fetchJson("/.well-known/agent-card.json")
       },
       {
         name: "get-api-catalog",
         description: "Get the API catalog for this site",
         inputSchema: { type: "object", properties: {} },
-        execute: async () => {
-          const res = await fetch("/.well-known/api-catalog");
-          return await res.json();
-        }
+        execute: async () => await fetchJson("/.well-known/api-catalog")
       }
     ]
   });
