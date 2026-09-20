@@ -53,14 +53,21 @@ jobs:
           index = Path("index.html").read_text()
           headers = Path("_headers").read_text()
 
-          if 'nonce=' in index:
-              raise SystemExit("index.html should not rely on a static CSP nonce")
+          scripts = []
+          for match in re.finditer(r"<script\b(?P<attrs>[^>]*)>(?P<body>.*?)</script>", index, re.S | re.I):
+              attrs = match.group("attrs")
+              if re.search(r"\bsrc\s*=", attrs, re.I):
+                  continue
+              if not re.search(r"\btype\s*=\s*(['\"])module\1", attrs, re.I):
+                  continue
+              if re.search(r"\bnonce\s*=", attrs, re.I):
+                  raise SystemExit("index.html should not rely on a static CSP nonce")
+              scripts.append(match.group("body"))
 
-          matches = re.findall(r'<script type="module">(.*?)</script>', index, re.S)
-          if len(matches) != 1:
-              raise SystemExit("inline module script not found")
+          if len(scripts) != 1:
+              raise SystemExit("expected exactly one inline module script")
 
-          digest = base64.b64encode(hashlib.sha256(matches[0].encode()).digest()).decode()
+          digest = base64.b64encode(hashlib.sha256(scripts[0].encode()).digest()).decode()
           expected = f\"'sha256-{digest}'\"
           if expected not in headers:
               raise SystemExit(f\"_headers is missing {expected}\")
