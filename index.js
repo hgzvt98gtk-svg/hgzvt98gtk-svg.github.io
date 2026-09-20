@@ -1,3 +1,12 @@
+const siteOrigin =
+  window.location.hostname === "hussamfaroug.com"
+    ? window.location.origin
+    : "https://hussamfaroug.com";
+
+function siteUrl(path) {
+  return new URL(path, siteOrigin);
+}
+
 if ("modelContext" in navigator) {
   navigator.modelContext.provideContext({
     tools: [
@@ -14,7 +23,7 @@ if ("modelContext" in navigator) {
         description: "Get the AI agent card for this site",
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
-          const res = await fetch("/.well-known/agent-card.json");
+          const res = await fetch(siteUrl("/.well-known/agent-card.json"));
           return await res.json();
         }
       },
@@ -23,7 +32,7 @@ if ("modelContext" in navigator) {
         description: "Get the API catalog for this site",
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
-          const res = await fetch("/.well-known/api-catalog");
+          const res = await fetch(siteUrl("/.well-known/api-catalog"));
           return await res.json();
         }
       }
