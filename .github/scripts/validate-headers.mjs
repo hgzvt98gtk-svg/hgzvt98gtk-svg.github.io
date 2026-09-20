@@ -60,8 +60,8 @@ function parseCsp(value) {
 function parseAttributes(value) {
   const attributes = new Map();
 
-  for (const match of value.matchAll(/([^\s=]+)\s*=\s*"([^"]*)"/g)) {
-    attributes.set(match[1], match[2]);
+  for (const match of value.matchAll(/([^\s=]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) {
+    attributes.set(match[1], match[2] ?? match[3] ?? "");
   }
 
   return attributes;
