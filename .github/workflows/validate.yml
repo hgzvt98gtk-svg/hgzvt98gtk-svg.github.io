@@ -35,6 +35,7 @@ jobs:
           grep -q 'src="./site.js"' index.html
           grep -q 'new URL("./.well-known/agent-card.json", import.meta.url)' site.js
           grep -q 'new URL("./.well-known/api-catalog", import.meta.url)' site.js
+          grep -q 'return await response.text();' site.js
           grep -q 'url("/Background.jpeg")' style.css
           grep -q 'https://hussamfaroug.com/social-preview.svg' index.html
           grep -q 'https://hussamfaroug.com/Privacy.html' sitemap.xml

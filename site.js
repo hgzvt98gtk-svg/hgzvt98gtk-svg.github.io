@@ -27,7 +27,7 @@ if ("modelContext" in navigator) {
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
           const response = await fetch(apiCatalogUrl);
-          return await response.json();
+          return await response.text();
         }
       }
     ]
