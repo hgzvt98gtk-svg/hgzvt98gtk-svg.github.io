@@ -41,7 +41,7 @@ jobs:
         run: |
           set -euo pipefail
           ! grep -R "HF2026SecureNonce\\|'unsafe-inline'\\|'unsafe-eval'" index.html site.js _headers
-          ! grep -R -nE '<script[^>]*>' --include='*.html' . | grep -Ev '</script>|src=|type=["'"'"']application/(ld\+json|json)["'"'"']'
+          awk 'BEGIN{IGNORECASE=1} /<script[^>]*>/ { if ($0 !~ /<\/script>/ && $0 !~ /src=/ && $0 !~ /type=["'"'"'"'"'"'"'"'"']application\/(ld\+json|json)["'"'"'"'"'"'"'"'"']/) { print FILENAME ":" FNR ":" $0; bad=1 } } END { exit bad }' ./*.html
           ! grep -R 'http://' --include='*.html' --include='*.txt' --include='*.css' .
       - name: Validate XML and SVG syntax
         shell: bash
