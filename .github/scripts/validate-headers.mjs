@@ -57,6 +57,16 @@ function parseCsp(value) {
   return directives;
 }
 
+function parseAttributes(value) {
+  const attributes = new Map();
+
+  for (const match of value.matchAll(/([^\s=]+)\s*=\s*"([^"]*)"/g)) {
+    attributes.set(match[1], match[2]);
+  }
+
+  return attributes;
+}
+
 const [headersContents, indexContents] = await Promise.all([
   readFile(headersPath, "utf8"),
   readFile(indexPath, "utf8")
@@ -126,12 +136,20 @@ if (siteBlock.headers.has("Cross-Origin-Embedder-Policy")) {
   throw new Error("Cross-Origin-Embedder-Policy is too strict for Cloudflare challenge compatibility.");
 }
 
-if (!/script[^>]+type="module"[^>]+src="\/index\.js"/.test(indexContents)) {
+const scriptTags = [...indexContents.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
+const externalModuleScript = scriptTags.find(([, attributeText]) => {
+  const attributes = parseAttributes(attributeText);
+  return attributes.get("src") === "/index.js" && attributes.get("type") === "module";
+});
+
+if (!externalModuleScript) {
   throw new Error('index.html must load /index.js as a module script.');
 }
 
-if (/<script\b(?![^>]*\bsrc=)[^>]*>[\s\S]*?<\/script>/i.test(indexContents)) {
-  throw new Error("Inline scripts require a CSP hash or nonce and are not allowed here.");
+for (const [, , contents] of scriptTags) {
+  if (contents.trim()) {
+    throw new Error("Inline scripts require a CSP hash or nonce and are not allowed here.");
+  }
 }
 
 console.log("Security header configuration looks valid.");
