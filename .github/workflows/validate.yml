@@ -42,6 +42,7 @@ jobs:
           grep -q "img-src 'self' data:" _headers
           grep -q "form-action 'self'" _headers
           grep -q "frame-ancestors 'none'" _headers
+          grep -q 'upgrade-insecure-requests' _headers
           grep -q "connect-src 'self' https://challenges.cloudflare.com" _headers
           grep -q 'Strict-Transport-Security: max-age=31536000' _headers
           ! grep -R 'social-preview.png\|https://hussamfaroug.com/Privacy[^.]' --include='*.html' --include='*.xml' --include='*.txt' .
