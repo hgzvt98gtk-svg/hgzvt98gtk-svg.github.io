@@ -44,6 +44,19 @@ function findBlock(blocks, path) {
   return block;
 }
 
+function parseCsp(value) {
+  const directives = new Map();
+
+  for (const directive of value.split(";")) {
+    const trimmed = directive.trim();
+    if (!trimmed) continue;
+    const [name, ...sources] = trimmed.split(/\s+/);
+    directives.set(name, sources);
+  }
+
+  return directives;
+}
+
 const [headersContents, indexContents] = await Promise.all([
   readFile(headersPath, "utf8"),
   readFile(indexPath, "utf8")
@@ -72,6 +85,7 @@ if (mtaStsBlock.headers.get("Cross-Origin-Resource-Policy") !== "cross-origin") 
 const siteBlock = findBlock(blocks, "/*");
 const csp = siteBlock.headers.get("Content-Security-Policy");
 if (!csp) throw new Error("Missing Content-Security-Policy for /*.");
+const directives = parseCsp(csp);
 
 for (const forbidden of ["'unsafe-inline'", "'unsafe-eval'", "'nonce-"]) {
   if (csp.includes(forbidden)) {
@@ -79,23 +93,33 @@ for (const forbidden of ["'unsafe-inline'", "'unsafe-eval'", "'nonce-"]) {
   }
 }
 
-for (const required of [
-  "default-src 'self'",
-  "script-src 'self' https://challenges.cloudflare.com",
-  "style-src 'self'",
-  "img-src 'self'",
-  "font-src 'self'",
-  "connect-src 'self'",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'self'",
-  "frame-src https://challenges.cloudflare.com",
-  "upgrade-insecure-requests"
+for (const [name, expectedSources] of [
+  ["default-src", ["'self'"]],
+  ["script-src", ["'self'", "https://challenges.cloudflare.com"]],
+  ["style-src", ["'self'"]],
+  ["img-src", ["'self'"]],
+  ["font-src", ["'self'"]],
+  ["connect-src", ["'self'", "https://challenges.cloudflare.com"]],
+  ["object-src", ["'none'"]],
+  ["base-uri", ["'self'"]],
+  ["form-action", ["'self'"]],
+  ["frame-ancestors", ["'self'"]],
+  ["frame-src", ["https://challenges.cloudflare.com"]]
 ]) {
-  if (!csp.includes(required)) {
-    throw new Error(`CSP is missing ${required}.`);
+  const actualSources = directives.get(name);
+  if (!actualSources) {
+    throw new Error(`CSP is missing ${name}.`);
   }
+
+  for (const source of expectedSources) {
+    if (!actualSources.includes(source)) {
+      throw new Error(`CSP ${name} must include ${source}.`);
+    }
+  }
+}
+
+if (!directives.has("upgrade-insecure-requests")) {
+  throw new Error("CSP is missing upgrade-insecure-requests.");
 }
 
 if (siteBlock.headers.has("Cross-Origin-Embedder-Policy")) {
