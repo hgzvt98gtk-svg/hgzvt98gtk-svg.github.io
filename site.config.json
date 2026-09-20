@@ -2,12 +2,11 @@
   "owner": "Hussam Faroug",
   "domain": "hussamfaroug.com",
   "url": "https://hussamfaroug.com/",
-  "email": "admin@hussamfaroug.com",
   "themeColor": "#0b0b0d",
   "socialImage": "https://hussamfaroug.com/social-preview.svg",
   "llms": {
     "summary": "Personal website of Hussam Faroug.",
-    "about": "Hussam Faroug — personal site and contact page."
+    "about": "Hussam Faroug — personal site."
   },
   "pages": [
     {
@@ -43,16 +42,8 @@
         "body": "The site does not intentionally collect personal information or set cookies. Hosting and delivery providers may process technical request data, such as IP address, browser information, and request time, in server logs and security systems."
       },
       {
-        "heading": "Email and external links",
-        "parts": [
-          "If you email ",
-          {
-            "type": "mailto",
-            "email": "admin@hussamfaroug.com",
-            "text": "admin@hussamfaroug.com"
-          },
-          ", your email provider will process your message. External websites have their own privacy policies."
-        ]
+        "heading": "External links",
+        "body": "External websites have their own privacy policies and data-handling practices."
       },
       {
         "heading": "Changes",

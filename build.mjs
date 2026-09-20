@@ -40,16 +40,6 @@ function pageByPath(pathname) {
   return page;
 }
 
-function renderInline(parts) {
-  return parts.map((part) => {
-    if (typeof part === "string") return escapeHtml(part);
-    if (part.type === "mailto") {
-      return `<a href="mailto:${escapeAttribute(part.email)}">${escapeHtml(part.text)}</a>`;
-    }
-    throw new Error(`Unsupported content part type: ${part.type}`);
-  }).join("");
-}
-
 function renderHead({ title, description, canonical, social = false }) {
   const lines = [
     "<head>",
@@ -102,10 +92,7 @@ function renderIndex() {
 function renderPrivacy() {
   const page = pageByPath("/Privacy.html");
   const sections = site.privacy.sections
-    .map((section) => {
-      const body = section.parts ? renderInline(section.parts) : escapeHtml(section.body);
-      return `    <h2>${escapeHtml(section.heading)}</h2>\n    <p>${body}</p>`;
-    })
+    .map((section) => `    <h2>${escapeHtml(section.heading)}</h2>\n    <p>${escapeHtml(section.body)}</p>`)
     .join("\n");
 
   return [
@@ -158,9 +145,6 @@ function renderLlms() {
     "",
     "## Pages",
     pages,
-    "",
-    "## Contact",
-    `- Email: ${site.email}`,
     ""
   ].join("\n");
 }

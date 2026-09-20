@@ -1,11 +1,3 @@
-/.well-known/agent-card.json
-  Cross-Origin-Resource-Policy: cross-origin
-  Access-Control-Allow-Origin: *
-
-/.well-known/api-catalog
-  Cross-Origin-Resource-Policy: cross-origin
-  Access-Control-Allow-Origin: *
-
 /*
   Cross-Origin-Resource-Policy: same-origin
   Cross-Origin-Embedder-Policy: require-corp
