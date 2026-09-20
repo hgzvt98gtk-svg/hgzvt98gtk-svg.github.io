@@ -56,6 +56,7 @@ jobs:
           test -f dist/model-context.js
           test -f dist/.well-known/mta-sts.txt
           test -f dist/.well-known/bimi/logo.svg
+          test -f dist/Background.jpeg
           grep -qx 'hussamfaroug.com' dist/CNAME
           cmp CNAME dist/CNAME
           cmp Background.jpeg dist/Background.jpeg
