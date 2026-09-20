@@ -12,7 +12,7 @@
   - No hard-coded CSP nonce usage in HTML.
   - Browser code is loaded from `/site.js` as a same-origin module.
   - No mixed-content `http://` links in tracked HTML/CSS/TXT files.
-- `_headers` is kept for hosts that support it (such as Cloudflare Pages). It is **not** applied by GitHub Pages itself.
+- `_headers` is committed and can be applied by hosts that support it (such as Cloudflare Pages). GitHub Pages itself does **not** apply `_headers`.
 - CI (`.github/workflows/validate.yml`) checks these invariants to prevent regressions.
 
 ## What must be configured outside the repository

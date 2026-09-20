@@ -72,7 +72,10 @@ jobs:
               print("\n".join(violations))
               sys.exit(1)
           PY
-          ! grep -R 'http://' --include='*.html' --include='*.txt' --include='*.css' --include='*.js' --include='*.xml' . | grep -v 'http://www.sitemaps.org/schemas/sitemap/0.9'
+          if grep -R 'http://' --include='*.html' --include='*.txt' --include='*.css' --include='*.js' --include='*.xml' . | grep -v 'http://www.sitemaps.org/schemas/sitemap/0.9'; then
+            echo "Disallowed mixed-content http:// URL found"
+            exit 1
+          fi
       - name: Validate XML and SVG syntax
         shell: bash
         run: |
