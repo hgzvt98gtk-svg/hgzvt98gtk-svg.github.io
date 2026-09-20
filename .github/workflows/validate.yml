@@ -56,11 +56,11 @@ jobs:
           if 'nonce=' in index:
               raise SystemExit("index.html should not rely on a static CSP nonce")
 
-          match = re.search(r'<script type="module">\n(.*?)\n  </script>', index, re.S)
-          if not match:
+          matches = re.findall(r'<script type="module">(.*?)</script>', index, re.S)
+          if len(matches) != 1:
               raise SystemExit("inline module script not found")
 
-          digest = base64.b64encode(hashlib.sha256(match.group(1).encode()).digest()).decode()
+          digest = base64.b64encode(hashlib.sha256(matches[0].encode()).digest()).decode()
           expected = f\"'sha256-{digest}'\"
           if expected not in headers:
               raise SystemExit(f\"_headers is missing {expected}\")
