@@ -121,7 +121,7 @@ for (const [name, expectedSources] of [
   ["default-src", ["'self'"]],
   ["script-src", ["'self'", "https://challenges.cloudflare.com"]],
   ["style-src", ["'self'"]],
-  ["img-src", ["'self'"]],
+  ["img-src", ["'self'", "https://hussamfaroug.com"]],
   ["font-src", ["'self'"]],
   ["connect-src", ["'self'", "https://challenges.cloudflare.com"]],
   ["object-src", ["'none'"]],
