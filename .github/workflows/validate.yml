@@ -19,6 +19,7 @@ jobs:
         run: |
           set -euo pipefail
           test -f index.html
+          test -f index.js
           test -f Privacy.html
           test -f style.css
           test -f HF.svg
@@ -29,11 +30,17 @@ jobs:
           test -f llms.txt
           grep -q 'href="/style.css"' index.html
           grep -q 'href="/HF.svg"' index.html
+          grep -q 'src="/index.js"' index.html
           grep -q 'url("/Background.jpeg")' style.css
           grep -q 'https://hussamfaroug.com/social-preview.svg' index.html
           grep -q 'https://hussamfaroug.com/Privacy.html' sitemap.xml
           grep -q 'https://hussamfaroug.com/Privacy.html' llms.txt
           ! grep -R 'social-preview.png\|https://hussamfaroug.com/Privacy[^.]' --include='*.html' --include='*.xml' --include='*.txt' .
+      - name: Validate security header configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          node .github/scripts/validate-headers.mjs
       - name: Validate XML and SVG syntax
         shell: bash
         run: |
