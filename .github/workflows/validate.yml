@@ -27,12 +27,21 @@ jobs:
           test -f sitemap.xml
           test -f robots.txt
           test -f llms.txt
+          test -f site.js
           grep -q 'href="/style.css"' index.html
           grep -q 'href="/HF.svg"' index.html
+          grep -q '<script type="module" src="/site.js"></script>' index.html
           grep -q 'url("/Background.jpeg")' style.css
           grep -q 'https://hussamfaroug.com/social-preview.svg' index.html
           grep -q 'https://hussamfaroug.com/Privacy.html' sitemap.xml
           grep -q 'https://hussamfaroug.com/Privacy.html' llms.txt
+          ! grep -q 'HF2026SecureNonce' index.html
+          ! grep -q 'HF2026SecureNonce' _headers
+          catch_all_line="$(grep -n '^/\*$' _headers | cut -d: -f1)"
+          well_known_line="$(grep -n '^/\.well-known/\*$' _headers | cut -d: -f1)"
+          auth_line="$(grep -n '^/auth.md$' _headers | cut -d: -f1)"
+          test "$catch_all_line" -lt "$well_known_line"
+          test "$catch_all_line" -lt "$auth_line"
           ! grep -R 'social-preview.png\|https://hussamfaroug.com/Privacy[^.]' --include='*.html' --include='*.xml' --include='*.txt' .
       - name: Validate XML and SVG syntax
         shell: bash
