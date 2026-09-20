@@ -21,8 +21,33 @@ const excluded = new Set([
 const textExtensions = new Set([".css", ".htm", ".html", ".js", ".json", ".mjs", ".svg", ".txt", ".xml"]);
 const site = JSON.parse(await readFile(join(root, "site.config.json"), "utf8"));
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value)
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 function pageByPath(pathname) {
-  return site.pages.find((page) => page.path === pathname);
+  const page = site.pages.find((entry) => entry.path === pathname);
+  if (!page) throw new Error(`Missing page config for ${pathname}`);
+  return page;
+}
+
+function renderInline(parts) {
+  return parts.map((part) => {
+    if (typeof part === "string") return escapeHtml(part);
+    if (part.type === "mailto") {
+      return `<a href="mailto:${escapeAttribute(part.email)}">${escapeHtml(part.text)}</a>`;
+    }
+    throw new Error(`Unsupported content part type: ${part.type}`);
+  }).join("");
 }
 
 function renderHead({ title, description, canonical, social = false }) {
@@ -30,24 +55,24 @@ function renderHead({ title, description, canonical, social = false }) {
     "<head>",
     '  <meta charset="utf-8">',
     '  <meta name="viewport" content="width=device-width, initial-scale=1">',
-    `  <meta name="theme-color" content="${site.themeColor}">`,
-    `  <title>${title}</title>`,
-    `  <meta name="description" content="${description}">`,
-    `  <link rel="canonical" href="${canonical}">`
+    `  <meta name="theme-color" content="${escapeAttribute(site.themeColor)}">`,
+    `  <title>${escapeHtml(title)}</title>`,
+    `  <meta name="description" content="${escapeAttribute(description)}">`,
+    `  <link rel="canonical" href="${escapeAttribute(canonical)}">`
   ];
 
   if (social) {
     lines.push(
       '  <meta property="og:type" content="website">',
-      `  <meta property="og:url" content="${site.url}">`,
-      `  <meta property="og:title" content="${title}">`,
-      `  <meta property="og:description" content="${description}">`,
-      `  <meta property="og:site_name" content="${site.owner}">`,
-      `  <meta property="og:image" content="${site.socialImage}">`,
+      `  <meta property="og:url" content="${escapeAttribute(site.url)}">`,
+      `  <meta property="og:title" content="${escapeAttribute(title)}">`,
+      `  <meta property="og:description" content="${escapeAttribute(description)}">`,
+      `  <meta property="og:site_name" content="${escapeAttribute(site.owner)}">`,
+      `  <meta property="og:image" content="${escapeAttribute(site.socialImage)}">`,
       '  <meta name="twitter:card" content="summary_large_image">',
-      `  <meta name="twitter:title" content="${title}">`,
-      `  <meta name="twitter:description" content="${description}">`,
-      `  <meta name="twitter:image" content="${site.socialImage}">`
+      `  <meta name="twitter:title" content="${escapeAttribute(title)}">`,
+      `  <meta name="twitter:description" content="${escapeAttribute(description)}">`,
+      `  <meta name="twitter:image" content="${escapeAttribute(site.socialImage)}">`
     );
   }
 
@@ -64,8 +89,8 @@ function renderIndex() {
     '<html lang="en">',
     renderHead(page),
     "<body>",
-    `  <main class="landing" aria-label="${site.owner} personal website">`,
-    `    <h1>${site.domain}</h1>`,
+    `  <main class="landing" aria-label="${escapeAttribute(site.owner)} personal website">`,
+    `    <h1>${escapeHtml(site.domain)}</h1>`,
     "  </main>",
     '  <script type="module" src="/site.js"></script>',
     "</body>",
@@ -77,7 +102,10 @@ function renderIndex() {
 function renderPrivacy() {
   const page = pageByPath("/Privacy.html");
   const sections = site.privacy.sections
-    .map((section) => `    <h2>${section.heading}</h2>\n    <p>${section.body}</p>`)
+    .map((section) => {
+      const body = section.parts ? renderInline(section.parts) : escapeHtml(section.body);
+      return `    <h2>${escapeHtml(section.heading)}</h2>\n    <p>${body}</p>`;
+    })
     .join("\n");
 
   return [
@@ -87,7 +115,7 @@ function renderPrivacy() {
     '<body class="document">',
     '  <main class="policy" aria-labelledby="privacy-title">',
     '    <h1 id="privacy-title">Privacy Policy</h1>',
-    `    <p class="updated">Last updated: ${site.privacy.updatedLabel}</p>`,
+    `    <p class="updated">Last updated: ${escapeHtml(site.privacy.updatedLabel)}</p>`,
     sections,
     "  </main>",
     "</body>",
@@ -100,8 +128,8 @@ function renderSitemap() {
   const urls = site.pages
     .map((page) => [
       "  <url>",
-      `    <loc>${page.canonical}</loc>`,
-      `    <lastmod>${page.lastmod}</lastmod>`,
+      `    <loc>${escapeHtml(page.canonical)}</loc>`,
+      `    <lastmod>${escapeHtml(page.lastmod)}</lastmod>`,
       "  </url>"
     ].join("\n"))
     .join("\n");

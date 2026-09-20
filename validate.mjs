@@ -11,6 +11,7 @@ const requiredFiles = [
   "Privacy.html",
   "style.css",
   "site.js",
+  "_headers",
   "HF.svg",
   "Background.jpeg",
   "social-preview.svg",
@@ -29,9 +30,15 @@ const requiredMatches = [
   ["index.html", "https://hussamfaroug.com/social-preview.svg"],
   ["site.js", "/.well-known/agent-card.json"],
   ["site.js", "/.well-known/api-catalog"],
+  ["_headers", "/.well-known/agent-card.json"],
+  ["_headers", "/.well-known/api-catalog"],
   ["style.css", 'url("/Background.jpeg")'],
   ["sitemap.xml", "https://hussamfaroug.com/Privacy.html"],
   ["llms.txt", "https://hussamfaroug.com/Privacy.html"]
+];
+
+const forbiddenMatches = [
+  ["_headers", "/.well-known/*"]
 ];
 
 async function assertFile(pathname) {
@@ -57,6 +64,10 @@ async function validateMtaSts() {
 
 for (const pathname of requiredFiles) await assertFile(pathname);
 for (const [pathname, snippet] of requiredMatches) await assertMatch(pathname, snippet);
+for (const [pathname, snippet] of forbiddenMatches) {
+  const contents = await readFile(join(base, pathname), "utf8");
+  if (contents.includes(snippet)) throw new Error(`Did not expect ${pathname} to include ${snippet}`);
+}
 await validateJson(".well-known/agent-card.json");
 await validateJson(".well-known/api-catalog");
 await validateMtaSts();

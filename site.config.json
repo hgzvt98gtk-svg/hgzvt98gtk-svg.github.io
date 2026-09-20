@@ -44,7 +44,15 @@
       },
       {
         "heading": "Email and external links",
-        "body": "If you email <a href=\"mailto:admin@hussamfaroug.com\">admin@hussamfaroug.com</a>, your email provider will process your message. External websites have their own privacy policies."
+        "parts": [
+          "If you email ",
+          {
+            "type": "mailto",
+            "email": "admin@hussamfaroug.com",
+            "text": "admin@hussamfaroug.com"
+          },
+          ", your email provider will process your message. External websites have their own privacy policies."
+        ]
       },
       {
         "heading": "Changes",
