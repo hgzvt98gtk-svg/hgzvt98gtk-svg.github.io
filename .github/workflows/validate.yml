@@ -34,7 +34,7 @@ jobs:
           test -f llms.txt
           grep -q 'href="/style.css"' index.html
           grep -q 'href="/HF.svg"' index.html
-          grep -q 'src="./model-context.js"' index.html
+          grep -q 'src="./model-context.js" defer' index.html
           ! grep -q 'nonce=' index.html
           grep -q 'url("/Background.jpeg")' style.css
           grep -q 'https://hussamfaroug.com/social-preview.svg' index.html
