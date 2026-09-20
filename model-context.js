@@ -23,7 +23,7 @@ if ("modelContext" in navigator) {
         description: "Get the API catalog for this site",
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
-          const res = await fetch("/.well-known/api-catalog");
+          const res = await fetch("/.well-known/api-catalog.json");
           return await res.json();
         }
       }
