@@ -37,6 +37,11 @@ jobs:
           grep -q 'https://hussamfaroug.com/Privacy.html' llms.txt
           ! grep -q 'nonce=' index.html
           ! grep -q 'nonce-' _headers
+          grep -q 'X-Frame-Options: DENY' _headers
+          grep -q 'Referrer-Policy: no-referrer' _headers
+          grep -q "img-src 'self' data:" _headers
+          grep -q "form-action 'self'" _headers
+          grep -q "frame-ancestors 'none'" _headers
           grep -q "connect-src 'self' https://challenges.cloudflare.com" _headers
           grep -q 'Strict-Transport-Security: max-age=31536000' _headers
           ! grep -R 'social-preview.png\|https://hussamfaroug.com/Privacy[^.]' --include='*.html' --include='*.xml' --include='*.txt' .
