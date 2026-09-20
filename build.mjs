@@ -31,6 +31,11 @@ for (const source of await filesIn(root)) {
   await mkdir(dirname(destination), { recursive: true });
 
   const extension = extname(source).toLowerCase();
+  if (![".html", ".htm", ".css", ".js", ".mjs"].includes(extension)) {
+    await cp(source, destination);
+    continue;
+  }
+
   const contents = await readFile(source, "utf8");
   let result = contents;
 

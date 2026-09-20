@@ -17,6 +17,8 @@
   <meta name="twitter:title" content="Hussam Faroug | Personal Website">
   <meta name="twitter:description" content="The personal website of Hussam Faroug.">
   <meta name="twitter:image" content="https://hussamfaroug.com/social-preview.svg">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <link rel="icon" href="/HF.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
 </head>
@@ -24,39 +26,6 @@
   <main class="landing" aria-label="Hussam Faroug personal website">
     <h1>hussamfaroug.com</h1>
   </main>
-  <script type="module" nonce="HF2026SecureNonce">
-    if ('modelContext' in navigator) {
-      navigator.modelContext.provideContext({
-        tools: [
-          {
-            name: 'get-site-info',
-            description: 'Get information about hussamfaroug.com',
-            inputSchema: { type: 'object', properties: {} },
-            execute: async () => {
-              return { host: 'hussamfaroug.com', status: 'agent-ready' };
-            }
-          },
-          {
-            name: 'get-agent-card',
-            description: 'Get the AI agent card for this site',
-            inputSchema: { type: 'object', properties: {} },
-            execute: async () => {
-              const res = await fetch('/.well-known/agent-card.json');
-              return await res.json();
-            }
-          },
-          {
-            name: 'get-api-catalog',
-            description: 'Get the API catalog for this site',
-            inputSchema: { type: 'object', properties: {} },
-            execute: async () => {
-              const res = await fetch('/.well-known/api-catalog');
-              return await res.json();
-            }
-          }
-        ]
-      });
-    }
-  </script>
+  <script type="module" src="/agent-readiness.js"></script>
 </body>
 </html>

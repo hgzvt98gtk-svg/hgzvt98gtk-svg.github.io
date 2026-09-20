@@ -1,0 +1,38 @@
+{
+  "name": "hussamfaroug.com public static endpoints",
+  "description": "Read-only machine-readable endpoints exposed by the GitHub Pages site.",
+  "base_url": "https://hussamfaroug.com",
+  "read_only": true,
+  "endpoints": [
+    {
+      "path": "/.well-known/agent-card.json",
+      "method": "GET",
+      "content_type": "application/json",
+      "description": "Static AI agent metadata."
+    },
+    {
+      "path": "/.well-known/api-catalog",
+      "method": "GET",
+      "content_type": "application/json",
+      "description": "Static catalog of public machine-readable endpoints."
+    },
+    {
+      "path": "/.well-known/bimi/logo.svg",
+      "method": "GET",
+      "content_type": "image/svg+xml",
+      "description": "Static BIMI logo asset."
+    },
+    {
+      "path": "/.well-known/mta-sts.txt",
+      "method": "GET",
+      "content_type": "text/plain",
+      "description": "Static MTA-STS policy."
+    },
+    {
+      "path": "/llms.txt",
+      "method": "GET",
+      "content_type": "text/plain",
+      "description": "Machine-readable site context."
+    }
+  ]
+}

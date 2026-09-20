@@ -14,38 +14,162 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate local files and cross-references
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install --no-package-lock
+      - name: Build site
+        run: npm run build
+      - name: Validate local files, endpoints, build output, and security config
         shell: bash
         run: |
           set -euo pipefail
-          test -f index.html
-          test -f Privacy.html
-          test -f style.css
-          test -f HF.svg
-          test -f Background.jpeg
-          test -f social-preview.svg
-          test -f sitemap.xml
-          test -f robots.txt
-          test -f llms.txt
-          grep -q 'href="/style.css"' index.html
-          grep -q 'href="/HF.svg"' index.html
-          grep -q 'url("/Background.jpeg")' style.css
-          grep -q 'https://hussamfaroug.com/social-preview.svg' index.html
-          grep -q 'https://hussamfaroug.com/Privacy.html' sitemap.xml
-          grep -q 'https://hussamfaroug.com/Privacy.html' llms.txt
-          ! grep -R 'social-preview.png\|https://hussamfaroug.com/Privacy[^.]' --include='*.html' --include='*.xml' --include='*.txt' .
-      - name: Validate XML and SVG syntax
-        shell: bash
-        run: |
-          set -euo pipefail
-          xmllint --noout sitemap.xml
-          xmllint --noout HF.svg
-          xmllint --noout social-preview.svg
-          xmllint --noout .well-known/bimi/logo.svg
-      - name: Validate MTA-STS policy syntax
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -q '^version: STSv1$' .well-known/mta-sts.txt
-          grep -q '^mode: testing$' .well-known/mta-sts.txt
-          test "$(grep -c '^mx: ' .well-known/mta-sts.txt)" -eq 2
+          python - <<'PY'
+          import json
+          import re
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          root = Path(".")
+          required_files = [
+              "index.html",
+              "Privacy.html",
+              "style.css",
+              "HF.svg",
+              "Background.jpeg",
+              "social-preview.svg",
+              "sitemap.xml",
+              "robots.txt",
+              "llms.txt",
+              "_headers",
+              ".nojekyll",
+              "agent-readiness.js",
+              ".well-known/agent-card.json",
+              ".well-known/api-catalog",
+              ".well-known/bimi/logo.svg",
+              ".well-known/bimi/README.txt",
+              ".well-known/mta-sts.txt",
+              "dist/index.html",
+              "dist/agent-readiness.js",
+              "dist/.well-known/agent-card.json",
+              "dist/.well-known/api-catalog",
+              "dist/.well-known/bimi/logo.svg",
+              "dist/.well-known/mta-sts.txt",
+              "dist/Background.jpeg",
+          ]
+          for relative_path in required_files:
+              if not (root / relative_path).is_file():
+                  raise SystemExit(f"Missing required file: {relative_path}")
+
+          index = (root / "index.html").read_text(encoding="utf-8")
+          if 'href="/style.css"' not in index or 'href="/HF.svg"' not in index:
+              raise SystemExit("index.html is missing required asset references")
+          if "https://hussamfaroug.com/social-preview.svg" not in index:
+              raise SystemExit("index.html is missing the social preview reference")
+          if 'src="/agent-readiness.js"' not in index:
+              raise SystemExit("index.html must load the external agent-readiness module")
+          if "nonce=" in index:
+              raise SystemExit("index.html must not use a hard-coded CSP nonce")
+          csp_match = re.search(r'<meta http-equiv="Content-Security-Policy" content="([^"]+)">', index)
+          if not csp_match:
+              raise SystemExit("index.html must define a CSP meta tag for GitHub Pages")
+          csp = csp_match.group(1)
+          for fragment in [
+              "default-src 'self'",
+              "script-src 'self'",
+              "connect-src 'self'",
+              "object-src 'none'",
+              "frame-ancestors 'self'",
+          ]:
+              if fragment not in csp:
+                  raise SystemExit(f"CSP is missing required fragment: {fragment}")
+          if "nonce-" in csp:
+              raise SystemExit("CSP must not contain a hard-coded nonce")
+          if '<meta name="referrer" content="strict-origin-when-cross-origin">' not in index:
+              raise SystemExit("index.html must define a referrer policy meta tag")
+
+          agent_script = (root / "agent-readiness.js").read_text(encoding="utf-8")
+          for fragment in [
+              '"/.well-known/agent-card.json"',
+              '"/.well-known/api-catalog"',
+              "navigator.modelContext.provideContext",
+          ]:
+              if fragment not in agent_script:
+                  raise SystemExit(f"agent-readiness.js is missing required fragment: {fragment}")
+
+          agent_card = json.loads((root / ".well-known/agent-card.json").read_text(encoding="utf-8"))
+          api_catalog = json.loads((root / ".well-known/api-catalog").read_text(encoding="utf-8"))
+          if agent_card.get("api_catalog_url") != "https://hussamfaroug.com/.well-known/api-catalog":
+              raise SystemExit("agent-card.json must reference the static API catalog endpoint")
+          endpoint_paths = {endpoint["path"] for endpoint in api_catalog.get("endpoints", [])}
+          for expected_path in {
+              "/.well-known/agent-card.json",
+              "/.well-known/api-catalog",
+              "/.well-known/bimi/logo.svg",
+              "/.well-known/mta-sts.txt",
+              "/llms.txt",
+          }:
+              if expected_path not in endpoint_paths:
+                  raise SystemExit(f"api-catalog is missing endpoint metadata for {expected_path}")
+
+          if "https://hussamfaroug.com/Privacy.html" not in (root / "sitemap.xml").read_text(encoding="utf-8"):
+              raise SystemExit("sitemap.xml must reference Privacy.html")
+          if "https://hussamfaroug.com/Privacy.html" not in (root / "llms.txt").read_text(encoding="utf-8"):
+              raise SystemExit("llms.txt must reference Privacy.html")
+          for text_path in root.rglob("*"):
+              if text_path.is_file() and text_path.suffix in {".html", ".xml", ".txt"}:
+                  text = text_path.read_text(encoding="utf-8")
+                  if "social-preview.png" in text or "https://hussamfaroug.com/Privacy" in text.replace("https://hussamfaroug.com/Privacy.html", ""):
+                      raise SystemExit(f"Unexpected stale reference found in {text_path}")
+
+          for xml_path in ["sitemap.xml", "HF.svg", "social-preview.svg", ".well-known/bimi/logo.svg"]:
+              ET.parse(root / xml_path)
+
+          bimi_root = ET.parse(root / ".well-known/bimi/logo.svg").getroot()
+          allowed_tags = {
+              "{http://www.w3.org/2000/svg}svg",
+              "{http://www.w3.org/2000/svg}title",
+              "{http://www.w3.org/2000/svg}desc",
+              "{http://www.w3.org/2000/svg}rect",
+              "{http://www.w3.org/2000/svg}text",
+          }
+          for element in bimi_root.iter():
+              if element.tag not in allowed_tags:
+                  raise SystemExit(f"Unexpected SVG element in BIMI logo: {element.tag}")
+              for attr_name, attr_value in element.attrib.items():
+                  if attr_name.lower().startswith("on"):
+                      raise SystemExit(f"Inline event handlers are not allowed in BIMI SVG: {attr_name}")
+                  if "javascript:" in attr_value.lower():
+                      raise SystemExit("BIMI SVG must not contain javascript: URLs")
+                  if attr_name in {"href", "{http://www.w3.org/1999/xlink}href"} and not attr_value.startswith("#"):
+                      raise SystemExit("BIMI SVG must not reference external resources")
+
+          headers = (root / "_headers").read_text(encoding="utf-8")
+          if "GitHub Pages does not apply this file as HTTP response headers." not in headers:
+              raise SystemExit("_headers must document the GitHub Pages limitation")
+          for disallowed_fragment in ["nonce-", "Access-Control-Allow-Origin: *", "/auth.md"]:
+              if disallowed_fragment in headers:
+                  raise SystemExit(f"_headers contains an unsafe or stale fragment: {disallowed_fragment}")
+
+          mta_sts = (root / ".well-known/mta-sts.txt").read_text(encoding="utf-8").splitlines()
+          if "version: STSv1" not in mta_sts or "mode: testing" not in mta_sts:
+              raise SystemExit("MTA-STS policy is missing required directives")
+          if sum(line.startswith("mx: ") for line in mta_sts) != 2:
+              raise SystemExit("MTA-STS policy must list exactly two mx directives")
+
+          bimi_readme = (root / ".well-known/bimi/README.txt").read_text(encoding="utf-8")
+          for fragment in ["DNS BIMI TXT record", "Verified Mark Certificate", "does not claim that they are configured"]:
+              if fragment not in bimi_readme:
+                  raise SystemExit(f"BIMI README is missing required text: {fragment}")
+
+          if (root / "Background.jpeg").read_bytes() != (root / "dist/Background.jpeg").read_bytes():
+              raise SystemExit("Build output must preserve binary assets")
+
+          dist_index = (root / "dist/index.html").read_text(encoding="utf-8")
+          dist_agent_script = (root / "dist/agent-readiness.js").read_text(encoding="utf-8")
+          if 'src="/agent-readiness.js"' not in dist_index or "Content-Security-Policy" not in dist_index:
+              raise SystemExit("dist/index.html is missing required production references")
+          if '"/.well-known/agent-card.json"' not in dist_agent_script or '"/.well-known/api-catalog"' not in dist_agent_script:
+              raise SystemExit("dist/agent-readiness.js is missing required endpoint references")
+          PY

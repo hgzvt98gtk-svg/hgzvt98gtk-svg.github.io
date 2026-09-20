@@ -1,0 +1,25 @@
+{
+  "name": "hussamfaroug.com",
+  "description": "Static personal website for Hussam Faroug.",
+  "url": "https://hussamfaroug.com/",
+  "documentation_url": "https://hussamfaroug.com/llms.txt",
+  "api_catalog_url": "https://hussamfaroug.com/.well-known/api-catalog",
+  "capabilities": {
+    "read_only": true,
+    "authenticated": false
+  },
+  "tools": [
+    {
+      "name": "get-site-info",
+      "description": "Returns static site metadata exposed through navigator.modelContext."
+    },
+    {
+      "name": "get-agent-card",
+      "description": "Returns this static agent card document."
+    },
+    {
+      "name": "get-api-catalog",
+      "description": "Returns the static public endpoint catalog for this site."
+    }
+  ]
+}
