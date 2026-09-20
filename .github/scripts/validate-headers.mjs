@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const headersPath = join(root, "_headers");
-const indexPath = join(root, "index.html");
+const htmlPagePaths = ["index.html", "Privacy.html"].map((path) => join(root, path));
 
 function parseHeaders(contents) {
   const blocks = [];
@@ -75,9 +75,9 @@ function sameSources(actualSources, expectedSources) {
   return actual.every((value, index) => value === expected[index]);
 }
 
-const [headersContents, indexContents] = await Promise.all([
+const [headersContents, ...htmlPages] = await Promise.all([
   readFile(headersPath, "utf8"),
-  readFile(indexPath, "utf8")
+  ...htmlPagePaths.map((path) => readFile(path, "utf8"))
 ]);
 
 const blocks = parseHeaders(headersContents);
@@ -148,8 +148,9 @@ if (siteBlock.headers.has("Cross-Origin-Embedder-Policy")) {
   throw new Error("Cross-Origin-Embedder-Policy is too strict for Cloudflare challenge compatibility.");
 }
 
-const scriptTags = [...indexContents.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
-const externalModuleScript = scriptTags.find(([, attributeText]) => {
+const [indexContents] = htmlPages;
+const indexScripts = [...indexContents.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
+const externalModuleScript = indexScripts.find(([, attributeText]) => {
   const attributes = parseAttributes(attributeText);
   return attributes.get("src") === "/index.js" && attributes.get("type") === "module";
 });
@@ -158,9 +159,12 @@ if (!externalModuleScript) {
   throw new Error('index.html must load /index.js as a module script.');
 }
 
-for (const [, , contents] of scriptTags) {
-  if (contents.trim()) {
-    throw new Error("Inline scripts require a CSP hash or nonce and are not allowed here.");
+for (const [pagePath, contents] of htmlPagePaths.map((path, index) => [path, htmlPages[index]])) {
+  const scriptTags = [...contents.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
+  for (const [, , scriptContents] of scriptTags) {
+    if (scriptContents.trim()) {
+      throw new Error(`${pagePath} contains inline script content, which requires a CSP hash or nonce.`);
+    }
   }
 }
 
