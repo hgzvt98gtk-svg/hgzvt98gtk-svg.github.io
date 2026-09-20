@@ -28,3 +28,5 @@ GitHub Pages does not let this repository set response headers like HSTS, CSP, C
 - Cross-origin policies (`COOP`, `COEP`, `CORP`) as needed for site features
 
 Also ensure GitHub Pages HTTPS enforcement remains enabled in repository Pages settings.
+
+If CDN-managed challenge pages (for example Cloudflare Managed Challenge/Turnstile injection) are enabled, configure any required CSP/frame exceptions at that edge layer rather than relying on repository `_headers` when GitHub Pages is the origin host.
