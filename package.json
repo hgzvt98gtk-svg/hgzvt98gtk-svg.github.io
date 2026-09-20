@@ -3,7 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs",
+    "validate": "node validate.mjs",
+    "validate:dist": "node validate.mjs dist"
   },
   "devDependencies": {
     "clean-css": "^5.3.3",

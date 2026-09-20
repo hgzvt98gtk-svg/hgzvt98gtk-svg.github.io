@@ -1,0 +1,55 @@
+{
+  "owner": "Hussam Faroug",
+  "domain": "hussamfaroug.com",
+  "url": "https://hussamfaroug.com/",
+  "email": "admin@hussamfaroug.com",
+  "themeColor": "#0b0b0d",
+  "socialImage": "https://hussamfaroug.com/social-preview.svg",
+  "llms": {
+    "summary": "Personal website of Hussam Faroug.",
+    "about": "Hussam Faroug — personal site and contact page."
+  },
+  "pages": [
+    {
+      "path": "/",
+      "label": "Home",
+      "title": "Hussam Faroug | Personal Website",
+      "description": "The personal website of Hussam Faroug.",
+      "canonical": "https://hussamfaroug.com/",
+      "listDescription": "Personal landing page.",
+      "lastmod": "2026-09-19",
+      "social": true
+    },
+    {
+      "path": "/Privacy.html",
+      "label": "Privacy",
+      "title": "Privacy Policy - Hussam Faroug",
+      "description": "Privacy policy for hussamfaroug.com.",
+      "canonical": "https://hussamfaroug.com/Privacy.html",
+      "listDescription": "Privacy policy.",
+      "lastmod": "2026-09-19",
+      "social": false
+    }
+  ],
+  "privacy": {
+    "updatedLabel": "September 19, 2026",
+    "sections": [
+      {
+        "heading": "Overview",
+        "body": "This is a static personal website. It does not provide accounts, contact forms, analytics, advertising, or embedded third-party scripts."
+      },
+      {
+        "heading": "Information collected",
+        "body": "The site does not intentionally collect personal information or set cookies. Hosting and delivery providers may process technical request data, such as IP address, browser information, and request time, in server logs and security systems."
+      },
+      {
+        "heading": "Email and external links",
+        "body": "If you email <a href=\"mailto:admin@hussamfaroug.com\">admin@hussamfaroug.com</a>, your email provider will process your message. External websites have their own privacy policies."
+      },
+      {
+        "heading": "Changes",
+        "body": "This policy may be updated when the site or its providers change. The date above identifies the latest revision."
+      }
+    ]
+  }
+}
