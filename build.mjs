@@ -26,7 +26,7 @@ async function filesIn(directory) {
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 
-for (const source of await filesIn(root)) {
+await Promise.all((await filesIn(root)).map(async (source) => {
   const destination = join(output, relative(root, source));
   await mkdir(dirname(destination), { recursive: true });
 
@@ -54,6 +54,6 @@ for (const source of await filesIn(root)) {
   } else {
     await copyFile(source, destination);
   }
-}
+}));
 
 console.log(`Built minified site in ${relative(root, output)}/`);
