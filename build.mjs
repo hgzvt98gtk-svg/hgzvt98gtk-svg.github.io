@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import CleanCSS from "clean-css";
@@ -7,7 +7,7 @@ import { minify as minifyJs } from "terser";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const output = join(root, "dist");
-const excluded = new Set([".git", ".github", "dist", "node_modules"]);
+const excluded = new Set([".git", ".github", "dist", "node_modules", "build.mjs", "package-lock.json", "package.json"]);
 
 async function filesIn(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -31,11 +31,9 @@ for (const source of await filesIn(root)) {
   await mkdir(dirname(destination), { recursive: true });
 
   const extension = extname(source).toLowerCase();
-  const contents = await readFile(source, "utf8");
-  let result = contents;
-
   if (extension === ".html" || extension === ".htm") {
-    result = await minifyHtml(contents, {
+    const contents = await readFile(source, "utf8");
+    let result = await minifyHtml(contents, {
       collapseWhitespace: true,
       minifyCSS: true,
       minifyJS: true,
@@ -43,14 +41,19 @@ for (const source of await filesIn(root)) {
       removeRedundantAttributes: true,
       useShortDoctype: true
     });
+    await writeFile(destination, result);
   } else if (extension === ".css") {
-    result = new CleanCSS().minify(contents).styles;
+    const contents = await readFile(source, "utf8");
+    const result = new CleanCSS().minify(contents).styles;
+    await writeFile(destination, result);
   } else if (extension === ".js" || extension === ".mjs") {
+    const contents = await readFile(source, "utf8");
     const minified = await minifyJs(contents);
-    result = minified.code ?? "";
+    const result = minified.code ?? "";
+    await writeFile(destination, result);
+  } else {
+    await copyFile(source, destination);
   }
-
-  await writeFile(destination, result);
 }
 
 console.log(`Built minified site in ${relative(root, output)}/`);
