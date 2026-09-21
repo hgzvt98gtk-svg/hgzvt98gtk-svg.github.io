@@ -37,9 +37,10 @@ async function read(rootPath, relativePath) {
   return readFile(join(rootPath, relativePath), "utf8");
 }
 
-async function validateRenderedFiles(rootPath, { sourceHtmlOnly = false } = {}) {
+async function validateRenderedFiles(rootPath, { includeHtml = true } = {}) {
   await Promise.all([...generatedFiles.entries()].map(async ([relativePath, expected]) => {
-    const shouldMatch = !sourceHtmlOnly || extname(relativePath).toLowerCase() === ".html";
+    const extension = extname(relativePath).toLowerCase();
+    const shouldMatch = includeHtml || (extension !== ".html" && extension !== ".htm");
     if (!shouldMatch) return;
     const actual = await read(rootPath, relativePath);
     assert(actual === expected, `${rootPath}: ${relativePath} has drifted from the shared renderer`);
@@ -91,8 +92,8 @@ async function validateRoot(rootPath) {
   assert(lines.filter((line) => line.startsWith("mx: ")).length === siteConfig.mtaSts.mx.length, `${rootPath}: invalid MTA-STS mx count`);
 }
 
-await validateRenderedFiles(root, { sourceHtmlOnly: true });
 await validateRenderedFiles(root);
+await validateRenderedFiles(join(root, "dist"), { includeHtml: false });
 await validateRoot(root);
 await validateRoot(join(root, "dist"));
 
