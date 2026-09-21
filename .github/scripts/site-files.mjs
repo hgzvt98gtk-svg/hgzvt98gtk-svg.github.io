@@ -139,3 +139,26 @@ max_age: ${siteConfig.mtaSts.maxAge}
 `]
   ]);
 }
+
+function normalizeAssetPath(value) {
+  if (typeof value !== "string") return null;
+  if (!value.startsWith("/")) return null;
+  return value.slice(1);
+}
+
+function uniqueSorted(values) {
+  return [...new Set(values)].sort();
+}
+
+export function listRequiredSiteFiles(siteConfig, siteUrls) {
+  const generatedFiles = [...renderSiteFiles(siteConfig, siteUrls).keys()];
+  const configuredAssets = Object.values(siteConfig.assetPaths)
+    .map(normalizeAssetPath)
+    .filter(Boolean);
+  const required = [...generatedFiles, ...configuredAssets, "style.css"];
+  return uniqueSorted(required);
+}
+
+export function listXmlSyntaxFiles(siteConfig, siteUrls) {
+  return listRequiredSiteFiles(siteConfig, siteUrls).filter((relativePath) => /\.(xml|svg)$/i.test(relativePath));
+}

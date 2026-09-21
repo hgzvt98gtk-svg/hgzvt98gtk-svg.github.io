@@ -3,7 +3,7 @@ import { constants } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { siteConfig, siteUrls } from "./site.config.mjs";
-import { renderSiteFiles } from "./site-files.mjs";
+import { listRequiredSiteFiles, renderSiteFiles } from "./site-files.mjs";
 import { validateSiteConfig } from "./validate-config.mjs";
 
 const root = join(fileURLToPath(new URL("../..", import.meta.url)));
@@ -43,22 +43,7 @@ async function read(rootPath, relativePath) {
 }
 
 async function validateRoot(rootPath, { expectGeneratedSource } = {}) {
-  const required = [
-    "index.html",
-    "app.js",
-    "Privacy.html",
-    "style.css",
-    "HF.svg",
-    "Background.jpeg",
-    "social-preview.svg",
-    "sitemap.xml",
-    "robots.txt",
-    "llms.txt",
-    ".well-known/agent-card.json",
-    ".well-known/api-catalog",
-    ".well-known/bimi/logo.svg",
-    ".well-known/mta-sts.txt"
-  ];
+  const required = listRequiredSiteFiles(siteConfig, siteUrls);
 
   await Promise.all(required.map((relativePath) => mustExist(join(rootPath, relativePath))));
 
