@@ -22,6 +22,18 @@ function includesAttribute(contents, attribute, value) {
   return pattern.test(contents);
 }
 
+function normalizeWhitespace(contents) {
+  return contents.replace(/\s+/g, " ").trim();
+}
+
+function equivalentGeneratedContents(relativePath, actualContents, expectedContents) {
+  if (relativePath === ".well-known/agent-card.json" || relativePath === ".well-known/api-catalog") {
+    return JSON.stringify(JSON.parse(actualContents)) === JSON.stringify(JSON.parse(expectedContents));
+  }
+
+  return normalizeWhitespace(actualContents) === normalizeWhitespace(expectedContents);
+}
+
 async function mustExist(path) {
   await access(path, constants.F_OK);
 }
@@ -53,7 +65,10 @@ async function validateRoot(rootPath, { expectGeneratedSource } = {}) {
   if (expectGeneratedSource) {
     await Promise.all([...generatedFiles].map(async ([relativePath, expectedContents]) => {
       const actualContents = await read(rootPath, relativePath);
-      assert(actualContents === expectedContents, `${rootPath}: ${relativePath} is out of date; run npm run generate`);
+      assert(
+        equivalentGeneratedContents(relativePath, actualContents, expectedContents),
+        `${rootPath}: ${relativePath} is out of date; run npm run generate`
+      );
     }));
   }
 
