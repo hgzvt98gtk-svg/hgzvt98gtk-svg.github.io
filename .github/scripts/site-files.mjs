@@ -139,3 +139,19 @@ max_age: ${siteConfig.mtaSts.maxAge}
 `]
   ]);
 }
+
+function toRelativePath(path) {
+  return path.replace(/^\/+/, "");
+}
+
+export function listRequiredSiteFiles(siteConfig, generatedFiles) {
+  const configuredAssetFiles = [
+    siteConfig.assetPaths.stylesheet,
+    siteConfig.assetPaths.icon,
+    siteConfig.assetPaths.background,
+    siteConfig.assetPaths.socialPreview,
+    siteConfig.assetPaths.bimiLogo
+  ].map(toRelativePath);
+
+  return [...new Set([...generatedFiles.keys(), ...configuredAssetFiles])];
+}
