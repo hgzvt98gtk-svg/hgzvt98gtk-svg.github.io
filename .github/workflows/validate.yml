@@ -33,33 +33,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          validate_site() {
-            local root="$1"
-            test -f "$root/index.html"
-            test -f "$root/Privacy.html"
-            test -f "$root/style.css"
-            test -f "$root/HF.svg"
-            test -f "$root/Background.jpeg"
-            test -f "$root/social-preview.svg"
-            test -f "$root/sitemap.xml"
-            test -f "$root/robots.txt"
-            test -f "$root/llms.txt"
-            test -f "$root/.well-known/agent-card.json"
-            test -f "$root/.well-known/api-catalog"
-            grep -q 'href="/style.css"' "$root/index.html"
-            grep -q 'href="/HF.svg"' "$root/index.html"
-            grep -q 'url("/Background.jpeg")' "$root/style.css"
-            grep -q 'https://hussamfaroug.com/social-preview.svg' "$root/index.html"
-            grep -q 'https://hussamfaroug.com/Privacy.html' "$root/sitemap.xml"
-            grep -q 'https://hussamfaroug.com/Privacy.html' "$root/llms.txt"
-            ! grep -R 'social-preview.png\|https://hussamfaroug.com/Privacy[^.]' --include='*.html' --include='*.xml' --include='*.txt' "$root"
-          }
-
-          for root in . dist; do
-            validate_site "$root"
-          done
+          npm run validate:site
           cmp Background.jpeg dist/Background.jpeg
-          node -e "const fs=require('node:fs'); for (const root of ['.', 'dist']) { JSON.parse(fs.readFileSync(\`\${root}/.well-known/agent-card.json\`, 'utf8')); JSON.parse(fs.readFileSync(\`\${root}/.well-known/api-catalog\`, 'utf8')); }"
       - name: Validate XML and SVG syntax
         shell: bash
         run: |

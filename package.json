@@ -3,7 +3,8 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs",
+    "validate:site": "node .github/scripts/validate-site.mjs . dist"
   },
   "devDependencies": {
     "clean-css": "^5.3.3",
