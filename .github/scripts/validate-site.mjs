@@ -1,12 +1,21 @@
 import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
-import { join } from "node:path";
+import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { siteConfig, siteUrls } from "./site.config.mjs";
+import { renderSiteFiles } from "./site-files.mjs";
 import { validateSiteConfig } from "./validate-config.mjs";
 
 const root = join(fileURLToPath(new URL("../..", import.meta.url)));
 validateSiteConfig(siteConfig, siteUrls);
+const generatedFiles = renderSiteFiles(siteConfig, siteUrls);
+const staticFiles = [
+  "style.css",
+  "HF.svg",
+  "Background.jpeg",
+  "social-preview.svg",
+  ".well-known/bimi/logo.svg"
+];
 
 function assert(condition, message) {
   if (!condition) {
@@ -28,23 +37,17 @@ async function read(rootPath, relativePath) {
   return readFile(join(rootPath, relativePath), "utf8");
 }
 
-async function validateRoot(rootPath) {
-  const required = [
-    "index.html",
-    "Privacy.html",
-    "style.css",
-    "HF.svg",
-    "Background.jpeg",
-    "social-preview.svg",
-    "sitemap.xml",
-    "robots.txt",
-    "llms.txt",
-    ".well-known/agent-card.json",
-    ".well-known/api-catalog",
-    ".well-known/bimi/logo.svg",
-    ".well-known/mta-sts.txt"
-  ];
+async function validateRenderedFiles(rootPath, { sourceHtmlOnly = false } = {}) {
+  await Promise.all([...generatedFiles.entries()].map(async ([relativePath, expected]) => {
+    const shouldMatch = !sourceHtmlOnly || extname(relativePath).toLowerCase() === ".html";
+    if (!shouldMatch) return;
+    const actual = await read(rootPath, relativePath);
+    assert(actual === expected, `${rootPath}: ${relativePath} has drifted from the shared renderer`);
+  }));
+}
 
+async function validateRoot(rootPath) {
+  const required = [...generatedFiles.keys(), ...staticFiles];
   await Promise.all(required.map((relativePath) => mustExist(join(rootPath, relativePath))));
 
   const [index, privacy, style, sitemap, robots, llms, agentCardText, apiCatalogText, mtaSts] = await Promise.all([
@@ -84,9 +87,12 @@ async function validateRoot(rootPath) {
   assert(lines[0] === `version: ${siteConfig.mtaSts.version}`, `${rootPath}: invalid MTA-STS version`);
   assert(lines[1] === `mode: ${siteConfig.mtaSts.mode}`, `${rootPath}: invalid MTA-STS mode`);
   assert(lines.at(-1) === `max_age: ${siteConfig.mtaSts.maxAge}`, `${rootPath}: invalid MTA-STS max_age`);
+  assert(siteConfig.mtaSts.mx.every((mx) => lines.includes(`mx: ${mx}`)), `${rootPath}: invalid MTA-STS mx values`);
   assert(lines.filter((line) => line.startsWith("mx: ")).length === siteConfig.mtaSts.mx.length, `${rootPath}: invalid MTA-STS mx count`);
 }
 
+await validateRenderedFiles(root, { sourceHtmlOnly: true });
+await validateRenderedFiles(root);
 await validateRoot(root);
 await validateRoot(join(root, "dist"));
 
