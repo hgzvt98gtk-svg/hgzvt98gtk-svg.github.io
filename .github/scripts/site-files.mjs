@@ -26,42 +26,40 @@ export function renderSiteFiles(siteConfig, siteUrls) {
   <main class="landing" aria-label="${siteConfig.personName} personal website">
     <h1>${siteConfig.domain}</h1>
   </main>
-  <script type="module" nonce="HF2026SecureNonce">
-    if ('modelContext' in navigator) {
-      navigator.modelContext.provideContext({
-        tools: [
-          {
-            name: 'get-site-info',
-            description: 'Get information about ${siteConfig.domain}',
-            inputSchema: { type: 'object', properties: {} },
-            execute: async () => {
-              return { host: '${siteConfig.domain}', status: '${siteConfig.siteStatus}' };
-            }
-          },
-          {
-            name: 'get-agent-card',
-            description: 'Get the AI agent card for this site',
-            inputSchema: { type: 'object', properties: {} },
-            execute: async () => {
-              const res = await fetch('${siteConfig.assetPaths.agentCard}');
-              return await res.json();
-            }
-          },
-          {
-            name: 'get-api-catalog',
-            description: 'Get the API catalog for this site',
-            inputSchema: { type: 'object', properties: {} },
-            execute: async () => {
-              const res = await fetch('${siteConfig.assetPaths.apiCatalog}');
-              return await res.json();
-            }
-          }
-        ]
-      });
-    }
-  </script>
+  <script type="module" src="${siteConfig.assetPaths.appScript}"></script>
 </body>
 </html>
+`],
+    ["app.js", `if ("modelContext" in navigator) {
+  navigator.modelContext.provideContext({
+    tools: [
+      {
+        name: "get-site-info",
+        description: "Get information about ${siteConfig.domain}",
+        inputSchema: { type: "object", properties: {} },
+        execute: async () => ({ host: "${siteConfig.domain}", status: "${siteConfig.siteStatus}" })
+      },
+      {
+        name: "get-agent-card",
+        description: "Get the AI agent card for this site",
+        inputSchema: { type: "object", properties: {} },
+        execute: async () => {
+          const response = await fetch("${siteConfig.assetPaths.agentCard}");
+          return await response.json();
+        }
+      },
+      {
+        name: "get-api-catalog",
+        description: "Get the API catalog for this site",
+        inputSchema: { type: "object", properties: {} },
+        execute: async () => {
+          const response = await fetch("${siteConfig.assetPaths.apiCatalog}");
+          return await response.json();
+        }
+      }
+    ]
+  });
+}
 `],
     ["Privacy.html", `<!doctype html>
 <html lang="en">

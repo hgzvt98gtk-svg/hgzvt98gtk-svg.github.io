@@ -16,6 +16,7 @@ export function validateSiteConfig(siteConfig, siteUrls) {
   assert(typeof siteConfig.assetPaths === "object" && siteConfig.assetPaths !== null, "siteConfig.assetPaths must be an object");
   assert(typeof siteConfig.assetPaths.stylesheet === "string", "siteConfig.assetPaths.stylesheet must be a string");
   assert(typeof siteConfig.assetPaths.icon === "string", "siteConfig.assetPaths.icon must be a string");
+  assert(typeof siteConfig.assetPaths.appScript === "string", "siteConfig.assetPaths.appScript must be a string");
   assert(typeof siteConfig.assetPaths.background === "string", "siteConfig.assetPaths.background must be a string");
   assert(typeof siteConfig.assetPaths.agentCard === "string", "siteConfig.assetPaths.agentCard must be a string");
   assert(typeof siteConfig.assetPaths.apiCatalog === "string", "siteConfig.assetPaths.apiCatalog must be a string");

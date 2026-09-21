@@ -10,6 +10,7 @@ export const siteConfig = {
   assetPaths: {
     icon: "/HF.svg",
     stylesheet: "/style.css",
+    appScript: "/app.js",
     background: "/Background.jpeg",
     socialPreview: "/social-preview.svg",
     agentCard: "/.well-known/agent-card.json",
