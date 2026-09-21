@@ -55,29 +55,28 @@ jobs:
             ! grep -R 'social-preview.png\|https://hussamfaroug.com/Privacy[^.]' --include='*.html' --include='*.xml' --include='*.txt' "$root"
           }
 
-          validate_site .
-          validate_site dist
+          for root in . dist; do
+            validate_site "$root"
+          done
           cmp Background.jpeg dist/Background.jpeg
-          node -e "JSON.parse(require('node:fs').readFileSync('.well-known/agent-card.json', 'utf8')); JSON.parse(require('node:fs').readFileSync('.well-known/api-catalog', 'utf8')); JSON.parse(require('node:fs').readFileSync('dist/.well-known/agent-card.json', 'utf8')); JSON.parse(require('node:fs').readFileSync('dist/.well-known/api-catalog', 'utf8'));"
+          node -e "const fs=require('node:fs'); for (const root of ['.', 'dist']) { JSON.parse(fs.readFileSync(\`\${root}/.well-known/agent-card.json\`, 'utf8')); JSON.parse(fs.readFileSync(\`\${root}/.well-known/api-catalog\`, 'utf8')); }"
       - name: Validate XML and SVG syntax
         shell: bash
         run: |
           set -euo pipefail
-          xmllint --noout sitemap.xml
-          xmllint --noout HF.svg
-          xmllint --noout social-preview.svg
-          xmllint --noout .well-known/bimi/logo.svg
-          xmllint --noout dist/sitemap.xml
-          xmllint --noout dist/HF.svg
-          xmllint --noout dist/social-preview.svg
-          xmllint --noout dist/.well-known/bimi/logo.svg
+          for root in . dist; do
+            xmllint --noout "$root/sitemap.xml"
+            xmllint --noout "$root/HF.svg"
+            xmllint --noout "$root/social-preview.svg"
+            xmllint --noout "$root/.well-known/bimi/logo.svg"
+          done
       - name: Validate MTA-STS policy syntax
         shell: bash
         run: |
           set -euo pipefail
-          grep -q '^version: STSv1$' .well-known/mta-sts.txt
-          grep -q '^mode: testing$' .well-known/mta-sts.txt
-          test "$(grep -c '^mx: ' .well-known/mta-sts.txt)" -eq 2
-          grep -q '^version: STSv1$' dist/.well-known/mta-sts.txt
-          grep -q '^mode: testing$' dist/.well-known/mta-sts.txt
-          test "$(grep -c '^mx: ' dist/.well-known/mta-sts.txt)" -eq 2
+          for root in . dist; do
+            file="$root/.well-known/mta-sts.txt"
+            grep -q '^version: STSv1$' "$file"
+            grep -q '^mode: testing$' "$file"
+            test "$(grep -c '^mx: ' "$file")" -eq 2
+          done
