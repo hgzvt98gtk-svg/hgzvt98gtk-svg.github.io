@@ -2,8 +2,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { siteConfig, siteUrls } from "./site.config.mjs";
+import { validateSiteConfig } from "./validate-config.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+validateSiteConfig(siteConfig, siteUrls);
 
 const files = new Map([
   ["index.html", `<!doctype html>

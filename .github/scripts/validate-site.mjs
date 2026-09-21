@@ -3,13 +3,21 @@ import { constants } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { siteConfig, siteUrls } from "./site.config.mjs";
+import { validateSiteConfig } from "./validate-config.mjs";
 
 const root = join(fileURLToPath(new URL("../..", import.meta.url)));
+validateSiteConfig(siteConfig, siteUrls);
 
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
   }
+}
+
+function includesAttribute(contents, attribute, value) {
+  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`${attribute}\\s*=\\s*["']${escaped}["']`);
+  return pattern.test(contents);
 }
 
 async function mustExist(path) {
@@ -51,14 +59,14 @@ async function validateRoot(rootPath) {
     read(rootPath, ".well-known/mta-sts.txt")
   ]);
 
-  assert(index.includes(`href="${siteConfig.assetPaths.stylesheet}"`), `${rootPath}: index.html missing stylesheet link`);
-  assert(index.includes(`href="${siteConfig.assetPaths.icon}"`), `${rootPath}: index.html missing icon link`);
+  assert(includesAttribute(index, "href", siteConfig.assetPaths.stylesheet), `${rootPath}: index.html missing stylesheet link`);
+  assert(includesAttribute(index, "href", siteConfig.assetPaths.icon), `${rootPath}: index.html missing icon link`);
   assert(index.includes(siteUrls.socialPreview), `${rootPath}: index.html missing social preview URL`);
   assert(index.includes(siteConfig.assetPaths.agentCard), `${rootPath}: index.html missing agent-card fetch`);
   assert(index.includes(siteConfig.assetPaths.apiCatalog), `${rootPath}: index.html missing api-catalog fetch`);
-  assert(privacy.includes(`href="${siteConfig.assetPaths.stylesheet}"`), `${rootPath}: Privacy.html missing stylesheet link`);
-  assert(privacy.includes(`href="${siteConfig.assetPaths.icon}"`), `${rootPath}: Privacy.html missing icon link`);
-  assert(style.includes(`url("${siteConfig.assetPaths.background}")`), `${rootPath}: style.css missing background asset`);
+  assert(includesAttribute(privacy, "href", siteConfig.assetPaths.stylesheet), `${rootPath}: Privacy.html missing stylesheet link`);
+  assert(includesAttribute(privacy, "href", siteConfig.assetPaths.icon), `${rootPath}: Privacy.html missing icon link`);
+  assert(new RegExp(`url\\((["'])?${siteConfig.assetPaths.background.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\1?\\)`).test(style), `${rootPath}: style.css missing background asset`);
   assert(sitemap.includes(siteUrls.privacy), `${rootPath}: sitemap.xml missing privacy URL`);
   assert(robots.includes(`Sitemap: ${siteUrls.sitemap}`), `${rootPath}: robots.txt missing sitemap URL`);
   assert(llms.includes(siteUrls.privacy), `${rootPath}: llms.txt missing privacy URL`);
