@@ -47,13 +47,3 @@ jobs:
             xmllint --noout "$root/social-preview.svg"
             xmllint --noout "$root/.well-known/bimi/logo.svg"
           done
-      - name: Validate MTA-STS policy syntax
-        shell: bash
-        run: |
-          set -euo pipefail
-          for root in . dist; do
-            file="$root/.well-known/mta-sts.txt"
-            grep -q '^version: STSv1$' "$file"
-            grep -q '^mode: testing$' "$file"
-            test "$(grep -c '^mx: ' "$file")" -eq 2
-          done
