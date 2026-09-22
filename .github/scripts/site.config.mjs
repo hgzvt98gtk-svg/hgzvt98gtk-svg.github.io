@@ -1,9 +1,5 @@
 import { siteFilePaths } from "./site-paths.mjs";
 
-function toAbsolutePath(relativePath) {
-  return `/${relativePath}`;
-}
-
 export const siteConfig = {
   personName: "Hussam Faroug",
   domain: "hussamfaroug.com",
@@ -16,17 +12,17 @@ export const siteConfig = {
   assetPaths: {
     icon: "/HF.svg",
     stylesheet: "/style.css",
-    appScript: toAbsolutePath(siteFilePaths.appScript),
+    appScript: `/${siteFilePaths.appScript}`,
     background: "/Background.jpeg",
     socialPreview: "/social-preview.svg",
-    agentCard: toAbsolutePath(siteFilePaths.agentCard),
-    apiCatalog: toAbsolutePath(siteFilePaths.apiCatalog),
-    privacyPage: toAbsolutePath(siteFilePaths.privacy),
-    llms: toAbsolutePath(siteFilePaths.llms),
-    robots: toAbsolutePath(siteFilePaths.robots),
-    sitemap: toAbsolutePath(siteFilePaths.sitemap),
+    agentCard: `/${siteFilePaths.agentCard}`,
+    apiCatalog: `/${siteFilePaths.apiCatalog}`,
+    privacyPage: `/${siteFilePaths.privacy}`,
+    llms: `/${siteFilePaths.llms}`,
+    robots: `/${siteFilePaths.robots}`,
+    sitemap: `/${siteFilePaths.sitemap}`,
     bimiLogo: "/.well-known/bimi/logo.svg",
-    mtaSts: toAbsolutePath(siteFilePaths.mtaSts)
+    mtaSts: `/${siteFilePaths.mtaSts}`
   },
   pageTitles: {
     home: "Hussam Faroug | Personal Website",

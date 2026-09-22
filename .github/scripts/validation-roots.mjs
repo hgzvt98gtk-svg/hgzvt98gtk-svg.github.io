@@ -2,10 +2,10 @@ import { join } from "node:path";
 
 const validationRootNames = Object.freeze([".", "dist"]);
 
-function resolveValidationRoots(rootPath) {
-  return validationRootNames.map((name) => ({ name, path: join(rootPath, name) }));
-}
-
 export async function runAcrossValidationRoots(rootPath, validateRoot) {
-  await Promise.all(resolveValidationRoots(rootPath).map((root) => validateRoot(root)));
+  await Promise.all(
+    validationRootNames
+      .map((name) => ({ name, path: join(rootPath, name) }))
+      .map((root) => validateRoot(root))
+  );
 }

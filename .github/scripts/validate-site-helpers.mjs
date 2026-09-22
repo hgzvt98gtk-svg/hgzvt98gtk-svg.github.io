@@ -60,6 +60,12 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
     && requiredLiterals.every((value) => new RegExp(escapeRegex(JSON.stringify(value))).test(scriptText));
 }
 
+export function validateRuntimeBootstrapScript(scriptText, siteConfig) {
+  const quotedPath = escapeRegex(JSON.stringify(siteConfig.assetPaths.appScript));
+  return /"modelContext"\s*in\s*navigator/.test(scriptText)
+    && new RegExp(`import\\s*\\(\\s*${quotedPath}\\s*\\)`).test(scriptText);
+}
+
 export function validateMtaStsDocument(documentText, siteConfig) {
   const lines = documentText.trim().split("\n");
   const mxLines = lines.filter((line) => line.startsWith("mx: "));

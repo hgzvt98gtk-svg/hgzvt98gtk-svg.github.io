@@ -63,3 +63,12 @@ function toAssetRelativePath(pathname) {
 export function listAssetRelativePaths(siteConfig, keys) {
   return keys.map((key) => toAssetRelativePath(siteConfig.assetPaths[key]));
 }
+
+export function listRenderedAndStaticFiles(siteConfig, renderedFiles) {
+  return [
+    ...new Set([
+      ...renderedFiles.keys(),
+      ...listAssetRelativePaths(siteConfig, requiredStaticAssetPathKeys)
+    ])
+  ];
+}

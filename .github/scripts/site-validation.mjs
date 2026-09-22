@@ -1,11 +1,8 @@
-import { contentCheckFiles, listAssetRelativePaths, requiredStaticAssetPathKeys, xmlSyntaxAssetPathKeys } from "./site-paths.mjs";
+import { contentCheckFiles, listAssetRelativePaths, listRenderedAndStaticFiles, xmlSyntaxAssetPathKeys } from "./site-paths.mjs";
 import { escapeRegex } from "./validate-site-helpers.mjs";
 
 export function listRequiredSiteFiles(siteConfig, renderedFiles) {
-  return [
-    ...renderedFiles.keys(),
-    ...listAssetRelativePaths(siteConfig, requiredStaticAssetPathKeys)
-  ];
+  return listRenderedAndStaticFiles(siteConfig, renderedFiles);
 }
 
 export function listXmlSyntaxFiles(siteConfig) {
@@ -28,13 +25,7 @@ export function listSiteContentChecks(siteConfig, siteUrls) {
       value: siteConfig.assetPaths.icon,
       message: `${contentCheckFiles.index} missing icon link`
     },
-    {
-      type: "attribute",
-      file: contentCheckFiles.index,
-      attribute: "src",
-      value: siteConfig.assetPaths.appScript,
-      message: `${contentCheckFiles.index} missing app script`
-    },
+    { type: "runtimeBootstrap", file: contentCheckFiles.index, message: `${contentCheckFiles.index} missing modelContext-gated app script bootstrap` },
     { type: "contains", file: contentCheckFiles.index, value: siteUrls.socialPreview, message: `${contentCheckFiles.index} missing social preview URL` },
     {
       type: "attribute",
