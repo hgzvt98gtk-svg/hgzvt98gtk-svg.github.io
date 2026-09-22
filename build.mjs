@@ -5,7 +5,8 @@ import CleanCSS from "clean-css";
 import { minify as minifyHtml } from "html-minifier-terser";
 import { minify as minifyJs } from "terser";
 import { buildConfig } from "./.github/scripts/build.config.mjs";
-import { siteConfig, siteUrls } from "./.github/scripts/site.config.mjs";
+import { siteConfig } from "./.github/scripts/site.config.mjs";
+import { siteUrls } from "./.github/scripts/site-urls.mjs";
 import { validateBuildConfig, validateSiteConfig } from "./.github/scripts/validate-config.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -15,7 +16,7 @@ validateSiteConfig(siteConfig, siteUrls);
 validateBuildConfig(buildConfig);
 const excluded = new Set(buildConfig.excludedNames);
 const concurrency = buildConfig.concurrency;
-const configFingerprint = JSON.stringify({ buildConfig, siteConfig });
+const configFingerprint = JSON.stringify(buildConfig);
 
 async function exists(path) {
   try {

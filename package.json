@@ -10,6 +10,7 @@
     "validate:deps": "node .github/scripts/validate-dependencies.mjs"
   },
   "devDependencies": {
+    "acorn": "^8.18.0",
     "clean-css": "^5.3.3",
     "html-minifier-terser": "^7.2.0",
     "terser": "^5.36.0"

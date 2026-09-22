@@ -42,14 +42,12 @@ export function validateMtaStsDocument(documentText, siteConfig) {
     && mxLines.length === siteConfig.mtaSts.mx.length;
 }
 
-export function listManualReadTargets() {
-  return [
-    siteFilePaths.index,
-    siteFilePaths.privacy,
-    siteFilePaths.sitemap,
-    siteFilePaths.llms,
-    siteFilePaths.agentCard,
-    siteFilePaths.apiCatalog,
-    siteFilePaths.mtaSts
-  ];
-}
+export const manualReadTargets = Object.freeze({
+  index: siteFilePaths.index,
+  privacy: siteFilePaths.privacy,
+  sitemap: siteFilePaths.sitemap,
+  llms: siteFilePaths.llms,
+  agentCard: siteFilePaths.agentCard,
+  apiCatalog: siteFilePaths.apiCatalog,
+  mtaSts: siteFilePaths.mtaSts
+});

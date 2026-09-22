@@ -1,7 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { siteConfig, siteUrls } from "./site.config.mjs";
+import { siteConfig } from "./site.config.mjs";
+import { siteUrls } from "./site-urls.mjs";
 import { renderSiteFiles } from "./site-files.mjs";
 import { validateSiteConfig } from "./validate-config.mjs";
 

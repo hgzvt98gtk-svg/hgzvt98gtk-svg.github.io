@@ -7,7 +7,5 @@ export function resolveValidationRoots(rootPath) {
 }
 
 export async function runAcrossValidationRoots(rootPath, validateRoot) {
-  for (const root of resolveValidationRoots(rootPath)) {
-    await validateRoot(root);
-  }
+  await Promise.all(resolveValidationRoots(rootPath).map((root) => validateRoot(root)));
 }

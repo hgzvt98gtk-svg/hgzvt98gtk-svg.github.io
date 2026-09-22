@@ -1,9 +1,5 @@
 import { siteFilePaths } from "./site-paths.mjs";
 
-function toRelativePath(pathname) {
-  return pathname.replace(/^\//, "");
-}
-
 function renderPageFiles(siteConfig, siteUrls) {
   return new Map([
     [siteFilePaths.index, `<!doctype html>
@@ -164,6 +160,4 @@ export function renderSiteFiles(siteConfig, siteUrls) {
   ]);
 }
 
-export function toAssetRelativePath(pathname) {
-  return toRelativePath(pathname);
-}
+export { toAssetRelativePath } from "./path-utils.mjs";

@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { dirname, extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse } from "acorn";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const scriptRoot = join(root, ".github", "scripts");
@@ -38,7 +39,16 @@ function resolveImportPath(importerPath, specifier) {
 
 async function parseImports(filePath) {
   const source = await readFile(filePath, "utf8");
-  const importSpecifiers = [...source.matchAll(/(?:import|export)\s+(?:[^;]*?\s+from\s+)?["']([^"']+)["']/g)].map((match) => match[1]);
+  const program = parse(source, { ecmaVersion: "latest", sourceType: "module" });
+  const importSpecifiers = program.body.flatMap((node) => {
+    if (node.type === "ImportDeclaration") {
+      return [node.source.value];
+    }
+    if ((node.type === "ExportAllDeclaration" || node.type === "ExportNamedDeclaration") && node.source) {
+      return [node.source.value];
+    }
+    return [];
+  });
   return importSpecifiers.map((specifier) => resolveImportPath(filePath, specifier)).filter(Boolean);
 }
 
