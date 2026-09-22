@@ -10,7 +10,7 @@ function normalizeWhitespace(contents) {
   return contents.replace(/\s+/g, " ").trim();
 }
 
-function escapeRegex(value) {
+export function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 

@@ -1,4 +1,4 @@
-import { access, copyFile, mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import CleanCSS from "clean-css";
@@ -21,20 +21,18 @@ const concurrency = buildConfig.concurrency;
 const configFingerprint = JSON.stringify(buildConfig);
 const renderedFiles = renderSiteFiles(siteConfig, siteUrls);
 
-async function exists(path) {
+async function statIfExists(path) {
   try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
+    return await stat(path);
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      return null;
+    }
+    throw error;
   }
 }
 
 async function loadManifest() {
-  if (!await exists(manifestPath)) {
-    return { configFingerprint: "", files: {} };
-  }
-
   try {
     const text = await readFile(manifestPath, "utf8");
     const parsed = JSON.parse(text);
@@ -47,8 +45,7 @@ async function loadManifest() {
   }
 }
 
-async function fileSignature(source) {
-  const stats = await stat(source);
+function fileSignature(stats) {
   return `${stats.size}:${stats.mtimeMs}`;
 }
 
@@ -105,8 +102,10 @@ const buildQueue = [];
 const sourceMetadata = await Promise.all(sources.map(async (source) => {
   const relativeSource = relative(root, source);
   const destination = join(output, relativeSource);
-  const signature = await fileSignature(source);
-  const destinationExists = forceRebuild ? false : await exists(destination);
+  const sourceStats = await stat(source);
+  const destinationStats = forceRebuild ? null : await statIfExists(destination);
+  const signature = fileSignature(sourceStats);
+  const destinationExists = destinationStats !== null;
   return { source, relativeSource, destination, signature, destinationExists };
 }));
 
@@ -127,8 +126,12 @@ for (let index = 0; index < buildQueue.length; index += concurrency) {
 const staleFiles = Object.keys(previousManifest.files).filter((relativeSource) => !(relativeSource in nextManifest.files));
 for (const relativeSource of staleFiles) {
   const destination = join(output, relativeSource);
-  if (await exists(destination)) {
+  try {
     await unlink(destination);
+  } catch (error) {
+    if (error?.code !== "ENOENT") {
+      throw error;
+    }
   }
 }
 

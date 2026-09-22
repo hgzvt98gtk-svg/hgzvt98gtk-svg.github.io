@@ -6,7 +6,7 @@ import { siteConfig } from "./site.config.mjs";
 import { renderSiteFiles } from "./site-files.mjs";
 import { siteUrls } from "./site-urls.mjs";
 import { listRequiredSiteFiles, listSiteContentChecks } from "./site-validation.mjs";
-import { validateSiteConfig } from "./validate-config.mjs";
+import { assert, validateSiteConfig } from "./validate-config.mjs";
 import { runAcrossValidationRoots } from "./validation-roots.mjs";
 import {
   assertNoOutdatedReferences,
@@ -22,12 +22,13 @@ import {
 const root = join(fileURLToPath(new URL("../..", import.meta.url)));
 validateSiteConfig(siteConfig, siteUrls);
 const generatedFiles = renderSiteFiles(siteConfig, siteUrls);
-
-function assert(condition, message) {
-  if (!condition) {
-    throw new Error(message);
-  }
-}
+const contentChecks = listSiteContentChecks(siteConfig, siteUrls);
+const readTargets = new Set([
+  ...generatedFiles.keys(),
+  ...new Set(contentChecks.map(({ file }) => file)),
+  ...Object.values(manualReadTargets)
+]);
+const requiredFiles = listRequiredSiteFiles(siteConfig, generatedFiles);
 
 async function mustExist(path) {
   await access(path, constants.F_OK);
@@ -52,9 +53,8 @@ async function validateGeneratedSource(rootPath, read) {
     );
   }));
 }
-
 async function validateContentChecks(rootPath, read) {
-  const contentChecks = listSiteContentChecks(siteConfig, siteUrls);
+async function validateContentChecks(rootPath, read) {
   const uniqueFiles = [...new Set(contentChecks.map(({ file }) => file))];
   const contentByFile = new Map(await Promise.all(uniqueFiles.map(async (file) => [file, await read(file)])));
 
@@ -94,14 +94,8 @@ async function validateSpecialCases(rootPath, read) {
 }
 
 async function validateRoot(rootInfo) {
-  const required = listRequiredSiteFiles(siteConfig, generatedFiles);
-  const readTargets = new Set([
-    ...generatedFiles.keys(),
-    ...new Set(listSiteContentChecks(siteConfig, siteUrls).map(({ file }) => file)),
-    ...Object.values(manualReadTargets)
-  ]);
   await Promise.all(
-    required
+    requiredFiles
       .filter((relativePath) => !readTargets.has(relativePath))
       .map((relativePath) => mustExist(join(rootInfo.path, relativePath)))
   );
