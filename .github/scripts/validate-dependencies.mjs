@@ -1,5 +1,5 @@
 import { readdir, readFile } from "node:fs/promises";
-import { basename, dirname, extname, join, normalize, resolve } from "node:path";
+import { basename, dirname, extname, join, normalize, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "acorn";
 
@@ -75,7 +75,7 @@ async function parseImports(filePath, fileSet) {
 }
 
 function relativeToRoot(path) {
-  return path.replace(`${root}/`, "");
+  return relative(root, path);
 }
 
 function findCycle(graph) {

@@ -1,4 +1,4 @@
-import { access, copyFile, mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, readFile, readdir, rmdir, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import CleanCSS from "clean-css";
@@ -66,6 +66,20 @@ async function loadManifest() {
 async function fileSignature(source) {
   const stats = await stat(source);
   return `${stats.size}:${stats.mtimeMs}`;
+}
+
+async function removeEmptyParentDirectories(path) {
+  let currentDirectory = dirname(path);
+
+  while (currentDirectory !== output && currentDirectory.startsWith(output)) {
+    const entries = await readdir(currentDirectory);
+    if (entries.length > 0) {
+      break;
+    }
+
+    await rmdir(currentDirectory);
+    currentDirectory = dirname(currentDirectory);
+  }
 }
 
 async function buildFile(source) {
@@ -141,6 +155,7 @@ for (const relativeSource of staleFiles) {
   const destination = join(output, relativeSource);
   if (await exists(destination)) {
     await unlink(destination);
+    await removeEmptyParentDirectories(destination);
   }
 }
 

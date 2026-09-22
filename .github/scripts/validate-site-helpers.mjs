@@ -20,7 +20,7 @@ export function equivalentGeneratedContents(relativePath, actualContents, expect
 }
 
 export function assertNoOutdatedReferences(index, privacy, sitemap, llms) {
-  return !/(social-preview\.png|https:\/\/hussamfaroug\.com\/Privacy[^.])/.test(`${index}\n${privacy}\n${sitemap}\n${llms}`);
+  return !/(social-preview\.png|https:\/\/hussamfaroug\.com\/Privacy(?=$|[\s"'<>]))/.test(`${index}\n${privacy}\n${sitemap}\n${llms}`);
 }
 
 export function validateAgentCard(agentCard, siteConfig, siteUrls) {
@@ -139,11 +139,12 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
 export function validateMtaStsDocument(documentText, siteConfig) {
   const lines = documentText.trim().split("\n");
   const mxLines = lines.filter((line) => line.startsWith("mx: "));
+  const mxValues = mxLines.map((line) => line.slice("mx: ".length));
 
   return lines[0] === `version: ${siteConfig.mtaSts.version}`
     && lines[1] === `mode: ${siteConfig.mtaSts.mode}`
     && lines.at(-1) === `max_age: ${siteConfig.mtaSts.maxAge}`
-    && mxLines.length === siteConfig.mtaSts.mx.length;
+    && JSON.stringify(mxValues) === JSON.stringify(siteConfig.mtaSts.mx);
 }
 
 export const manualReadTargets = Object.freeze({
