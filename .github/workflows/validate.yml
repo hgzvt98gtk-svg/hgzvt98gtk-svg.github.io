@@ -65,7 +65,7 @@ jobs:
           run_validation site npm run validate:site
           run_validation xml npm run validate:xml
           run_validation deps npm run validate:deps
-          wait
+          wait || true
 
           failures=0
           failed_jobs=()
