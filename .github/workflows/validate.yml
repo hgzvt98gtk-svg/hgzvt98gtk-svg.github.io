@@ -18,15 +18,19 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Install validation dependencies
+      - name: Install xmllint when missing
         shell: bash
         run: |
           set -euo pipefail
           if ! command -v xmllint >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y libxml2-utils
+            sudo apt-get install -y --no-install-recommends libxml2-utils || {
+              sudo apt-get update
+              sudo apt-get install -y --no-install-recommends libxml2-utils
+            }
           fi
-          npm ci --prefer-offline --no-audit
+      - name: Install Node dependencies
+        shell: bash
+        run: npm ci --prefer-offline --no-audit
       - name: Build site
         shell: bash
         run: |
@@ -41,18 +45,19 @@ jobs:
           log_dir="$(mktemp -d)"
 
           run_validation() {
-            local name="$1"
-            shift
+            local pid_var="$1"
+            local name="$2"
+            shift 2
             (
               set -euo pipefail
               "$@"
             ) >"${log_dir}/${name}.log" 2>&1 &
-            echo $!
+            printf -v "$pid_var" "%s" "$!"
           }
 
-          site_pid="$(run_validation site npm run validate:site)"
-          xml_pid="$(run_validation xml npm run validate:xml)"
-          deps_pid="$(run_validation deps npm run validate:deps)"
+          run_validation site_pid site npm run validate:site
+          run_validation xml_pid xml npm run validate:xml
+          run_validation deps_pid deps npm run validate:deps
 
           failures=0
           failed_jobs=()
