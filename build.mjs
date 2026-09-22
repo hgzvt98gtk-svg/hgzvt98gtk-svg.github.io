@@ -130,15 +130,17 @@ for (let index = 0; index < buildQueue.length; index += concurrency) {
 }
 
 const staleFiles = Object.keys(previousManifest.files).filter((relativeSource) => !(relativeSource in nextManifest.files));
-for (const relativeSource of staleFiles) {
-  const destination = join(output, relativeSource);
-  try {
-    await unlink(destination);
-  } catch (error) {
-    if (error?.code !== "ENOENT") {
-      throw error;
+for (let index = 0; index < staleFiles.length; index += concurrency) {
+  await Promise.all(staleFiles.slice(index, index + concurrency).map(async (relativeSource) => {
+    const destination = join(output, relativeSource);
+    try {
+      await unlink(destination);
+    } catch (error) {
+      if (error?.code !== "ENOENT") {
+        throw error;
+      }
     }
-  }
+  }));
 }
 
 await writeFile(manifestPath, `${JSON.stringify(nextManifest, null, 2)}\n`);
