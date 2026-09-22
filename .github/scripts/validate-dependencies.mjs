@@ -12,7 +12,9 @@ const boundaryRules = new Map([
   ["path-utils.mjs", new Set()],
   ["site.config.mjs", new Set()],
   ["build.config.mjs", new Set()],
-  ["validation-roots.mjs", new Set()]
+  ["validation-roots.mjs", new Set()],
+  ["site-urls.mjs", new Set(["site.config.mjs", "site-paths.mjs"])],
+  ["validate-config.mjs", new Set(["site-paths.mjs"])]
 ]);
 
 async function listSourceFiles(directory) {
@@ -70,6 +72,10 @@ async function parseImports(filePath, fileSet) {
     return [];
   });
   return importSpecifiers.map((specifier) => resolveImportPath(filePath, specifier, fileSet)).filter(Boolean);
+}
+
+function relativeToRoot(path) {
+  return path.replace(`${root}/`, "");
 }
 
 function findCycle(graph) {
@@ -154,7 +160,7 @@ for (const filePath of files) {
 
 const cycle = findCycle(graph);
 if (cycle) {
-  const display = cycle.map((path) => path.replace(`${root}/`, "")).join(" -> ");
+  const display = cycle.map(relativeToRoot).join(" -> ");
   throw new Error(`Circular dependency detected: ${display}`);
 }
 

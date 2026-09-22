@@ -165,5 +165,3 @@ export function renderSiteFiles(siteConfig, siteUrls) {
     ...renderWellKnownFiles(siteConfig, siteUrls)
   ]);
 }
-
-export { toAssetRelativePath } from "./path-utils.mjs";
