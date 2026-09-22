@@ -160,6 +160,19 @@ const sourceMetadata = await Promise.all(sources.map(async (source) => {
   return { source, relativeSource, destination, signature, destinationExists };
 }));
 
+const currentDestinations = new Set(sourceMetadata.map(({ destination }) => destination));
+const staleFiles = Object.keys(previousManifest.files).filter((relativeSource) => !(relativeSource in nextManifest.files));
+for (const relativeSource of staleFiles) {
+  const destination = join(output, relativeSource);
+  if (currentDestinations.has(destination)) {
+    continue;
+  }
+  if (await exists(destination)) {
+    await unlink(destination);
+    await removeEmptyParentDirectories(destination);
+  }
+}
+
 for (const { source, relativeSource, signature, destinationExists } of sourceMetadata) {
   nextManifest.files[relativeSource] = signature;
 
@@ -174,15 +187,6 @@ for (const { source, relativeSource, signature, destinationExists } of sourceMet
 
 for (let index = 0; index < buildQueue.length; index += concurrency) {
   await Promise.all(buildQueue.slice(index, index + concurrency).map(buildFile));
-}
-
-const staleFiles = Object.keys(previousManifest.files).filter((relativeSource) => !(relativeSource in nextManifest.files));
-for (const relativeSource of staleFiles) {
-  const destination = join(output, relativeSource);
-  if (await exists(destination)) {
-    await unlink(destination);
-    await removeEmptyParentDirectories(destination);
-  }
 }
 
 await writeFile(manifestPath, `${JSON.stringify(nextManifest, null, 2)}\n`);

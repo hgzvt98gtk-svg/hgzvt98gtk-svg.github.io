@@ -2,6 +2,7 @@ import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import CleanCSS from "clean-css";
 import { minify as minifyHtml } from "html-minifier-terser";
 import { minify as minifyJs } from "terser";
 import { siteConfig } from "./site.config.mjs";
@@ -64,6 +65,10 @@ async function expectedGeneratedContents(rootName, relativePath, expectedContent
 
   if (extension === ".js" || extension === ".mjs") {
     return (await minifyJs(expectedContents)).code ?? "";
+  }
+
+  if (extension === ".css") {
+    return new CleanCSS().minify(expectedContents).styles;
   }
 
   return expectedContents;

@@ -137,7 +137,7 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
 }
 
 export function validateMtaStsDocument(documentText, siteConfig) {
-  const normalizedText = documentText.replace(/\r\n/g, "\n");
+  const normalizedText = documentText.replace(/\r\n?/g, "\n");
   const lines = normalizedText.endsWith("\n")
     ? normalizedText.slice(0, -1).split("\n")
     : normalizedText.split("\n");
