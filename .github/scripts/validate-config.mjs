@@ -36,6 +36,13 @@ export function validateSiteConfig(siteConfig, siteUrls) {
 
   assert(Array.isArray(siteConfig.mtaSts?.mx), "siteConfig.mtaSts.mx must be an array");
   assert(siteConfig.mtaSts.mx.length > 0, "siteConfig.mtaSts.mx must include at least one mx host");
+
+  assert(typeof siteConfig.build === "object" && siteConfig.build !== null, "siteConfig.build must be an object");
+  assert(Array.isArray(siteConfig.build.includePatterns), "siteConfig.build.includePatterns must be an array");
+  assert(siteConfig.build.includePatterns.length > 0, "siteConfig.build.includePatterns must include at least one pattern");
+  assert(siteConfig.build.includePatterns.every((pattern) => typeof pattern === "string" && pattern.length > 0), "siteConfig.build.includePatterns entries must be non-empty strings");
+  assert(Array.isArray(siteConfig.build.excludePatterns), "siteConfig.build.excludePatterns must be an array");
+  assert(siteConfig.build.excludePatterns.every((pattern) => typeof pattern === "string" && pattern.length > 0), "siteConfig.build.excludePatterns entries must be non-empty strings");
 }
 
 export function validateBuildConfig(buildConfig) {
