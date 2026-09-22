@@ -34,11 +34,8 @@ export const requiredAssetPathKeys = Object.freeze([
   "agentCard",
   "apiCatalog",
   "privacyPage",
-  "llms",
-  "robots",
   "sitemap",
-  "bimiLogo",
-  "mtaSts"
+  "bimiLogo"
 ]);
 
 export const requiredStaticAssetPathKeys = Object.freeze([

@@ -36,10 +36,6 @@ const readTargets = new Set([
 const requiredFiles = listRenderedAndStaticFiles(siteConfig, generatedFiles);
 const requiredExistenceOnlyFiles = requiredFiles.filter((relativePath) => !readTargets.has(relativePath));
 
-async function mustExist(path) {
-  await access(path, constants.F_OK);
-}
-
 function createRootReader(rootPath) {
   const cache = new Map();
   return async function read(relativePath) {
@@ -49,6 +45,23 @@ function createRootReader(rootPath) {
     return cache.get(relativePath);
   };
 }
+
+const contentCheckValidators = {
+  attribute: (check) => (contents) => includesAttribute(contents, check.attribute, check.value),
+  contains: (check) => (contents) => contents.includes(check.value),
+  regex: (check) => {
+    const pattern = new RegExp(check.pattern);
+    return (contents) => pattern.test(contents);
+  },
+  runtimeScript: () => (contents) => validateRuntimeAppScript(contents, siteConfig),
+  runtimeBootstrap: () => (contents) => validateRuntimeBootstrapScript(contents, siteConfig)
+};
+
+const compiledContentChecks = contentChecks.map((check) => {
+  const compile = contentCheckValidators[check.type];
+  assert(typeof compile === "function", `Unknown content check type: ${check.type}`);
+  return { ...check, validate: compile(check) };
+});
 
 async function validateGeneratedSource(rootPath, read) {
   await Promise.all([...generatedFiles].map(async ([relativePath, expectedContents]) => {
@@ -62,27 +75,9 @@ async function validateGeneratedSource(rootPath, read) {
 async function validateContentChecks(rootPath, read) {
   const contentByFile = new Map(await Promise.all(contentCheckUniqueFiles.map(async (file) => [file, await read(file)])));
 
-  for (const check of contentChecks) {
+  for (const check of compiledContentChecks) {
     const contents = contentByFile.get(check.file);
-    if (check.type === "attribute") {
-      assert(includesAttribute(contents, check.attribute, check.value), `${rootPath}: ${check.message}`);
-      continue;
-    }
-    if (check.type === "contains") {
-      assert(contents.includes(check.value), `${rootPath}: ${check.message}`);
-      continue;
-    }
-    if (check.type === "regex") {
-      assert(new RegExp(check.pattern).test(contents), `${rootPath}: ${check.message}`);
-      continue;
-    }
-    if (check.type === "runtimeScript") {
-      assert(validateRuntimeAppScript(contents, siteConfig), `${rootPath}: ${check.message}`);
-      continue;
-    }
-    if (check.type === "runtimeBootstrap") {
-      assert(validateRuntimeBootstrapScript(contents, siteConfig), `${rootPath}: ${check.message}`);
-    }
+    assert(check.validate(contents), `${rootPath}: ${check.message}`);
   }
 }
 
@@ -103,7 +98,7 @@ async function validateSpecialCases(rootPath, read) {
 
 async function validateRoot(rootInfo) {
   await Promise.all(
-    requiredExistenceOnlyFiles.map((relativePath) => mustExist(join(rootInfo.path, relativePath)))
+    requiredExistenceOnlyFiles.map((relativePath) => access(join(rootInfo.path, relativePath), constants.F_OK))
   );
   const read = createRootReader(rootInfo.path);
 

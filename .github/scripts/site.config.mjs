@@ -18,11 +18,8 @@ export const siteConfig = {
     agentCard: `/${siteFilePaths.agentCard}`,
     apiCatalog: `/${siteFilePaths.apiCatalog}`,
     privacyPage: `/${siteFilePaths.privacy}`,
-    llms: `/${siteFilePaths.llms}`,
-    robots: `/${siteFilePaths.robots}`,
     sitemap: `/${siteFilePaths.sitemap}`,
-    bimiLogo: "/.well-known/bimi/logo.svg",
-    mtaSts: `/${siteFilePaths.mtaSts}`
+    bimiLogo: "/.well-known/bimi/logo.svg"
   },
   pageTitles: {
     home: "Hussam Faroug | Personal Website",

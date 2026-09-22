@@ -107,19 +107,19 @@ const nextManifest = { configFingerprint, files: {} };
 const buildQueue = [];
 const sourceMetadata = await Promise.all(sources.map(async (source) => {
   const relativeSource = relative(root, source);
-  const destination = join(output, relativeSource);
   const sourceStats = await stat(source);
-  const destinationStats = forceRebuild ? null : await statIfExists(destination);
   const signature = fileSignature(sourceStats);
-  const destinationExists = destinationStats !== null;
-  return { source, relativeSource, destination, signature, destinationExists };
+  return { source, relativeSource, signature };
 }));
 
-for (const { source, relativeSource, signature, destinationExists } of sourceMetadata) {
+for (const { source, relativeSource, signature } of sourceMetadata) {
   nextManifest.files[relativeSource] = signature;
 
-  if (!forceRebuild && previousManifest.files[relativeSource] === signature && destinationExists) {
-    continue;
+  if (!forceRebuild && previousManifest.files[relativeSource] === signature) {
+    const destination = join(output, relativeSource);
+    if (await statIfExists(destination)) {
+      continue;
+    }
   }
 
   buildQueue.push(source);
