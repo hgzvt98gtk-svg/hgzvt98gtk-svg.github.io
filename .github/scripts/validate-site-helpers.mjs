@@ -20,7 +20,7 @@ export function equivalentGeneratedContents(relativePath, actualContents, expect
 }
 
 export function assertNoOutdatedReferences(index, privacy, robots, sitemap, llms, mtaSts) {
-  return !/(social-preview\.png|https:\/\/hussamfaroug\.com\/Privacy(?=$|[^.]))/.test(`${index}\n${privacy}\n${robots}\n${sitemap}\n${llms}\n${mtaSts}`);
+  return !/(social-preview\.png|https:\/\/hussamfaroug\.com\/Privacy(?=$|[\s"'()<>/?#]|(?:\.(?![A-Za-z0-9]))))/.test(`${index}\n${privacy}\n${robots}\n${sitemap}\n${llms}\n${mtaSts}`);
 }
 
 export function validateAgentCard(agentCard, siteConfig, siteUrls) {
