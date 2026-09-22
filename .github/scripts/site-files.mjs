@@ -29,7 +29,7 @@ function renderPageFiles(siteConfig, siteUrls) {
   const socialPreviewUrl = escapeHtml(siteUrls.socialPreview);
   const iconPath = escapeHtml(siteConfig.assetPaths.icon);
   const stylesheetPath = escapeHtml(siteConfig.assetPaths.stylesheet);
-  const appScriptPath = escapeHtml(siteConfig.assetPaths.appScript);
+  const appScriptImportPath = escapeJsString(siteConfig.assetPaths.appScript);
   const privacyLastUpdated = escapeHtml(siteConfig.privacyLastUpdated);
   const email = escapeHtml(siteConfig.email);
   const mailtoHref = escapeHtml(encodeMailtoAddress(siteConfig.email));
@@ -61,7 +61,11 @@ function renderPageFiles(siteConfig, siteUrls) {
   <main class="landing" aria-label="${personName} personal website">
     <h1>${domain}</h1>
   </main>
-  <script type="module" src="${appScriptPath}"></script>
+  <script type="module">
+    if ("modelContext" in navigator) {
+      import(${appScriptImportPath});
+    }
+  </script>
 </body>
 </html>
 `],

@@ -24,6 +24,10 @@
   <main class="landing" aria-label="Hussam Faroug personal website">
     <h1>hussamfaroug.com</h1>
   </main>
-  <script type="module" src="/app.js"></script>
+  <script type="module">
+    if ("modelContext" in navigator) {
+      import("/app.js");
+    }
+  </script>
 </body>
 </html>

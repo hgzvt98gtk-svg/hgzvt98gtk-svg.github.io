@@ -15,6 +15,7 @@ import {
   manualReadTargets,
   validateAgentCard,
   validateApiCatalog,
+  validateRuntimeBootstrapScript,
   validateRuntimeAppScript,
   validateMtaStsDocument
 } from "./validate-site-helpers.mjs";
@@ -76,6 +77,10 @@ async function validateContentChecks(rootPath, read) {
     }
     if (check.type === "runtimeScript") {
       assert(validateRuntimeAppScript(contents, siteConfig), `${rootPath}: ${check.message}`);
+      continue;
+    }
+    if (check.type === "runtimeBootstrap") {
+      assert(validateRuntimeBootstrapScript(contents, siteConfig), `${rootPath}: ${check.message}`);
     }
   }
 }

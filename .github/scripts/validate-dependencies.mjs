@@ -1,10 +1,12 @@
-import { readdir, readFile } from "node:fs/promises";
-import { basename, dirname, extname, join, normalize, resolve } from "node:path";
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { basename, dirname, extname, join, normalize, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "acorn";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const scriptRoot = join(root, ".github", "scripts");
+const cachePath = join(root, ".cache", "validate-dependencies.json");
+const cacheVersion = 1;
 const entryFiles = [join(root, "build.mjs"), join(root, "app.js")];
 const sourceExtensions = new Set([".mjs", ".js"]);
 const boundaryRules = new Map([
@@ -16,6 +18,10 @@ const boundaryRules = new Map([
   ["validate-config.mjs", new Set(["site-paths.mjs"])]
 ]);
 const rootPrefix = `${root}/`;
+
+function toRelativePath(path) {
+  return path.startsWith(rootPrefix) ? path.slice(rootPrefix.length) : relative(root, path);
+}
 
 async function listSourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -65,6 +71,31 @@ async function parseImports(filePath, fileSet) {
     return [];
   });
   return importSpecifiers.map((specifier) => resolveImportPath(filePath, specifier, fileSet)).filter(Boolean);
+}
+
+function fileSignature(stats) {
+  return `${stats.size}:${stats.mtimeMs}`;
+}
+
+async function loadCache() {
+  try {
+    const text = await readFile(cachePath, "utf8");
+    const parsed = JSON.parse(text);
+    if (parsed?.version !== cacheVersion || typeof parsed.files !== "object" || parsed.files === null) {
+      return { files: {} };
+    }
+    return { files: parsed.files };
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      return { files: {} };
+    }
+    return { files: {} };
+  }
+}
+
+async function saveCache(cache) {
+  await mkdir(dirname(cachePath), { recursive: true });
+  await writeFile(cachePath, `${JSON.stringify({ version: cacheVersion, files: cache.files }, null, 2)}\n`);
 }
 
 function findCycle(graph) {
@@ -145,10 +176,37 @@ const files = [...new Set([...(await listSourceFiles(scriptRoot)), ...entryFiles
 const fileSet = new Set(files);
 const fileInfoByPath = new Map(files.map((filePath) => [filePath, {
   fileName: basename(filePath),
-  relativePath: filePath.startsWith(rootPrefix) ? filePath.slice(rootPrefix.length) : filePath
+  relativePath: toRelativePath(filePath)
 }]));
+const previousCache = await loadCache();
+const nextCache = { files: {} };
 const graph = new Map(
-  await Promise.all(files.map(async (filePath) => [filePath, await parseImports(filePath, fileSet)]))
+  await Promise.all(files.map(async (filePath) => {
+    const relativePath = toRelativePath(filePath);
+    const signature = fileSignature(await stat(filePath));
+    const cached = previousCache.files[relativePath];
+    let imports = null;
+
+    if (cached?.signature === signature && Array.isArray(cached.imports)) {
+      const restoredImports = cached.imports
+        .map((importPath) => normalize(join(root, importPath)))
+        .filter((importPath) => fileSet.has(importPath));
+      if (restoredImports.length === cached.imports.length) {
+        imports = restoredImports;
+      }
+    }
+
+    if (!imports) {
+      imports = await parseImports(filePath, fileSet);
+    }
+
+    nextCache.files[relativePath] = {
+      signature,
+      imports: imports.map((importPath) => toRelativePath(importPath))
+    };
+
+    return [filePath, imports];
+  }))
 );
 
 const cycle = findCycle(graph);
@@ -169,5 +227,7 @@ if (boundaryViolations.length > 0) {
     + "If a low-level module intentionally needs new dependencies, update boundaryRules in .github/scripts/validate-dependencies.mjs."
   );
 }
+
+await saveCache(nextCache);
 
 console.log(`Validated dependency graph for ${files.length} modules (no cycles, boundaries respected).`);
