@@ -1,23 +1,26 @@
 # hgzvt98gtk-svg.github.io
 
-## Architecture and ownership
+Static personal site with generated metadata files, build output in `dist/`, and CI validation for source and build artifacts.
 
-### Source of truth
-- Primary site metadata and build patterns live in `/home/runner/work/hgzvt98gtk-svg.github.io/hgzvt98gtk-svg.github.io/.github/scripts/site.config.mjs`.
-- Generated content templates live in `/home/runner/work/hgzvt98gtk-svg.github.io/hgzvt98gtk-svg.github.io/.github/scripts/site-files.mjs`.
+## Architecture
 
-When changing URLs, titles, asset paths, status values, or build include/exclude behavior, update `site.config.mjs` first.
+- `.github/scripts/site.config.mjs` is the shared source of truth for site metadata and runtime URLs.
+- `.github/scripts/build.config.mjs` holds build-specific settings for the dist pipeline.
+- `.github/scripts/site-files.mjs` owns generated file templates.
+- `.github/scripts/site-validation.mjs` owns shared validation target and content-check definitions.
+- `npm run generate` writes generated files to the repository root from shared templates.
+- `npm run build` minifies HTML/CSS/JS and copies other assets into `dist/`.
+- `npm run validate:site` validates required files, generated-file drift, and cross-reference/content checks for both root and `dist/`.
+- `npm run validate:xml` validates XML/SVG syntax for shared target files across both root and `dist/`.
+- `npm run validate:deps` validates local script/runtime module imports, fails on circular dependencies, and enforces low-level module boundaries.
 
-### Build and validation flow
-1. **Generate** (`npm run generate`)  
-   Rewrites generated runtime/site files from shared config + templates.
-2. **Build** (`npm run build`)  
-   Produces minified/copy output in `dist/`.
-3. **Validate** (`npm run validate:site` and `npm run validate:xml`)  
-   Validates both source and `dist`, including cross-references and XML/SVG syntax.
+## Local workflow
 
-### Ownership boundaries
-- `site.config.mjs`: canonical configuration and ownership of metadata/build patterns.
-- `site-files.mjs`: ownership of generated file definitions and shared validation targets/checks.
-- `build.mjs`: build execution only (consumes shared config; does not own hardcoded layout rules).
-- `.github/workflows/validate.yml`: CI orchestration only (calls scripts; avoids duplicating target lists).
+```bash
+npm ci
+npm run generate
+npm run build
+npm run validate:site
+npm run validate:xml
+npm run validate:deps
+```

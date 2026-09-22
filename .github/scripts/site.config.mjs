@@ -51,10 +51,3 @@ export const siteConfig = {
   },
   apis: []
 };
-
-export const siteUrls = {
-  home: `${siteConfig.origin}/`,
-  privacy: `${siteConfig.origin}${siteConfig.assetPaths.privacyPage}`,
-  socialPreview: `${siteConfig.origin}${siteConfig.assetPaths.socialPreview}`,
-  sitemap: `${siteConfig.origin}${siteConfig.assetPaths.sitemap}`
-};

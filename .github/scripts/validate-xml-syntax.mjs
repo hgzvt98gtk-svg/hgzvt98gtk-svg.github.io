@@ -1,29 +1,26 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
+import { access } from "node:fs/promises";
+import { constants } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { siteConfig, siteUrls } from "./site.config.mjs";
-import { listRequiredSiteFiles, listXmlSyntaxFiles, renderSiteFiles } from "./site-files.mjs";
-import { validateSiteConfig } from "./validate-config.mjs";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { siteConfig } from "./site.config.mjs";
+import { listXmlSyntaxFiles } from "./site-validation.mjs";
+import { runAcrossValidationRoots } from "./validation-roots.mjs";
 
-const run = promisify(execFile);
-const root = join(fileURLToPath(new URL("../..", import.meta.url)));
+const execFileAsync = promisify(execFile);
+const root = fileURLToPath(new URL("../..", import.meta.url));
 
-validateSiteConfig(siteConfig, siteUrls);
-const generatedFiles = renderSiteFiles(siteConfig, siteUrls);
-const xmlSyntaxFiles = listXmlSyntaxFiles(listRequiredSiteFiles(generatedFiles));
-
-for (const rootPath of [".", "dist"]) {
-  for (const relativePath of xmlSyntaxFiles) {
-    try {
-      await run("xmllint", ["--noout", join(root, rootPath, relativePath)]);
-    } catch (error) {
-      if (error?.code === "ENOENT") {
-        throw new Error("xmllint is required but not installed");
-      }
-      throw error;
-    }
-  }
+async function mustExist(path) {
+  await access(path, constants.F_OK);
 }
 
-console.log(`Validated XML/SVG syntax for ${xmlSyntaxFiles.length} files in source and dist.`);
+async function validateRoot(rootInfo) {
+  const xmlPaths = listXmlSyntaxFiles(siteConfig).map((relativePath) => join(rootInfo.path, relativePath));
+  await Promise.all(xmlPaths.map((path) => mustExist(path)));
+  await execFileAsync("xmllint", ["--noout", ...xmlPaths]);
+}
+
+await runAcrossValidationRoots(root, validateRoot);
+
+console.log("Validated XML/SVG syntax for source and dist.");
