@@ -26,26 +26,66 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y libxml2-utils
           fi
-          npm ci
+          npm ci --prefer-offline --no-audit
       - name: Build site
         shell: bash
         run: |
           set -euo pipefail
           npm run generate
           npm run build
-      - name: Validate local files and cross-references
+      - name: Validate local files, XML/SVG, and module dependencies in parallel
         shell: bash
         run: |
           set -euo pipefail
-          npm run validate:site
-          cmp Background.jpeg dist/Background.jpeg
-      - name: Validate XML and SVG syntax
-        shell: bash
-        run: |
-          set -euo pipefail
-          for root in . dist; do
-            xmllint --noout "$root/sitemap.xml"
-            xmllint --noout "$root/HF.svg"
-            xmllint --noout "$root/social-preview.svg"
-            xmllint --noout "$root/.well-known/bimi/logo.svg"
+
+          log_dir="$(mktemp -d)"
+
+          run_validation() {
+            local pid_var="$1"
+            local name="$2"
+            shift 2
+            (
+              set -euo pipefail
+              "$@"
+            ) >"${log_dir}/${name}.log" 2>&1 &
+            printf -v "$pid_var" "%s" "$!"
+          }
+
+          run_validation site_pid site npm run validate:site
+          run_validation xml_pid xml npm run validate:xml
+          run_validation deps_pid deps npm run validate:deps
+
+          failures=0
+          failed_jobs=()
+
+          if ! wait "$site_pid"; then
+            failures=$((failures + 1))
+            failed_jobs+=("site")
+          fi
+          if ! wait "$xml_pid"; then
+            failures=$((failures + 1))
+            failed_jobs+=("xml")
+          fi
+          if ! wait "$deps_pid"; then
+            failures=$((failures + 1))
+            failed_jobs+=("deps")
+          fi
+
+          cmp Background.jpeg dist/Background.jpeg || {
+            failures=$((failures + 1))
+            failed_jobs+=("cmp")
+          }
+
+          for job in "${failed_jobs[@]}"; do
+            if [ "$job" = "cmp" ]; then
+              echo "::error::Background.jpeg and dist/Background.jpeg differ."
+              continue
+            fi
+            echo "::group::Failed validation output (${job})"
+            cat "${log_dir}/${job}.log"
+            echo "::endgroup::"
           done
+
+          if [ "$failures" -ne 0 ]; then
+            exit 1
+          fi
