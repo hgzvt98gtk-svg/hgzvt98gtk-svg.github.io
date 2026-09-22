@@ -33,27 +33,58 @@ jobs:
           set -euo pipefail
           npm run generate
           npm run build
-      - name: Validate local files, XML/SVG, and dependency graph in parallel
+      - name: Validate local files, XML/SVG, and module dependencies in parallel
         shell: bash
         run: |
           set -euo pipefail
 
-          npm run validate:site &
-          site_pid=$!
+          log_dir="$(mktemp -d)"
 
-          npm run validate:xml &
-          xml_pid=$!
+          run_validation() {
+            local name="$1"
+            shift
+            (
+              set -euo pipefail
+              "$@"
+            ) >"${log_dir}/${name}.log" 2>&1 &
+            echo $!
+          }
 
-          npm run validate:deps &
-          deps_pid=$!
+          site_pid="$(run_validation site npm run validate:site)"
+          xml_pid="$(run_validation xml npm run validate:xml)"
+          deps_pid="$(run_validation deps npm run validate:deps)"
 
-          status=0
-          wait "$site_pid" || status=1
-          wait "$xml_pid" || status=1
-          wait "$deps_pid" || status=1
+          failures=0
+          failed_jobs=()
 
-          cmp Background.jpeg dist/Background.jpeg
+          if ! wait "$site_pid"; then
+            failures=$((failures + 1))
+            failed_jobs+=("site")
+          fi
+          if ! wait "$xml_pid"; then
+            failures=$((failures + 1))
+            failed_jobs+=("xml")
+          fi
+          if ! wait "$deps_pid"; then
+            failures=$((failures + 1))
+            failed_jobs+=("deps")
+          fi
 
-          if [ "$status" -ne 0 ]; then
-            exit "$status"
+          cmp Background.jpeg dist/Background.jpeg || {
+            failures=$((failures + 1))
+            failed_jobs+=("cmp")
+          }
+
+          for job in "${failed_jobs[@]}"; do
+            if [ "$job" = "cmp" ]; then
+              echo "::error::Background.jpeg and dist/Background.jpeg differ."
+              continue
+            fi
+            echo "::group::Failed validation output (${job})"
+            cat "${log_dir}/${job}.log"
+            echo "::endgroup::"
+          done
+
+          if [ "$failures" -ne 0 ]; then
+            exit 1
           fi

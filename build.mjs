@@ -1,4 +1,4 @@
-import { access, copyFile, mkdir, readFile, readdir, rm, stat, unlink, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import CleanCSS from "clean-css";
@@ -25,14 +25,22 @@ async function exists(path) {
 }
 
 async function filesIn(directory) {
-  const entries = await readdir(directory, { withFileTypes: true });
+  const pending = [directory];
   const files = [];
 
-  for (const entry of entries) {
-    if (excluded.has(entry.name)) continue;
-    const path = join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...await filesIn(path));
-    else files.push(path);
+  while (pending.length > 0) {
+    const currentDirectory = pending.pop();
+    const entries = await readdir(currentDirectory, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (excluded.has(entry.name)) continue;
+      const path = join(currentDirectory, entry.name);
+      if (entry.isDirectory()) {
+        pending.push(path);
+      } else {
+        files.push(path);
+      }
+    }
   }
 
   return files;
@@ -106,14 +114,18 @@ const [sources, previousManifest] = await Promise.all([
 const forceRebuild = previousManifest.configFingerprint !== configFingerprint;
 const nextManifest = { configFingerprint, files: {} };
 const buildQueue = [];
-
-for (const source of sources) {
+const sourceMetadata = await Promise.all(sources.map(async (source) => {
   const relativeSource = relative(root, source);
   const destination = join(output, relativeSource);
   const signature = await fileSignature(source);
+  const destinationExists = forceRebuild ? false : await exists(destination);
+  return { source, relativeSource, destination, signature, destinationExists };
+}));
+
+for (const { source, relativeSource, signature, destinationExists } of sourceMetadata) {
   nextManifest.files[relativeSource] = signature;
 
-  if (!forceRebuild && previousManifest.files[relativeSource] === signature && await exists(destination)) {
+  if (!forceRebuild && previousManifest.files[relativeSource] === signature && destinationExists) {
     continue;
   }
 
