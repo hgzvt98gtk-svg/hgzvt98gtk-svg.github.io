@@ -1,10 +1,6 @@
 import { contentCheckFiles, listAssetRelativePaths, listRenderedAndStaticFiles, xmlSyntaxAssetPathKeys } from "./site-paths.mjs";
 import { escapeRegex } from "./validate-site-helpers.mjs";
 
-export function listRequiredSiteFiles(siteConfig, renderedFiles) {
-  return listRenderedAndStaticFiles(siteConfig, renderedFiles);
-}
-
 export function listXmlSyntaxFiles(siteConfig) {
   return listAssetRelativePaths(siteConfig, xmlSyntaxAssetPathKeys);
 }

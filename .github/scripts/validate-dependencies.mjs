@@ -2,6 +2,7 @@ import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, join, normalize, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "acorn";
+import { fileSignature } from "./file-signature.mjs";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const scriptRoot = join(root, ".github", "scripts");
@@ -71,10 +72,6 @@ async function parseImports(filePath, fileSet) {
     return [];
   });
   return importSpecifiers.map((specifier) => resolveImportPath(filePath, specifier, fileSet)).filter(Boolean);
-}
-
-function fileSignature(stats) {
-  return `${stats.size}:${stats.mtimeMs}`;
 }
 
 async function loadCache() {
