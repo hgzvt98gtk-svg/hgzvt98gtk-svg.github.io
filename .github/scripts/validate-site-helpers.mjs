@@ -68,13 +68,14 @@ export function validateRuntimeBootstrapScript(scriptText, siteConfig) {
 
 export function validateMtaStsDocument(documentText, siteConfig) {
   const lines = documentText.trim().split("\n");
+  const lineSet = new Set(lines);
   const mxLines = lines.filter((line) => line.startsWith("mx: "));
 
   return lines[0] === `version: ${siteConfig.mtaSts.version}`
     && lines[1] === `mode: ${siteConfig.mtaSts.mode}`
     && lines.at(-1) === `max_age: ${siteConfig.mtaSts.maxAge}`
     && mxLines.length === siteConfig.mtaSts.mx.length
-    && siteConfig.mtaSts.mx.every((mx) => lines.includes(`mx: ${mx}`));
+    && siteConfig.mtaSts.mx.every((mx) => lineSet.has(`mx: ${mx}`));
 }
 
 export const manualReadTargets = Object.freeze({

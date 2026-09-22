@@ -9,6 +9,7 @@ import { buildConfig } from "./.github/scripts/build.config.mjs";
 import { renderSiteFiles } from "./.github/scripts/site-files.mjs";
 import { siteConfig } from "./.github/scripts/site.config.mjs";
 import { siteUrls } from "./.github/scripts/site-urls.mjs";
+import { fileSignature } from "./.github/scripts/file-signature.mjs";
 import { validateBuildConfig, validateSiteConfig } from "./.github/scripts/validate-config.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -20,6 +21,7 @@ const excluded = new Set(buildConfig.excludedNames);
 const concurrency = buildConfig.concurrency;
 const configFingerprint = JSON.stringify(buildConfig);
 const renderedFiles = renderSiteFiles(siteConfig, siteUrls);
+const cssMinifier = new CleanCSS();
 
 async function statIfExists(path) {
   try {
@@ -53,10 +55,6 @@ async function loadManifest() {
   }
 }
 
-function fileSignature(stats) {
-  return `${stats.size}:${stats.mtimeMs}`;
-}
-
 async function buildFile(source) {
   const destination = join(output, relative(root, source));
   await mkdir(dirname(destination), { recursive: true });
@@ -78,7 +76,7 @@ async function buildFile(source) {
 
   if (extension === ".css") {
     const contents = await readFile(source, "utf8");
-    const result = new CleanCSS().minify(contents).styles;
+    const result = cssMinifier.minify(contents).styles;
     await writeFile(destination, result);
     return;
   }

@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 import { siteConfig } from "./site.config.mjs";
 import { renderSiteFiles } from "./site-files.mjs";
 import { siteUrls } from "./site-urls.mjs";
-import { listRequiredSiteFiles, listSiteContentChecks } from "./site-validation.mjs";
+import { listSiteContentChecks } from "./site-validation.mjs";
+import { listRenderedAndStaticFiles } from "./site-paths.mjs";
 import { assert, validateSiteConfig } from "./validate-config.mjs";
 import { runAcrossValidationRoots } from "./validation-roots.mjs";
 import {
@@ -32,7 +33,7 @@ const readTargets = new Set([
   ...contentCheckUniqueFiles,
   ...manualReadTargetPaths
 ]);
-const requiredFiles = listRequiredSiteFiles(siteConfig, generatedFiles);
+const requiredFiles = listRenderedAndStaticFiles(siteConfig, generatedFiles);
 const requiredExistenceOnlyFiles = requiredFiles.filter((relativePath) => !readTargets.has(relativePath));
 
 async function mustExist(path) {
