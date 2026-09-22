@@ -10,6 +10,7 @@ const cachePath = join(root, ".cache", "validate-dependencies.json");
 const cacheVersion = 1;
 const entryFiles = [join(root, "build.mjs"), join(root, "app.js")];
 const sourceExtensions = new Set([".mjs", ".js"]);
+const ignoredDirectoryNames = new Set([".git", "node_modules", "dist", ".cache"]);
 const boundaryRules = new Map([
   ["site-paths.mjs", new Set()],
   ["site.config.mjs", new Set(["site-paths.mjs"])],
@@ -25,14 +26,27 @@ function toRelativePath(path) {
 }
 
 async function listSourceFiles(directory) {
-  const entries = await readdir(directory, { withFileTypes: true });
-  return (await Promise.all(entries.map(async (entry) => {
-    const path = join(directory, entry.name);
-    if (entry.isDirectory()) {
-      return listSourceFiles(path);
+  const sources = [];
+  const directories = [directory];
+
+  while (directories.length > 0) {
+    const currentDirectory = directories.pop();
+    const entries = await readdir(currentDirectory, { withFileTypes: true });
+    for (const entry of entries) {
+      const path = join(currentDirectory, entry.name);
+      if (entry.isDirectory()) {
+        if (!ignoredDirectoryNames.has(entry.name)) {
+          directories.push(path);
+        }
+        continue;
+      }
+      if (sourceExtensions.has(extname(entry.name))) {
+        sources.push(path);
+      }
     }
-    return sourceExtensions.has(extname(entry.name)) ? [path] : [];
-  }))).flat();
+  }
+
+  return sources;
 }
 
 function resolveImportPath(importerPath, specifier, fileSet) {
