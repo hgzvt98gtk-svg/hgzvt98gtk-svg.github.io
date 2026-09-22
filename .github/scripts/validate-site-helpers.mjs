@@ -1,5 +1,4 @@
 import { generatedJsonFiles, siteFilePaths } from "./site-paths.mjs";
-import { parse } from "acorn";
 
 export function includesAttribute(contents, attribute, value) {
   const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -9,6 +8,10 @@ export function includesAttribute(contents, attribute, value) {
 
 function normalizeWhitespace(contents) {
   return contents.replace(/\s+/g, " ").trim();
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export function equivalentGeneratedContents(relativePath, actualContents, expectedContents) {
@@ -33,117 +36,28 @@ export function validateApiCatalog(apiCatalog, siteUrls) {
   return apiCatalog.site === siteUrls.home && Array.isArray(apiCatalog.apis);
 }
 
-function walkAst(node, visit) {
-  if (!node || typeof node !== "object") {
-    return;
-  }
-
-  if (Array.isArray(node)) {
-    for (const item of node) {
-      walkAst(item, visit);
-    }
-    return;
-  }
-
-  if ("type" in node && typeof node.type === "string") {
-    visit(node);
-  }
-
-  for (const value of Object.values(node)) {
-    if (value && typeof value === "object") {
-      walkAst(value, visit);
-    }
-  }
-}
-
 export function validateRuntimeAppScript(scriptText, siteConfig) {
-  const program = parse(scriptText, { ecmaVersion: "latest", sourceType: "module" });
-  let hasProvideContextCall = false;
-  const literalStrings = new Set();
-  let hasFetchJsonHelper = false;
-  let fetchesAgentCard = false;
-  let fetchesApiCatalog = false;
+  const requiredPatterns = [
+    /async function fetchJson\s*\(/,
+    /provideContext\s*\(/,
+    /name\s*:\s*["']get-site-info["']/,
+    /name\s*:\s*["']get-agent-card["']/,
+    /name\s*:\s*["']get-api-catalog["']/,
+    /status\s*:\s*runtimeContract\.siteStatus/,
+    /fetchJson\s*\(\s*runtimeContract\.agentCardPath\s*,\s*["']agent card["']\s*\)/,
+    /fetchJson\s*\(\s*runtimeContract\.apiCatalogPath\s*,\s*["']api catalog["']\s*\)/
+  ];
 
-  walkAst(program, (node) => {
-    if (node.type === "Literal" && typeof node.value === "string") {
-      literalStrings.add(node.value);
-    }
+  const requiredLiterals = [
+    siteConfig.assetPaths.agentCard,
+    siteConfig.assetPaths.apiCatalog,
+    siteConfig.siteStatus,
+    siteConfig.domain,
+    `Get information about ${siteConfig.domain}`
+  ];
 
-    if (node.type === "CallExpression" && node.callee?.type === "MemberExpression") {
-      const propertyName = node.callee.property?.type === "Identifier"
-        ? node.callee.property.name
-        : node.callee.property?.type === "Literal"
-          ? node.callee.property.value
-          : null;
-      if (propertyName === "provideContext") {
-        hasProvideContextCall = true;
-      }
-    }
-
-    if (
-      node.type === "CallExpression"
-      && (
-        (node.callee.type === "Identifier" && node.callee.name === "fetch")
-        || (
-          node.callee.type === "MemberExpression"
-          && (
-            (node.callee.property.type === "Identifier" && node.callee.property.name === "fetch")
-            || (node.callee.property.type === "Literal" && node.callee.property.value === "fetch")
-          )
-        )
-      )
-    ) {
-      const firstArg = node.arguments[0];
-      const fetchedLiteral = firstArg?.type === "Literal" && typeof firstArg.value === "string"
-        ? firstArg.value
-        : null;
-      const fetchedMember = firstArg?.type === "MemberExpression"
-        ? firstArg.property?.type === "Identifier"
-          ? firstArg.property.name
-          : firstArg.property?.type === "Literal" && typeof firstArg.property.value === "string"
-            ? firstArg.property.value
-            : null
-        : null;
-
-      if (fetchedLiteral === siteConfig.assetPaths.agentCard || fetchedMember === "agentCardPath") {
-        fetchesAgentCard = true;
-      }
-      if (fetchedLiteral === siteConfig.assetPaths.apiCatalog || fetchedMember === "apiCatalogPath") {
-        fetchesApiCatalog = true;
-      }
-    }
-
-    if (node.type === "CallExpression" && node.callee.type === "Identifier" && node.callee.name === "fetchJson") {
-      hasFetchJsonHelper = true;
-      const firstArg = node.arguments[0];
-      const fetchedLiteral = firstArg?.type === "Literal" && typeof firstArg.value === "string"
-        ? firstArg.value
-        : null;
-      const fetchedMember = firstArg?.type === "MemberExpression"
-        ? firstArg.property?.type === "Identifier"
-          ? firstArg.property.name
-          : firstArg.property?.type === "Literal" && typeof firstArg.property.value === "string"
-            ? firstArg.property.value
-            : null
-        : null;
-
-      if (fetchedLiteral === siteConfig.assetPaths.agentCard || fetchedMember === "agentCardPath") {
-        fetchesAgentCard = true;
-      }
-      if (fetchedLiteral === siteConfig.assetPaths.apiCatalog || fetchedMember === "apiCatalogPath") {
-        fetchesApiCatalog = true;
-      }
-    }
-  });
-
-  return hasProvideContextCall
-    && literalStrings.has(siteConfig.assetPaths.agentCard)
-    && literalStrings.has(siteConfig.assetPaths.apiCatalog)
-    && literalStrings.has(siteConfig.siteStatus)
-    && literalStrings.has(siteConfig.domain)
-    && hasFetchJsonHelper
-    && fetchesAgentCard
-    && fetchesApiCatalog;
+  return requiredPatterns.every((pattern) => pattern.test(scriptText))
+    && requiredLiterals.every((value) => new RegExp(escapeRegex(JSON.stringify(value))).test(scriptText));
 }
 
 export function validateMtaStsDocument(documentText, siteConfig) {

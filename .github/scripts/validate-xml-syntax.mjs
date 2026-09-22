@@ -1,5 +1,3 @@
-import { access } from "node:fs/promises";
-import { constants } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
@@ -11,13 +9,8 @@ import { runAcrossValidationRoots } from "./validation-roots.mjs";
 const execFileAsync = promisify(execFile);
 const root = fileURLToPath(new URL("../..", import.meta.url));
 
-async function mustExist(path) {
-  await access(path, constants.F_OK);
-}
-
 async function validateRoot(rootInfo) {
   const xmlPaths = listXmlSyntaxFiles(siteConfig).map((relativePath) => join(rootInfo.path, relativePath));
-  await Promise.all(xmlPaths.map((path) => mustExist(path)));
   await execFileAsync("xmllint", ["--noout", ...xmlPaths]);
 }
 

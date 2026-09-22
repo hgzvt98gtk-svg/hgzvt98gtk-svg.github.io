@@ -1,7 +1,7 @@
 import { siteConfig } from "./site.config.mjs";
 import { derivedSiteUrlAssetPathKeys } from "./site-paths.mjs";
 
-export function deriveSiteUrls(config) {
+function deriveSiteUrls(config) {
   const { origin, assetPaths } = config;
 
   return {

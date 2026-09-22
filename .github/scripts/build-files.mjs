@@ -1,7 +1,6 @@
-import { requiredStaticAssetPathKeys } from "./site-paths.mjs";
-import { toAssetRelativePath } from "./path-utils.mjs";
+import { listAssetRelativePaths, requiredStaticAssetPathKeys } from "./site-paths.mjs";
 
-export const passthroughBuildFiles = Object.freeze([
+const passthroughBuildFiles = Object.freeze([
   "CNAME",
   "_headers"
 ]);
@@ -10,7 +9,7 @@ export function listBuildFiles(siteConfig, renderedFiles) {
   return [
     ...new Set([
       ...renderedFiles.keys(),
-      ...requiredStaticAssetPathKeys.map((key) => toAssetRelativePath(siteConfig.assetPaths[key])),
+      ...listAssetRelativePaths(siteConfig, requiredStaticAssetPathKeys),
       ...passthroughBuildFiles
     ])
   ];

@@ -1,19 +1,14 @@
-import { contentCheckFiles, requiredStaticAssetPathKeys, xmlSyntaxAssetPathKeys } from "./site-paths.mjs";
-import { toAssetRelativePath } from "./path-utils.mjs";
-
-function listAssetPathsByKey(siteConfig, keys) {
-  return keys.map((key) => toAssetRelativePath(siteConfig.assetPaths[key]));
-}
+import { contentCheckFiles, listAssetRelativePaths, requiredStaticAssetPathKeys, xmlSyntaxAssetPathKeys } from "./site-paths.mjs";
 
 export function listRequiredSiteFiles(siteConfig, renderedFiles) {
   return [
     ...renderedFiles.keys(),
-    ...listAssetPathsByKey(siteConfig, requiredStaticAssetPathKeys)
+    ...listAssetRelativePaths(siteConfig, requiredStaticAssetPathKeys)
   ];
 }
 
 export function listXmlSyntaxFiles(siteConfig) {
-  return listAssetPathsByKey(siteConfig, xmlSyntaxAssetPathKeys);
+  return listAssetRelativePaths(siteConfig, xmlSyntaxAssetPathKeys);
 }
 
 export function listSiteContentChecks(siteConfig, siteUrls) {
