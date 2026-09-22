@@ -7,14 +7,15 @@ const root = fileURLToPath(new URL("../..", import.meta.url));
 const scriptRoot = join(root, ".github", "scripts");
 const entryFiles = [join(root, "build.mjs"), join(root, "app.js")];
 const sourceExtensions = new Set([".mjs", ".js"]);
+const scriptModule = (fileName) => normalize(join(".github", "scripts", fileName));
 const boundaryRules = new Map([
-  ["site-paths.mjs", new Set()],
-  ["path-utils.mjs", new Set()],
-  ["site.config.mjs", new Set()],
-  ["build.config.mjs", new Set()],
-  ["validation-roots.mjs", new Set()],
-  ["site-urls.mjs", new Set(["site.config.mjs", "site-paths.mjs"])],
-  ["validate-config.mjs", new Set(["site-paths.mjs"])]
+  [scriptModule("site-paths.mjs"), new Set()],
+  [scriptModule("path-utils.mjs"), new Set()],
+  [scriptModule("site.config.mjs"), new Set()],
+  [scriptModule("build.config.mjs"), new Set()],
+  [scriptModule("validation-roots.mjs"), new Set()],
+  [scriptModule("site-urls.mjs"), new Set([scriptModule("site.config.mjs"), scriptModule("site-paths.mjs")])],
+  [scriptModule("validate-config.mjs"), new Set([scriptModule("site-paths.mjs")])]
 ]);
 
 async function listSourceFiles(directory) {
@@ -121,15 +122,15 @@ function findBoundaryViolations(graph) {
   const violations = [];
 
   for (const [fromPath, toPaths] of graph) {
-    const fromFileName = basename(fromPath);
-    const allowedImports = boundaryRules.get(fromFileName);
+    const fromModule = normalize(relativeToRoot(fromPath));
+    const allowedImports = boundaryRules.get(fromModule);
     if (!allowedImports) {
       continue;
     }
 
     for (const toPath of toPaths) {
-      const importedFileName = basename(toPath);
-      if (!allowedImports.has(importedFileName)) {
+      const importedModule = normalize(relativeToRoot(toPath));
+      if (!allowedImports.has(importedModule)) {
         violations.push({ fromPath, toPath });
       }
     }
@@ -139,8 +140,8 @@ function findBoundaryViolations(graph) {
 }
 
 function validateBoundaryRuleCoverage(graph) {
-  const graphFileNames = new Set([...graph.keys()].map((path) => basename(path)));
-  const staleBoundaryRules = [...boundaryRules.keys()].filter((fileName) => !graphFileNames.has(fileName));
+  const graphModules = new Set([...graph.keys()].map((path) => normalize(relativeToRoot(path))));
+  const staleBoundaryRules = [...boundaryRules.keys()].filter((fileName) => !graphModules.has(fileName));
   if (staleBoundaryRules.length > 0) {
     throw new Error(
       `boundaryRules has entries for files that are not in the dependency graph: ${staleBoundaryRules.join(", ")}.\n`

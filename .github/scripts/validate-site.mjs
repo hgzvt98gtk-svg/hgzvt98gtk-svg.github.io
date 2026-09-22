@@ -1,6 +1,6 @@
 import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
-import { join } from "node:path";
+import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { siteConfig } from "./site.config.mjs";
 import { renderSiteFiles } from "./site-files.mjs";
@@ -22,6 +22,9 @@ import {
 const root = join(fileURLToPath(new URL("../..", import.meta.url)));
 validateSiteConfig(siteConfig, siteUrls);
 const generatedFiles = renderSiteFiles(siteConfig, siteUrls);
+const generatedVerbatimFiles = new Map(
+  [...generatedFiles].filter(([relativePath]) => ![".html", ".htm", ".css", ".js", ".mjs"].includes(extname(relativePath).toLowerCase()))
+);
 
 function assert(condition, message) {
   if (!condition) {
@@ -43,8 +46,8 @@ function createRootReader(rootPath) {
   };
 }
 
-async function validateGeneratedSource(rootPath, read) {
-  await Promise.all([...generatedFiles].map(async ([relativePath, expectedContents]) => {
+async function validateGeneratedSource(rootPath, read, filesToValidate) {
+  await Promise.all([...filesToValidate].map(async ([relativePath, expectedContents]) => {
     const actualContents = await read(relativePath);
     assert(
       equivalentGeneratedContents(relativePath, actualContents, expectedContents),
@@ -99,7 +102,9 @@ async function validateRoot(rootInfo) {
   const read = createRootReader(rootInfo.path);
 
   if (rootInfo.name === ".") {
-    await validateGeneratedSource(rootInfo.path, read);
+    await validateGeneratedSource(rootInfo.path, read, generatedFiles);
+  } else {
+    await validateGeneratedSource(rootInfo.path, read, generatedVerbatimFiles);
   }
 
   await validateContentChecks(rootInfo.path, read);
