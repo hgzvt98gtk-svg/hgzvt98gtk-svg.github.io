@@ -6,12 +6,23 @@ function assert(condition, message) {
   }
 }
 
+function validatePathOnlyAssetPath(path, key) {
+  assert(!path.startsWith("//"), `siteConfig.assetPaths.${key} must not start with //`);
+  assert(!/[?#]/.test(path), `siteConfig.assetPaths.${key} must not include a query string or fragment`);
+  assert(!/[\u0000-\u001F\u007F\s\\]/.test(path), `siteConfig.assetPaths.${key} must not contain whitespace, control characters, or backslashes`);
+
+  const parsed = new URL(path, "https://example.test");
+  assert(parsed.origin === "https://example.test", `siteConfig.assetPaths.${key} must stay on-origin`);
+  assert(parsed.pathname === path, `siteConfig.assetPaths.${key} must be a normalized absolute path`);
+}
+
 function validateAssetPaths(assetPaths) {
   assert(typeof assetPaths === "object" && assetPaths !== null, "siteConfig.assetPaths must be an object");
 
   for (const key of requiredAssetPathKeys) {
     assert(typeof assetPaths[key] === "string" && assetPaths[key].length > 0, `siteConfig.assetPaths.${key} must be a non-empty string`);
     assert(assetPaths[key].startsWith("/"), `siteConfig.assetPaths.${key} must start with /`);
+    validatePathOnlyAssetPath(assetPaths[key], key);
   }
 }
 
