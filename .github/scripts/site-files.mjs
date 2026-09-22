@@ -139,3 +139,19 @@ max_age: ${siteConfig.mtaSts.maxAge}
 `]
   ]);
 }
+
+const staticRequiredFiles = [
+  "style.css",
+  "HF.svg",
+  "Background.jpeg",
+  "social-preview.svg",
+  ".well-known/bimi/logo.svg"
+];
+
+export function listRequiredSiteFiles(generatedFiles) {
+  return [...new Set([...generatedFiles.keys(), ...staticRequiredFiles])];
+}
+
+export function listXmlSyntaxFiles(requiredFiles) {
+  return requiredFiles.filter((relativePath) => relativePath.endsWith(".xml") || relativePath.endsWith(".svg"));
+}
