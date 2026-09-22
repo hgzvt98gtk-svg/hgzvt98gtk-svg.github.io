@@ -1,0 +1,167 @@
+import { siteFilePaths } from "./site-paths.mjs";
+
+function renderPageFiles(siteConfig, siteUrls) {
+  return new Map([
+    [siteFilePaths.index, `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="${siteConfig.themeColor}">
+  <title>${siteConfig.pageTitles.home}</title>
+  <meta name="description" content="${siteConfig.descriptions.home}">
+  <link rel="canonical" href="${siteUrls.home}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="${siteUrls.home}">
+  <meta property="og:title" content="${siteConfig.pageTitles.home}">
+  <meta property="og:description" content="${siteConfig.descriptions.home}">
+  <meta property="og:site_name" content="${siteConfig.personName}">
+  <meta property="og:image" content="${siteUrls.socialPreview}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${siteConfig.pageTitles.home}">
+  <meta name="twitter:description" content="${siteConfig.descriptions.home}">
+  <meta name="twitter:image" content="${siteUrls.socialPreview}">
+  <link rel="icon" href="${siteConfig.assetPaths.icon}" type="image/svg+xml">
+  <link rel="stylesheet" href="${siteConfig.assetPaths.stylesheet}">
+</head>
+<body>
+  <main class="landing" aria-label="${siteConfig.personName} personal website">
+    <h1>${siteConfig.domain}</h1>
+  </main>
+  <script type="module" src="${siteConfig.assetPaths.appScript}"></script>
+</body>
+</html>
+`],
+    [siteFilePaths.privacy, `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="${siteConfig.themeColor}">
+  <title>${siteConfig.pageTitles.privacy}</title>
+  <meta name="description" content="${siteConfig.descriptions.privacy}">
+  <link rel="canonical" href="${siteUrls.privacy}">
+  <link rel="icon" href="${siteConfig.assetPaths.icon}" type="image/svg+xml">
+  <link rel="stylesheet" href="${siteConfig.assetPaths.stylesheet}">
+</head>
+<body class="document">
+  <main class="policy" aria-labelledby="privacy-title">
+    <h1 id="privacy-title">Privacy Policy</h1>
+    <p class="updated">Last updated: ${siteConfig.privacyLastUpdated}</p>
+    <h2>Overview</h2>
+    <p>This is a static personal website. It does not provide accounts, contact forms, analytics, advertising, or embedded third-party scripts.</p>
+    <h2>Information collected</h2>
+    <p>The site does not intentionally collect personal information or set cookies. Hosting and delivery providers may process technical request data, such as IP address, browser information, and request time, in server logs and security systems.</p>
+    <h2>Email and external links</h2>
+    <p>If you email <a href="mailto:${siteConfig.email}">${siteConfig.email}</a>, your email provider will process your message. External websites have their own privacy policies.</p>
+    <h2>Changes</h2>
+    <p>This policy may be updated when the site or its providers change. The date above identifies the latest revision.</p>
+  </main>
+</body>
+</html>
+`]
+  ]);
+}
+
+function renderRuntimeFiles(siteConfig, siteUrls) {
+  return new Map([
+    [siteFilePaths.appScript, `const runtimeContract = Object.freeze({
+  agentCardPath: "${siteConfig.assetPaths.agentCard}",
+  apiCatalogPath: "${siteConfig.assetPaths.apiCatalog}",
+  siteStatus: "${siteConfig.siteStatus}"
+});
+
+if ("modelContext" in navigator) {
+  navigator.modelContext.provideContext({
+    tools: [
+      {
+        name: "get-site-info",
+        description: "Get information about ${siteConfig.domain}",
+        inputSchema: { type: "object", properties: {} },
+        execute: async () => ({ host: "${siteConfig.domain}", status: runtimeContract.siteStatus })
+      },
+      {
+        name: "get-agent-card",
+        description: "Get the AI agent card for this site",
+        inputSchema: { type: "object", properties: {} },
+        execute: async () => {
+          const response = await fetch(runtimeContract.agentCardPath);
+          return await response.json();
+        }
+      },
+      {
+        name: "get-api-catalog",
+        description: "Get the API catalog for this site",
+        inputSchema: { type: "object", properties: {} },
+        execute: async () => {
+          const response = await fetch(runtimeContract.apiCatalogPath);
+          return await response.json();
+        }
+      }
+    ]
+  });
+}
+`],
+    [siteFilePaths.robots, `User-agent: *
+Allow: /
+
+Sitemap: ${siteUrls.sitemap}
+`],
+    [siteFilePaths.sitemap, `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${siteUrls.home}</loc>
+    <lastmod>${siteConfig.privacyLastModified}</lastmod>
+  </url>
+  <url>
+    <loc>${siteUrls.privacy}</loc>
+    <lastmod>${siteConfig.privacyLastModified}</lastmod>
+  </url>
+</urlset>
+`],
+    [siteFilePaths.llms, `# ${siteConfig.personName}
+
+> Personal website of ${siteConfig.personName}.
+
+## About
+- ${siteConfig.personName} — personal site and contact page.
+
+## Pages
+- [Home](${siteUrls.home}): Personal landing page.
+- [Privacy](${siteUrls.privacy}): Privacy policy.
+
+## Contact
+- Email: ${siteConfig.email}
+`]
+  ]);
+}
+
+function renderWellKnownFiles(siteConfig, siteUrls) {
+  return new Map([
+    [siteFilePaths.agentCard, `${JSON.stringify({
+      name: siteConfig.personName,
+      url: siteUrls.home,
+      description: siteConfig.descriptions.agentCard,
+      status: siteConfig.siteStatus
+    }, null, 2)}
+`],
+    [siteFilePaths.apiCatalog, `${JSON.stringify({
+      site: siteUrls.home,
+      apis: siteConfig.apis
+    }, null, 2)}
+`],
+    [siteFilePaths.mtaSts, `version: ${siteConfig.mtaSts.version}
+mode: ${siteConfig.mtaSts.mode}
+${siteConfig.mtaSts.mx.map((mx) => `mx: ${mx}`).join("\n")}
+max_age: ${siteConfig.mtaSts.maxAge}
+`]
+  ]);
+}
+
+export function renderSiteFiles(siteConfig, siteUrls) {
+  return new Map([
+    ...renderPageFiles(siteConfig, siteUrls),
+    ...renderRuntimeFiles(siteConfig, siteUrls),
+    ...renderWellKnownFiles(siteConfig, siteUrls)
+  ]);
+}
