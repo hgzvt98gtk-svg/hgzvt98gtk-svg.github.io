@@ -16,11 +16,9 @@ async function mustExist(path) {
 }
 
 async function validateRoot(rootInfo) {
-  await Promise.all(listXmlSyntaxFiles(siteConfig).map(async (relativePath) => {
-    const path = join(rootInfo.path, relativePath);
-    await mustExist(path);
-    await execFileAsync("xmllint", ["--noout", path]);
-  }));
+  const xmlPaths = listXmlSyntaxFiles(siteConfig).map((relativePath) => join(rootInfo.path, relativePath));
+  await Promise.all(xmlPaths.map((path) => mustExist(path)));
+  await execFileAsync("xmllint", ["--noout", ...xmlPaths]);
 }
 
 await runAcrossValidationRoots(root, validateRoot);

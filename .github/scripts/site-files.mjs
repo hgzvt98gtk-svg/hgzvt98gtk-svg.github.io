@@ -65,21 +65,27 @@ function renderPageFiles(siteConfig, siteUrls) {
 
 function renderRuntimeFiles(siteConfig, siteUrls) {
   return new Map([
-    [siteFilePaths.appScript, `if ("modelContext" in navigator) {
+    [siteFilePaths.appScript, `const runtimeContract = Object.freeze({
+  agentCardPath: "${siteConfig.assetPaths.agentCard}",
+  apiCatalogPath: "${siteConfig.assetPaths.apiCatalog}",
+  siteStatus: "${siteConfig.siteStatus}"
+});
+
+if ("modelContext" in navigator) {
   navigator.modelContext.provideContext({
     tools: [
       {
         name: "get-site-info",
         description: "Get information about ${siteConfig.domain}",
         inputSchema: { type: "object", properties: {} },
-        execute: async () => ({ host: "${siteConfig.domain}", status: "${siteConfig.siteStatus}" })
+        execute: async () => ({ host: "${siteConfig.domain}", status: runtimeContract.siteStatus })
       },
       {
         name: "get-agent-card",
         description: "Get the AI agent card for this site",
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
-          const response = await fetch("${siteConfig.assetPaths.agentCard}");
+          const response = await fetch(runtimeContract.agentCardPath);
           return await response.json();
         }
       },
@@ -88,7 +94,7 @@ function renderRuntimeFiles(siteConfig, siteUrls) {
         description: "Get the API catalog for this site",
         inputSchema: { type: "object", properties: {} },
         execute: async () => {
-          const response = await fetch("${siteConfig.assetPaths.apiCatalog}");
+          const response = await fetch(runtimeContract.apiCatalogPath);
           return await response.json();
         }
       }

@@ -1,24 +1,34 @@
 import { contentCheckFiles } from "./site-paths.mjs";
 import { toAssetRelativePath } from "./path-utils.mjs";
 
+const requiredAssetPathKeys = Object.freeze([
+  "stylesheet",
+  "icon",
+  "background",
+  "socialPreview",
+  "bimiLogo"
+]);
+
+const xmlSyntaxAssetPathKeys = Object.freeze([
+  "sitemap",
+  "icon",
+  "socialPreview",
+  "bimiLogo"
+]);
+
+function listAssetPathsByKey(siteConfig, keys) {
+  return keys.map((key) => toAssetRelativePath(siteConfig.assetPaths[key]));
+}
+
 export function listRequiredSiteFiles(siteConfig, renderedFiles) {
   return [
     ...renderedFiles.keys(),
-    toAssetRelativePath(siteConfig.assetPaths.stylesheet),
-    toAssetRelativePath(siteConfig.assetPaths.icon),
-    toAssetRelativePath(siteConfig.assetPaths.background),
-    toAssetRelativePath(siteConfig.assetPaths.socialPreview),
-    toAssetRelativePath(siteConfig.assetPaths.bimiLogo)
+    ...listAssetPathsByKey(siteConfig, requiredAssetPathKeys)
   ];
 }
 
 export function listXmlSyntaxFiles(siteConfig) {
-  return [
-    toAssetRelativePath(siteConfig.assetPaths.sitemap),
-    toAssetRelativePath(siteConfig.assetPaths.icon),
-    toAssetRelativePath(siteConfig.assetPaths.socialPreview),
-    toAssetRelativePath(siteConfig.assetPaths.bimiLogo)
-  ];
+  return listAssetPathsByKey(siteConfig, xmlSyntaxAssetPathKeys);
 }
 
 export function listSiteContentChecks(siteConfig, siteUrls) {
