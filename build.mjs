@@ -35,13 +35,21 @@ async function statIfExists(path) {
 async function loadManifest() {
   try {
     const text = await readFile(manifestPath, "utf8");
-    const parsed = JSON.parse(text);
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (error) {
+      throw new Error(`Invalid build manifest at ${manifestPath}: ${error.message}`, { cause: error });
+    }
     return {
       configFingerprint: parsed.configFingerprint ?? "",
       files: typeof parsed.files === "object" && parsed.files !== null ? parsed.files : {}
     };
-  } catch {
-    return { configFingerprint: "", files: {} };
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      return { configFingerprint: "", files: {} };
+    }
+    throw error;
   }
 }
 
