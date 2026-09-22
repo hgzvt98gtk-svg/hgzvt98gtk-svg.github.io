@@ -4,14 +4,16 @@ import { fileURLToPath } from "node:url";
 import CleanCSS from "clean-css";
 import { minify as minifyHtml } from "html-minifier-terser";
 import { minify as minifyJs } from "terser";
+import { buildConfig } from "./.github/scripts/build.config.mjs";
 import { siteConfig, siteUrls } from "./.github/scripts/site.config.mjs";
-import { validateSiteConfig } from "./.github/scripts/validate-config.mjs";
+import { validateBuildConfig, validateSiteConfig } from "./.github/scripts/validate-config.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const output = join(root, "dist");
 validateSiteConfig(siteConfig, siteUrls);
-const excluded = new Set(siteConfig.build.excludedNames);
-const concurrency = siteConfig.build.concurrency;
+validateBuildConfig(buildConfig);
+const excluded = new Set(buildConfig.excludedNames);
+const concurrency = buildConfig.concurrency;
 
 async function filesIn(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
