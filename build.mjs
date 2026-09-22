@@ -1,10 +1,8 @@
 import { access, copyFile, mkdir, readFile, readdir, rm, rmdir, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import CleanCSS from "clean-css";
-import { minify as minifyHtml } from "html-minifier-terser";
-import { minify as minifyJs } from "terser";
 import { buildConfig } from "./.github/scripts/build.config.mjs";
+import { minifySiteContents } from "./.github/scripts/site-minify.mjs";
 import { validateBuildConfig } from "./.github/scripts/validate-config.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -108,29 +106,22 @@ async function buildFile(source) {
   const extension = extname(source).toLowerCase();
   if (extension === ".html" || extension === ".htm") {
     const contents = await readFile(source, "utf8");
-    const result = await minifyHtml(contents, {
-      collapseWhitespace: true,
-      minifyCSS: true,
-      minifyJS: true,
-      removeComments: true,
-      removeRedundantAttributes: true,
-      useShortDoctype: true
-    });
+    const result = await minifySiteContents(extension, contents);
     await writeFile(destination, result);
     return;
   }
 
   if (extension === ".css") {
     const contents = await readFile(source, "utf8");
-    const result = new CleanCSS().minify(contents).styles;
+    const result = await minifySiteContents(extension, contents);
     await writeFile(destination, result);
     return;
   }
 
   if (extension === ".js" || extension === ".mjs") {
     const contents = await readFile(source, "utf8");
-    const minified = await minifyJs(contents);
-    await writeFile(destination, minified.code ?? "");
+    const minified = await minifySiteContents(extension, contents);
+    await writeFile(destination, minified);
     return;
   }
 

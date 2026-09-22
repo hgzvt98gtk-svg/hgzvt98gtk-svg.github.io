@@ -2,11 +2,9 @@ import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import CleanCSS from "clean-css";
-import { minify as minifyHtml } from "html-minifier-terser";
-import { minify as minifyJs } from "terser";
 import { siteConfig } from "./site.config.mjs";
 import { renderSiteFiles } from "./site-files.mjs";
+import { minifySiteContents } from "./site-minify.mjs";
 import { siteUrls } from "./site-urls.mjs";
 import { listRequiredSiteFiles, listSiteContentChecks } from "./site-validation.mjs";
 import { validateSiteConfig } from "./validate-config.mjs";
@@ -51,27 +49,7 @@ async function expectedGeneratedContents(rootName, relativePath, expectedContent
     return expectedContents;
   }
 
-  const extension = extname(relativePath).toLowerCase();
-  if (extension === ".html" || extension === ".htm") {
-    return minifyHtml(expectedContents, {
-      collapseWhitespace: true,
-      minifyCSS: true,
-      minifyJS: true,
-      removeComments: true,
-      removeRedundantAttributes: true,
-      useShortDoctype: true
-    });
-  }
-
-  if (extension === ".js" || extension === ".mjs") {
-    return (await minifyJs(expectedContents)).code ?? "";
-  }
-
-  if (extension === ".css") {
-    return new CleanCSS().minify(expectedContents).styles;
-  }
-
-  return expectedContents;
+  return minifySiteContents(extname(relativePath).toLowerCase(), expectedContents);
 }
 
 async function validateGeneratedSource(rootInfo, read, filesToValidate) {
