@@ -1,10 +1,12 @@
+import { siteFilePaths } from "./site-paths.mjs";
+
 function toRelativePath(pathname) {
   return pathname.replace(/^\//, "");
 }
 
 function renderPageFiles(siteConfig, siteUrls) {
   return new Map([
-    ["index.html", `<!doctype html>
+    [siteFilePaths.index, `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -34,7 +36,7 @@ function renderPageFiles(siteConfig, siteUrls) {
 </body>
 </html>
 `],
-    ["Privacy.html", `<!doctype html>
+    [siteFilePaths.privacy, `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -67,7 +69,7 @@ function renderPageFiles(siteConfig, siteUrls) {
 
 function renderRuntimeFiles(siteConfig, siteUrls) {
   return new Map([
-    ["app.js", `if ("modelContext" in navigator) {
+    [siteFilePaths.appScript, `if ("modelContext" in navigator) {
   navigator.modelContext.provideContext({
     tools: [
       {
@@ -98,12 +100,12 @@ function renderRuntimeFiles(siteConfig, siteUrls) {
   });
 }
 `],
-    ["robots.txt", `User-agent: *
+    [siteFilePaths.robots, `User-agent: *
 Allow: /
 
 Sitemap: ${siteUrls.sitemap}
 `],
-    ["sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>
+    [siteFilePaths.sitemap, `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>${siteUrls.home}</loc>
@@ -115,7 +117,7 @@ Sitemap: ${siteUrls.sitemap}
   </url>
 </urlset>
 `],
-    ["llms.txt", `# ${siteConfig.personName}
+    [siteFilePaths.llms, `# ${siteConfig.personName}
 
 > Personal website of ${siteConfig.personName}.
 
@@ -134,19 +136,19 @@ Sitemap: ${siteUrls.sitemap}
 
 function renderWellKnownFiles(siteConfig, siteUrls) {
   return new Map([
-    [toRelativePath(siteConfig.assetPaths.agentCard), `${JSON.stringify({
+    [siteFilePaths.agentCard, `${JSON.stringify({
       name: siteConfig.personName,
       url: siteUrls.home,
       description: siteConfig.descriptions.agentCard,
       status: siteConfig.siteStatus
     }, null, 2)}
 `],
-    [toRelativePath(siteConfig.assetPaths.apiCatalog), `${JSON.stringify({
+    [siteFilePaths.apiCatalog, `${JSON.stringify({
       site: siteUrls.home,
       apis: siteConfig.apis
     }, null, 2)}
 `],
-    [toRelativePath(siteConfig.assetPaths.mtaSts), `version: ${siteConfig.mtaSts.version}
+    [siteFilePaths.mtaSts, `version: ${siteConfig.mtaSts.version}
 mode: ${siteConfig.mtaSts.mode}
 ${siteConfig.mtaSts.mx.map((mx) => `mx: ${mx}`).join("\n")}
 max_age: ${siteConfig.mtaSts.maxAge}
@@ -160,4 +162,8 @@ export function renderSiteFiles(siteConfig, siteUrls) {
     ...renderRuntimeFiles(siteConfig, siteUrls),
     ...renderWellKnownFiles(siteConfig, siteUrls)
   ]);
+}
+
+export function toAssetRelativePath(pathname) {
+  return toRelativePath(pathname);
 }
