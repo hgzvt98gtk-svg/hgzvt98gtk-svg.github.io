@@ -137,7 +137,7 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
 }
 
 export function validateMtaStsDocument(documentText, siteConfig) {
-  const lines = documentText.trim().split("\n");
+  const lines = documentText.trim().split(/\r?\n/);
   const mxLines = lines.filter((line) => line.startsWith("mx: "));
   const mxValues = mxLines.map((line) => line.slice("mx: ".length));
 

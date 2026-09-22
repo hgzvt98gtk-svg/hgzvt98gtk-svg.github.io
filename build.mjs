@@ -1,4 +1,4 @@
-import { access, copyFile, mkdir, readFile, readdir, rmdir, stat, unlink, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, readFile, readdir, rm, rmdir, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import CleanCSS from "clean-css";
@@ -126,6 +126,11 @@ const [sources, previousManifest] = await Promise.all([
 ]);
 
 const forceRebuild = previousManifest.configFingerprint !== configFingerprint;
+if (forceRebuild) {
+  await rm(output, { recursive: true, force: true });
+  await mkdir(output, { recursive: true });
+}
+
 const nextManifest = { configFingerprint, files: {} };
 const buildQueue = [];
 const sourceMetadata = await Promise.all(sources.map(async (source) => {
