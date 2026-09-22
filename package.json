@@ -6,7 +6,8 @@
     "generate": "node .github/scripts/generate-site.mjs",
     "build": "node build.mjs",
     "validate:site": "node .github/scripts/validate-site.mjs",
-    "validate:xml": "node .github/scripts/validate-xml-syntax.mjs"
+    "validate:xml": "node .github/scripts/validate-xml-syntax.mjs",
+    "validate:deps": "node .github/scripts/validate-dependencies.mjs"
   },
   "devDependencies": {
     "clean-css": "^5.3.3",

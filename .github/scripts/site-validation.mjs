@@ -1,24 +1,23 @@
-function toRelativePath(pathname) {
-  return pathname.replace(/^\//, "");
-}
+import { contentCheckFiles } from "./site-paths.mjs";
+import { toAssetRelativePath } from "./site-files.mjs";
 
 export function listRequiredSiteFiles(siteConfig, renderedFiles) {
   return [
     ...renderedFiles.keys(),
-    toRelativePath(siteConfig.assetPaths.stylesheet),
-    toRelativePath(siteConfig.assetPaths.icon),
-    toRelativePath(siteConfig.assetPaths.background),
-    toRelativePath(siteConfig.assetPaths.socialPreview),
-    toRelativePath(siteConfig.assetPaths.bimiLogo)
+    toAssetRelativePath(siteConfig.assetPaths.stylesheet),
+    toAssetRelativePath(siteConfig.assetPaths.icon),
+    toAssetRelativePath(siteConfig.assetPaths.background),
+    toAssetRelativePath(siteConfig.assetPaths.socialPreview),
+    toAssetRelativePath(siteConfig.assetPaths.bimiLogo)
   ];
 }
 
 export function listXmlSyntaxFiles(siteConfig) {
   return [
-    toRelativePath(siteConfig.assetPaths.sitemap),
-    toRelativePath(siteConfig.assetPaths.icon),
-    toRelativePath(siteConfig.assetPaths.socialPreview),
-    toRelativePath(siteConfig.assetPaths.bimiLogo)
+    toAssetRelativePath(siteConfig.assetPaths.sitemap),
+    toAssetRelativePath(siteConfig.assetPaths.icon),
+    toAssetRelativePath(siteConfig.assetPaths.socialPreview),
+    toAssetRelativePath(siteConfig.assetPaths.bimiLogo)
   ];
 }
 
@@ -26,51 +25,51 @@ export function listSiteContentChecks(siteConfig, siteUrls) {
   return [
     {
       type: "attribute",
-      file: "index.html",
+      file: contentCheckFiles.index,
       attribute: "href",
       value: siteConfig.assetPaths.stylesheet,
-      message: "index.html missing stylesheet link"
+      message: `${contentCheckFiles.index} missing stylesheet link`
     },
     {
       type: "attribute",
-      file: "index.html",
+      file: contentCheckFiles.index,
       attribute: "href",
       value: siteConfig.assetPaths.icon,
-      message: "index.html missing icon link"
+      message: `${contentCheckFiles.index} missing icon link`
     },
     {
       type: "attribute",
-      file: "index.html",
+      file: contentCheckFiles.index,
       attribute: "src",
       value: siteConfig.assetPaths.appScript,
-      message: "index.html missing app script"
+      message: `${contentCheckFiles.index} missing app script`
     },
-    { type: "contains", file: "index.html", value: siteUrls.socialPreview, message: "index.html missing social preview URL" },
+    { type: "contains", file: contentCheckFiles.index, value: siteUrls.socialPreview, message: `${contentCheckFiles.index} missing social preview URL` },
     {
       type: "attribute",
-      file: "Privacy.html",
+      file: contentCheckFiles.privacy,
       attribute: "href",
       value: siteConfig.assetPaths.stylesheet,
-      message: "Privacy.html missing stylesheet link"
+      message: `${contentCheckFiles.privacy} missing stylesheet link`
     },
     {
       type: "attribute",
-      file: "Privacy.html",
+      file: contentCheckFiles.privacy,
       attribute: "href",
       value: siteConfig.assetPaths.icon,
-      message: "Privacy.html missing icon link"
+      message: `${contentCheckFiles.privacy} missing icon link`
     },
     {
       type: "regex",
-      file: "style.css",
+      file: contentCheckFiles.style,
       pattern: `url\\((["'])?${siteConfig.assetPaths.background.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\1?\\)`,
-      message: "style.css missing background asset"
+      message: `${contentCheckFiles.style} missing background asset`
     },
-    { type: "contains", file: "app.js", value: siteConfig.assetPaths.agentCard, message: "app.js missing agent-card fetch" },
-    { type: "contains", file: "app.js", value: siteConfig.assetPaths.apiCatalog, message: "app.js missing api-catalog fetch" },
-    { type: "contains", file: "app.js", value: siteConfig.siteStatus, message: "app.js missing site status" },
-    { type: "contains", file: "sitemap.xml", value: siteUrls.privacy, message: "sitemap.xml missing privacy URL" },
-    { type: "contains", file: "robots.txt", value: `Sitemap: ${siteUrls.sitemap}`, message: "robots.txt missing sitemap URL" },
-    { type: "contains", file: "llms.txt", value: siteUrls.privacy, message: "llms.txt missing privacy URL" }
+    { type: "contains", file: contentCheckFiles.appScript, value: siteConfig.assetPaths.agentCard, message: `${contentCheckFiles.appScript} missing agent-card fetch` },
+    { type: "contains", file: contentCheckFiles.appScript, value: siteConfig.assetPaths.apiCatalog, message: `${contentCheckFiles.appScript} missing api-catalog fetch` },
+    { type: "contains", file: contentCheckFiles.appScript, value: siteConfig.siteStatus, message: `${contentCheckFiles.appScript} missing site status` },
+    { type: "contains", file: contentCheckFiles.sitemap, value: siteUrls.privacy, message: `${contentCheckFiles.sitemap} missing privacy URL` },
+    { type: "contains", file: contentCheckFiles.robots, value: `Sitemap: ${siteUrls.sitemap}`, message: `${contentCheckFiles.robots} missing sitemap URL` },
+    { type: "contains", file: contentCheckFiles.llms, value: siteUrls.privacy, message: `${contentCheckFiles.llms} missing privacy URL` }
   ];
 }

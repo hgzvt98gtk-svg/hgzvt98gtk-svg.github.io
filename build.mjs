@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, readFile, readdir, rm, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import CleanCSS from "clean-css";
@@ -10,10 +10,21 @@ import { validateBuildConfig, validateSiteConfig } from "./.github/scripts/valid
 
 const root = dirname(fileURLToPath(import.meta.url));
 const output = join(root, "dist");
+const manifestPath = join(output, ".build-manifest.json");
 validateSiteConfig(siteConfig, siteUrls);
 validateBuildConfig(buildConfig);
 const excluded = new Set(buildConfig.excludedNames);
 const concurrency = buildConfig.concurrency;
+const configFingerprint = JSON.stringify({ buildConfig, siteConfig });
+
+async function exists(path) {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 async function filesIn(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -29,8 +40,27 @@ async function filesIn(directory) {
   return files;
 }
 
-await rm(output, { recursive: true, force: true });
-await mkdir(output, { recursive: true });
+async function loadManifest() {
+  if (!await exists(manifestPath)) {
+    return { configFingerprint: "", files: {} };
+  }
+
+  try {
+    const text = await readFile(manifestPath, "utf8");
+    const parsed = JSON.parse(text);
+    return {
+      configFingerprint: parsed.configFingerprint ?? "",
+      files: typeof parsed.files === "object" && parsed.files !== null ? parsed.files : {}
+    };
+  } catch {
+    return { configFingerprint: "", files: {} };
+  }
+}
+
+async function fileSignature(source) {
+  const stats = await stat(source);
+  return `${stats.size}:${stats.mtimeMs}`;
+}
 
 async function buildFile(source) {
   const destination = join(output, relative(root, source));
@@ -68,9 +98,41 @@ async function buildFile(source) {
   await copyFile(source, destination);
 }
 
-const sources = await filesIn(root);
-for (let index = 0; index < sources.length; index += concurrency) {
-  await Promise.all(sources.slice(index, index + concurrency).map(buildFile));
+await mkdir(output, { recursive: true });
+
+const [sources, previousManifest] = await Promise.all([
+  filesIn(root),
+  loadManifest()
+]);
+
+const forceRebuild = previousManifest.configFingerprint !== configFingerprint;
+const nextManifest = { configFingerprint, files: {} };
+const buildQueue = [];
+
+for (const source of sources) {
+  const relativeSource = relative(root, source);
+  const destination = join(output, relativeSource);
+  const signature = await fileSignature(source);
+  nextManifest.files[relativeSource] = signature;
+
+  if (!forceRebuild && previousManifest.files[relativeSource] === signature && await exists(destination)) {
+    continue;
+  }
+
+  buildQueue.push(source);
 }
 
-console.log(`Built minified site in ${relative(root, output)}/`);
+for (let index = 0; index < buildQueue.length; index += concurrency) {
+  await Promise.all(buildQueue.slice(index, index + concurrency).map(buildFile));
+}
+
+const staleFiles = Object.keys(previousManifest.files).filter((relativeSource) => !(relativeSource in nextManifest.files));
+for (const relativeSource of staleFiles) {
+  const destination = join(output, relativeSource);
+  if (await exists(destination)) {
+    await unlink(destination);
+  }
+}
+
+await writeFile(manifestPath, `${JSON.stringify(nextManifest, null, 2)}\n`);
+console.log(`Built minified site in ${relative(root, output)}/ (${buildQueue.length} changed file${buildQueue.length === 1 ? "" : "s"}).`);

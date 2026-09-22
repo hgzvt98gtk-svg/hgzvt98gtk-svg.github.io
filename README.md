@@ -12,6 +12,7 @@ Static personal site with generated metadata files, build output in `dist/`, and
 - `npm run build` minifies HTML/CSS/JS and copies other assets into `dist/`.
 - `npm run validate:site` validates required files, generated-file drift, and cross-reference/content checks for both root and `dist/`.
 - `npm run validate:xml` validates XML/SVG syntax for shared target files across both root and `dist/`.
+- `npm run validate:deps` validates the script import graph and fails on circular dependencies.
 
 ## Local workflow
 
@@ -21,4 +22,5 @@ npm run generate
 npm run build
 npm run validate:site
 npm run validate:xml
+npm run validate:deps
 ```

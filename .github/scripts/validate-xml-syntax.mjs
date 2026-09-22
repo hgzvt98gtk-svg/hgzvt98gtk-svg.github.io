@@ -6,22 +6,23 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { siteConfig } from "./site.config.mjs";
 import { listXmlSyntaxFiles } from "./site-validation.mjs";
+import { runAcrossValidationRoots } from "./validation-roots.mjs";
 
 const execFileAsync = promisify(execFile);
 const root = fileURLToPath(new URL("../..", import.meta.url));
-const roots = [".", "dist"];
 
 async function mustExist(path) {
   await access(path, constants.F_OK);
 }
 
-for (const relativeRoot of roots) {
-  const rootPath = join(root, relativeRoot);
+async function validateRoot(rootInfo) {
   for (const relativePath of listXmlSyntaxFiles(siteConfig)) {
-    const path = join(rootPath, relativePath);
+    const path = join(rootInfo.path, relativePath);
     await mustExist(path);
     await execFileAsync("xmllint", ["--noout", path]);
   }
 }
+
+await runAcrossValidationRoots(root, validateRoot);
 
 console.log("Validated XML/SVG syntax for source and dist.");

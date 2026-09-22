@@ -40,9 +40,28 @@ export const siteConfig = {
   apis: []
 };
 
-export const siteUrls = {
-  home: `${siteConfig.origin}/`,
-  privacy: `${siteConfig.origin}${siteConfig.assetPaths.privacyPage}`,
-  socialPreview: `${siteConfig.origin}${siteConfig.assetPaths.socialPreview}`,
-  sitemap: `${siteConfig.origin}${siteConfig.assetPaths.sitemap}`
-};
+function toAbsoluteUrl(origin, path) {
+  return new URL(path, `${origin}/`).toString();
+}
+
+export function deriveSiteUrls(config) {
+  const { origin, assetPaths } = config;
+  const assetUrlKeys = {
+    privacy: "privacyPage",
+    socialPreview: "socialPreview",
+    sitemap: "sitemap",
+    agentCard: "agentCard",
+    apiCatalog: "apiCatalog",
+    llms: "llms",
+    robots: "robots",
+    mtaSts: "mtaSts",
+    bimiLogo: "bimiLogo"
+  };
+
+  return {
+    home: new URL("/", `${origin}/`).toString(),
+    ...Object.fromEntries(Object.entries(assetUrlKeys).map(([urlKey, assetKey]) => [urlKey, toAbsoluteUrl(origin, assetPaths[assetKey])]))
+  };
+}
+
+export const siteUrls = deriveSiteUrls(siteConfig);

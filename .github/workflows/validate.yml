@@ -33,14 +33,27 @@ jobs:
           set -euo pipefail
           npm run generate
           npm run build
-      - name: Validate local files and cross-references
+      - name: Validate local files, XML/SVG, and dependency graph in parallel
         shell: bash
         run: |
           set -euo pipefail
-          npm run validate:site
+
+          npm run validate:site &
+          site_pid=$!
+
+          npm run validate:xml &
+          xml_pid=$!
+
+          npm run validate:deps &
+          deps_pid=$!
+
+          status=0
+          wait "$site_pid" || status=1
+          wait "$xml_pid" || status=1
+          wait "$deps_pid" || status=1
+
           cmp Background.jpeg dist/Background.jpeg
-      - name: Validate XML and SVG syntax
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm run validate:xml
+
+          if [ "$status" -ne 0 ]; then
+            exit "$status"
+          fi
