@@ -52,6 +52,52 @@ async function parseImports(filePath) {
   return importSpecifiers.map((specifier) => resolveImportPath(filePath, specifier)).filter(Boolean);
 }
 
+const dependencyBoundaryRules = [
+  {
+    files: [
+      ".github/scripts/path-utils.mjs",
+      ".github/scripts/site-paths.mjs",
+      ".github/scripts/validation-roots.mjs",
+      ".github/scripts/site.config.mjs",
+      ".github/scripts/build.config.mjs"
+    ],
+    allowedImports: []
+  },
+  {
+    files: [".github/scripts/site-urls.mjs"],
+    allowedImports: [".github/scripts/site.config.mjs"]
+  },
+  {
+    files: [".github/scripts/validate-config.mjs"],
+    allowedImports: [".github/scripts/site-paths.mjs"]
+  }
+];
+
+function relativeToRoot(path) {
+  return path.replace(`${root}/`, "");
+}
+
+function validateDependencyBoundaries(graph) {
+  for (const rule of dependencyBoundaryRules) {
+    const restrictedFiles = new Set(rule.files);
+    const allowedImports = new Set(rule.allowedImports);
+
+    for (const [filePath, imports] of graph) {
+      const relativeFilePath = relativeToRoot(filePath);
+      if (!restrictedFiles.has(relativeFilePath)) {
+        continue;
+      }
+
+      for (const importPath of imports) {
+        const relativeImportPath = relativeToRoot(importPath);
+        if (!allowedImports.has(relativeImportPath)) {
+          throw new Error(`Dependency boundary violation: ${relativeFilePath} must not import ${relativeImportPath}`);
+        }
+      }
+    }
+  }
+}
+
 function findCycle(graph) {
   const state = new Map();
   const stack = [];
@@ -102,8 +148,10 @@ for (const filePath of files) {
 
 const cycle = findCycle(graph);
 if (cycle) {
-  const display = cycle.map((path) => path.replace(`${root}/`, "")).join(" -> ");
+  const display = cycle.map(relativeToRoot).join(" -> ");
   throw new Error(`Circular dependency detected: ${display}`);
 }
 
-console.log(`Validated dependency graph for ${files.length} modules (no cycles).`);
+validateDependencyBoundaries(graph);
+
+console.log(`Validated dependency graph for ${files.length} modules (no cycles or boundary violations).`);
