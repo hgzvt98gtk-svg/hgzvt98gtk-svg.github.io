@@ -155,3 +155,46 @@ export function listRequiredSiteFiles(generatedFiles) {
 export function listXmlSyntaxFiles(requiredFiles) {
   return requiredFiles.filter((relativePath) => relativePath.endsWith(".xml") || relativePath.endsWith(".svg"));
 }
+
+function toRelativePath(assetPath) {
+  return assetPath.startsWith("/") ? assetPath.slice(1) : assetPath;
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function listSiteContentChecks(siteConfig, siteUrls) {
+  const indexPath = "index.html";
+  const privacyPath = toRelativePath(siteConfig.assetPaths.privacyPage);
+  const appPath = toRelativePath(siteConfig.assetPaths.appScript);
+  const stylePath = toRelativePath(siteConfig.assetPaths.stylesheet);
+  const sitemapPath = toRelativePath(siteConfig.assetPaths.sitemap);
+  const robotsPath = toRelativePath(siteConfig.assetPaths.robots);
+  const llmsPath = toRelativePath(siteConfig.assetPaths.llms);
+  const outdatedReferencePattern = new RegExp(`social-preview\\.png|${escapeRegExp(siteConfig.origin)}\\/Privacy[^.]`);
+
+  return [
+    { file: indexPath, type: "attribute", attribute: "href", value: siteConfig.assetPaths.stylesheet, message: `${indexPath} missing stylesheet link` },
+    { file: indexPath, type: "attribute", attribute: "href", value: siteConfig.assetPaths.icon, message: `${indexPath} missing icon link` },
+    { file: indexPath, type: "attribute", attribute: "src", value: siteConfig.assetPaths.appScript, message: `${indexPath} missing app script` },
+    { file: indexPath, type: "includes", value: siteUrls.socialPreview, message: `${indexPath} missing social preview URL` },
+    { file: privacyPath, type: "attribute", attribute: "href", value: siteConfig.assetPaths.stylesheet, message: `${privacyPath} missing stylesheet link` },
+    { file: privacyPath, type: "attribute", attribute: "href", value: siteConfig.assetPaths.icon, message: `${privacyPath} missing icon link` },
+    { file: stylePath, type: "includes", value: siteConfig.assetPaths.background, message: `${stylePath} missing background asset` },
+    { file: appPath, type: "includes", value: siteConfig.assetPaths.agentCard, message: `${appPath} missing agent-card fetch` },
+    { file: appPath, type: "includes", value: siteConfig.assetPaths.apiCatalog, message: `${appPath} missing api-catalog fetch` },
+    { file: appPath, type: "includes", value: siteConfig.siteStatus, message: `${appPath} missing site status` },
+    { file: sitemapPath, type: "includes", value: siteUrls.privacy, message: `${sitemapPath} missing privacy URL` },
+    { file: robotsPath, type: "includes", value: `Sitemap: ${siteUrls.sitemap}`, message: `${robotsPath} missing sitemap URL` },
+    { file: llmsPath, type: "includes", value: siteUrls.privacy, message: `${llmsPath} missing privacy URL` },
+    { file: indexPath, type: "notRegex", value: outdatedReferencePattern, message: `${indexPath} found outdated URL references` },
+    { file: privacyPath, type: "notRegex", value: outdatedReferencePattern, message: `${privacyPath} found outdated URL references` },
+    { file: sitemapPath, type: "notRegex", value: outdatedReferencePattern, message: `${sitemapPath} found outdated URL references` },
+    { file: llmsPath, type: "notRegex", value: outdatedReferencePattern, message: `${llmsPath} found outdated URL references` }
+  ];
+}
+
+export function toRelativeAssetPath(assetPath) {
+  return toRelativePath(assetPath);
+}
