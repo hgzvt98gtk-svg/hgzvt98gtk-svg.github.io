@@ -1,4 +1,5 @@
 import { generatedJsonFiles, siteFilePaths } from "./site-paths.mjs";
+import { parse } from "acorn";
 
 export function includesAttribute(contents, attribute, value) {
   const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -30,6 +31,59 @@ export function validateAgentCard(agentCard, siteConfig, siteUrls) {
 
 export function validateApiCatalog(apiCatalog, siteUrls) {
   return apiCatalog.site === siteUrls.home && Array.isArray(apiCatalog.apis);
+}
+
+function walkAst(node, visit) {
+  if (!node || typeof node !== "object") {
+    return;
+  }
+
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      walkAst(item, visit);
+    }
+    return;
+  }
+
+  if ("type" in node && typeof node.type === "string") {
+    visit(node);
+  }
+
+  for (const value of Object.values(node)) {
+    if (value && typeof value === "object") {
+      walkAst(value, visit);
+    }
+  }
+}
+
+export function validateRuntimeAppScript(scriptText, siteConfig) {
+  const program = parse(scriptText, { ecmaVersion: "latest", sourceType: "module" });
+  const fetchTargets = new Set();
+  const statusValues = new Set();
+
+  walkAst(program, (node) => {
+    if (node.type === "CallExpression" && node.callee?.type === "Identifier" && node.callee.name === "fetch") {
+      const [firstArgument] = node.arguments;
+      if (firstArgument?.type === "Literal" && typeof firstArgument.value === "string") {
+        fetchTargets.add(firstArgument.value);
+      }
+    }
+
+    if (node.type === "Property") {
+      const keyName = node.key?.type === "Identifier"
+        ? node.key.name
+        : node.key?.type === "Literal"
+          ? node.key.value
+          : null;
+      if (keyName === "status" && node.value?.type === "Literal" && typeof node.value.value === "string") {
+        statusValues.add(node.value.value);
+      }
+    }
+  });
+
+  return fetchTargets.has(siteConfig.assetPaths.agentCard)
+    && fetchTargets.has(siteConfig.assetPaths.apiCatalog)
+    && statusValues.has(siteConfig.siteStatus);
 }
 
 export function validateMtaStsDocument(documentText, siteConfig) {

@@ -1,23 +1,31 @@
 import { readdir, readFile } from "node:fs/promises";
-import { dirname, extname, join, normalize, resolve } from "node:path";
+import { basename, dirname, extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "acorn";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const scriptRoot = join(root, ".github", "scripts");
-const entryFiles = [join(root, "build.mjs")];
+const entryFiles = [join(root, "build.mjs"), join(root, "app.js")];
+const sourceExtensions = new Set([".mjs", ".js"]);
+const boundaryRules = new Map([
+  ["site-paths.mjs", new Set()],
+  ["path-utils.mjs", new Set()],
+  ["site.config.mjs", new Set()],
+  ["build.config.mjs", new Set()],
+  ["validation-roots.mjs", new Set()]
+]);
 
-async function listMjsFiles(directory) {
+async function listSourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
 
   for (const entry of entries) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
-      files.push(...await listMjsFiles(path));
+      files.push(...await listSourceFiles(path));
       continue;
     }
-    if (extname(entry.name) === ".mjs") {
+    if (sourceExtensions.has(extname(entry.name))) {
       files.push(path);
     }
   }
@@ -25,19 +33,31 @@ async function listMjsFiles(directory) {
   return files;
 }
 
-function resolveImportPath(importerPath, specifier) {
+function resolveImportPath(importerPath, specifier, fileSet) {
   if (!specifier.startsWith(".")) {
     return null;
   }
 
-  const resolved = specifier.endsWith(".mjs")
-    ? resolve(dirname(importerPath), specifier)
-    : resolve(dirname(importerPath), `${specifier}.mjs`);
+  const candidateBase = resolve(dirname(importerPath), specifier);
+  const candidates = extname(specifier)
+    ? [candidateBase]
+    : [
+      `${candidateBase}.mjs`,
+      `${candidateBase}.js`,
+      join(candidateBase, "index.mjs"),
+      join(candidateBase, "index.js")
+    ];
 
-  return normalize(resolved);
+  for (const candidate of candidates.map((path) => normalize(path))) {
+    if (fileSet.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
 
-async function parseImports(filePath) {
+async function parseImports(filePath, fileSet) {
   const source = await readFile(filePath, "utf8");
   const program = parse(source, { ecmaVersion: "latest", sourceType: "module" });
   const importSpecifiers = program.body.flatMap((node) => {
@@ -49,7 +69,7 @@ async function parseImports(filePath) {
     }
     return [];
   });
-  return importSpecifiers.map((specifier) => resolveImportPath(filePath, specifier)).filter(Boolean);
+  return importSpecifiers.map((specifier) => resolveImportPath(filePath, specifier, fileSet)).filter(Boolean);
 }
 
 function findCycle(graph) {
@@ -91,13 +111,34 @@ function findCycle(graph) {
   return null;
 }
 
-const files = [...new Set([...(await listMjsFiles(scriptRoot)), ...entryFiles])].map((filePath) => normalize(filePath));
+function findBoundaryViolations(graph) {
+  const violations = [];
+
+  for (const [fromPath, toPaths] of graph) {
+    const fromFileName = basename(fromPath);
+    const allowedImports = boundaryRules.get(fromFileName);
+    if (!allowedImports) {
+      continue;
+    }
+
+    for (const toPath of toPaths) {
+      const importedFileName = basename(toPath);
+      if (!allowedImports.has(importedFileName)) {
+        violations.push({ fromPath, toPath });
+      }
+    }
+  }
+
+  return violations;
+}
+
+const files = [...new Set([...(await listSourceFiles(scriptRoot)), ...entryFiles])].map((filePath) => normalize(filePath));
 const fileSet = new Set(files);
 const graph = new Map();
 
 for (const filePath of files) {
-  const imports = await parseImports(filePath);
-  graph.set(filePath, imports.filter((candidate) => fileSet.has(candidate)));
+  const imports = await parseImports(filePath, fileSet);
+  graph.set(filePath, imports);
 }
 
 const cycle = findCycle(graph);
@@ -106,4 +147,12 @@ if (cycle) {
   throw new Error(`Circular dependency detected: ${display}`);
 }
 
-console.log(`Validated dependency graph for ${files.length} modules (no cycles).`);
+const boundaryViolations = findBoundaryViolations(graph);
+if (boundaryViolations.length > 0) {
+  const violationList = boundaryViolations
+    .map(({ fromPath, toPath }) => `${fromPath.replace(`${root}/`, "")} -> ${toPath.replace(`${root}/`, "")}`)
+    .join("\n");
+  throw new Error(`Dependency boundary violation(s) detected:\n${violationList}`);
+}
+
+console.log(`Validated dependency graph for ${files.length} modules (no cycles, boundaries respected).`);
