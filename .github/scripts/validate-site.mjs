@@ -54,7 +54,6 @@ async function validateGeneratedSource(rootPath, read) {
   }));
 }
 async function validateContentChecks(rootPath, read) {
-async function validateContentChecks(rootPath, read) {
   const uniqueFiles = [...new Set(contentChecks.map(({ file }) => file))];
   const contentByFile = new Map(await Promise.all(uniqueFiles.map(async (file) => [file, await read(file)])));
 
