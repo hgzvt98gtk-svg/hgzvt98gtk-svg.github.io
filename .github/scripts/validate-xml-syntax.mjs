@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { siteConfig } from "./site.config.mjs";
-import { listXmlSyntaxFiles } from "./site-files.mjs";
+import { listXmlSyntaxFiles } from "./site-validation.mjs";
 
 const execFileAsync = promisify(execFile);
 const root = fileURLToPath(new URL("../..", import.meta.url));

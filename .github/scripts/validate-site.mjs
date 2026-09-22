@@ -3,7 +3,8 @@ import { constants } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { siteConfig, siteUrls } from "./site.config.mjs";
-import { listRequiredSiteFiles, listSiteContentChecks, renderSiteFiles } from "./site-files.mjs";
+import { renderSiteFiles } from "./site-files.mjs";
+import { listRequiredSiteFiles, listSiteContentChecks } from "./site-validation.mjs";
 import { validateSiteConfig } from "./validate-config.mjs";
 
 const root = join(fileURLToPath(new URL("../..", import.meta.url)));
@@ -43,7 +44,7 @@ async function read(rootPath, relativePath) {
 }
 
 async function validateRoot(rootPath, { expectGeneratedSource } = {}) {
-  const required = listRequiredSiteFiles(siteConfig);
+  const required = listRequiredSiteFiles(siteConfig, generatedFiles);
 
   await Promise.all(required.map((relativePath) => mustExist(join(rootPath, relativePath))));
 
