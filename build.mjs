@@ -13,7 +13,12 @@ const manifestPath = join(output, ".build-manifest.json");
 validateBuildConfig(buildConfig);
 const excluded = new Set(buildConfig.excludedNames);
 const concurrency = buildConfig.concurrency;
-const configFingerprint = JSON.stringify(buildConfig);
+const configFingerprint = JSON.stringify({
+  buildConfig,
+  buildScript: await readFile(fileURLToPath(import.meta.url), "utf8"),
+  packageJson: await readFile(join(root, "package.json"), "utf8"),
+  packageLock: await readFile(join(root, "package-lock.json"), "utf8")
+});
 
 async function exists(path) {
   try {

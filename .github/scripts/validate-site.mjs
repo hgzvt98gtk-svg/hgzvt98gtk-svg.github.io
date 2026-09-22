@@ -2,6 +2,8 @@ import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { minify as minifyHtml } from "html-minifier-terser";
+import { minify as minifyJs } from "terser";
 import { siteConfig } from "./site.config.mjs";
 import { renderSiteFiles } from "./site-files.mjs";
 import { siteUrls } from "./site-urls.mjs";
@@ -22,9 +24,6 @@ import {
 const root = join(fileURLToPath(new URL("../..", import.meta.url)));
 validateSiteConfig(siteConfig, siteUrls);
 const generatedFiles = renderSiteFiles(siteConfig, siteUrls);
-const generatedVerbatimFiles = new Map(
-  [...generatedFiles].filter(([relativePath]) => ![".html", ".htm", ".css", ".js", ".mjs"].includes(extname(relativePath).toLowerCase()))
-);
 
 function assert(condition, message) {
   if (!condition) {
@@ -46,12 +45,37 @@ function createRootReader(rootPath) {
   };
 }
 
-async function validateGeneratedSource(rootPath, read, filesToValidate) {
+async function expectedGeneratedContents(rootName, relativePath, expectedContents) {
+  if (rootName === ".") {
+    return expectedContents;
+  }
+
+  const extension = extname(relativePath).toLowerCase();
+  if (extension === ".html" || extension === ".htm") {
+    return minifyHtml(expectedContents, {
+      collapseWhitespace: true,
+      minifyCSS: true,
+      minifyJS: true,
+      removeComments: true,
+      removeRedundantAttributes: true,
+      useShortDoctype: true
+    });
+  }
+
+  if (extension === ".js" || extension === ".mjs") {
+    return (await minifyJs(expectedContents)).code ?? "";
+  }
+
+  return expectedContents;
+}
+
+async function validateGeneratedSource(rootInfo, read, filesToValidate) {
   await Promise.all([...filesToValidate].map(async ([relativePath, expectedContents]) => {
     const actualContents = await read(relativePath);
+    const expectedRootContents = await expectedGeneratedContents(rootInfo.name, relativePath, expectedContents);
     assert(
-      equivalentGeneratedContents(relativePath, actualContents, expectedContents),
-      `${rootPath}: ${relativePath} is out of date; run npm run generate`
+      equivalentGeneratedContents(relativePath, actualContents, expectedRootContents),
+      `${rootInfo.path}: ${relativePath} is out of date; run npm run generate`
     );
   }));
 }
@@ -100,12 +124,7 @@ async function validateRoot(rootInfo) {
   const required = listRequiredSiteFiles(siteConfig, generatedFiles);
   await Promise.all(required.map((relativePath) => mustExist(join(rootInfo.path, relativePath))));
   const read = createRootReader(rootInfo.path);
-
-  if (rootInfo.name === ".") {
-    await validateGeneratedSource(rootInfo.path, read, generatedFiles);
-  } else {
-    await validateGeneratedSource(rootInfo.path, read, generatedVerbatimFiles);
-  }
+  await validateGeneratedSource(rootInfo, read, generatedFiles);
 
   await validateContentChecks(rootInfo.path, read);
   await validateSpecialCases(rootInfo.path, read);
