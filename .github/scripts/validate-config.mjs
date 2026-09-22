@@ -29,4 +29,9 @@ export function validateSiteConfig(siteConfig, siteUrls) {
 
   assert(Array.isArray(siteConfig.mtaSts?.mx), "siteConfig.mtaSts.mx must be an array");
   assert(siteConfig.mtaSts.mx.length > 0, "siteConfig.mtaSts.mx must include at least one mx host");
+
+  assert(typeof siteConfig.build === "object" && siteConfig.build !== null, "siteConfig.build must be an object");
+  assert(Array.isArray(siteConfig.build.excludedNames), "siteConfig.build.excludedNames must be an array");
+  assert(siteConfig.build.excludedNames.every((entry) => typeof entry === "string" && entry.length > 0), "siteConfig.build.excludedNames entries must be non-empty strings");
+  assert(Number.isInteger(siteConfig.build.concurrency) && siteConfig.build.concurrency > 0, "siteConfig.build.concurrency must be a positive integer");
 }

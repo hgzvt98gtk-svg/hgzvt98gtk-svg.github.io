@@ -3,7 +3,7 @@ import { constants } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { siteConfig, siteUrls } from "./site.config.mjs";
-import { renderSiteFiles } from "./site-files.mjs";
+import { listRequiredSiteFiles, listSiteContentChecks, renderSiteFiles } from "./site-files.mjs";
 import { validateSiteConfig } from "./validate-config.mjs";
 
 const root = join(fileURLToPath(new URL("../..", import.meta.url)));
@@ -43,22 +43,7 @@ async function read(rootPath, relativePath) {
 }
 
 async function validateRoot(rootPath, { expectGeneratedSource } = {}) {
-  const required = [
-    "index.html",
-    "app.js",
-    "Privacy.html",
-    "style.css",
-    "HF.svg",
-    "Background.jpeg",
-    "social-preview.svg",
-    "sitemap.xml",
-    "robots.txt",
-    "llms.txt",
-    ".well-known/agent-card.json",
-    ".well-known/api-catalog",
-    ".well-known/bimi/logo.svg",
-    ".well-known/mta-sts.txt"
-  ];
+  const required = listRequiredSiteFiles(siteConfig);
 
   await Promise.all(required.map((relativePath) => mustExist(join(rootPath, relativePath))));
 
@@ -72,32 +57,33 @@ async function validateRoot(rootPath, { expectGeneratedSource } = {}) {
     }));
   }
 
-  const [index, privacy, style, appScript, sitemap, robots, llms, agentCardText, apiCatalogText, mtaSts] = await Promise.all([
+  const contentChecks = listSiteContentChecks(siteConfig, siteUrls);
+  const contentByFile = new Map(await Promise.all([...new Set(contentChecks.map(({ file }) => file))].map(async (file) => [file, await read(rootPath, file)])));
+
+  for (const check of contentChecks) {
+    const contents = contentByFile.get(check.file);
+    if (check.type === "attribute") {
+      assert(includesAttribute(contents, check.attribute, check.value), `${rootPath}: ${check.message}`);
+      continue;
+    }
+    if (check.type === "contains") {
+      assert(contents.includes(check.value), `${rootPath}: ${check.message}`);
+      continue;
+    }
+    if (check.type === "regex") {
+      assert(new RegExp(check.pattern).test(contents), `${rootPath}: ${check.message}`);
+    }
+  }
+
+  const [index, privacy, sitemap, llms, agentCardText, apiCatalogText, mtaSts] = await Promise.all([
     read(rootPath, "index.html"),
     read(rootPath, "Privacy.html"),
-    read(rootPath, "style.css"),
-    read(rootPath, "app.js"),
     read(rootPath, "sitemap.xml"),
-    read(rootPath, "robots.txt"),
     read(rootPath, "llms.txt"),
     read(rootPath, ".well-known/agent-card.json"),
     read(rootPath, ".well-known/api-catalog"),
     read(rootPath, ".well-known/mta-sts.txt")
   ]);
-
-  assert(includesAttribute(index, "href", siteConfig.assetPaths.stylesheet), `${rootPath}: index.html missing stylesheet link`);
-  assert(includesAttribute(index, "href", siteConfig.assetPaths.icon), `${rootPath}: index.html missing icon link`);
-  assert(includesAttribute(index, "src", siteConfig.assetPaths.appScript), `${rootPath}: index.html missing app script`);
-  assert(index.includes(siteUrls.socialPreview), `${rootPath}: index.html missing social preview URL`);
-  assert(includesAttribute(privacy, "href", siteConfig.assetPaths.stylesheet), `${rootPath}: Privacy.html missing stylesheet link`);
-  assert(includesAttribute(privacy, "href", siteConfig.assetPaths.icon), `${rootPath}: Privacy.html missing icon link`);
-  assert(new RegExp(`url\\((["'])?${siteConfig.assetPaths.background.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\1?\\)`).test(style), `${rootPath}: style.css missing background asset`);
-  assert(appScript.includes(siteConfig.assetPaths.agentCard), `${rootPath}: app.js missing agent-card fetch`);
-  assert(appScript.includes(siteConfig.assetPaths.apiCatalog), `${rootPath}: app.js missing api-catalog fetch`);
-  assert(appScript.includes(siteConfig.siteStatus), `${rootPath}: app.js missing site status`);
-  assert(sitemap.includes(siteUrls.privacy), `${rootPath}: sitemap.xml missing privacy URL`);
-  assert(robots.includes(`Sitemap: ${siteUrls.sitemap}`), `${rootPath}: robots.txt missing sitemap URL`);
-  assert(llms.includes(siteUrls.privacy), `${rootPath}: llms.txt missing privacy URL`);
   assert(!/(social-preview\.png|https:\/\/hussamfaroug\.com\/Privacy[^.])/.test(`${index}\n${privacy}\n${sitemap}\n${llms}`), `${rootPath}: found outdated URL references`);
 
   const agentCard = JSON.parse(agentCardText);
