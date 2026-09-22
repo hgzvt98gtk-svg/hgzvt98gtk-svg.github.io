@@ -4,10 +4,14 @@ import { fileURLToPath } from "node:url";
 import CleanCSS from "clean-css";
 import { minify as minifyHtml } from "html-minifier-terser";
 import { minify as minifyJs } from "terser";
+import { siteConfig, siteUrls } from "./.github/scripts/site.config.mjs";
+import { validateSiteConfig } from "./.github/scripts/validate-config.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const output = join(root, "dist");
-const excluded = new Set([".git", ".github", "dist", "node_modules", "build.mjs", "package-lock.json", "package.json"]);
+validateSiteConfig(siteConfig, siteUrls);
+const includePatterns = siteConfig.build.includePatterns;
+const excluded = new Set(siteConfig.build.excludePatterns);
 const concurrency = 8;
 
 async function filesIn(directory) {
@@ -18,7 +22,7 @@ async function filesIn(directory) {
     if (excluded.has(entry.name)) continue;
     const path = join(directory, entry.name);
     if (entry.isDirectory()) files.push(...await filesIn(path));
-    else files.push(path);
+    else if (includePatterns.some((pattern) => pattern === "**/*")) files.push(path);
   }
 
   return files;

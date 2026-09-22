@@ -37,6 +37,18 @@ export const siteConfig = {
     maxAge: 604800,
     mx: ["mx01.mail.icloud.com", "mx02.mail.icloud.com"]
   },
+  build: {
+    includePatterns: ["**/*"],
+    excludePatterns: [
+      ".git",
+      ".github",
+      "dist",
+      "node_modules",
+      "build.mjs",
+      "package-lock.json",
+      "package.json"
+    ]
+  },
   apis: []
 };
 
