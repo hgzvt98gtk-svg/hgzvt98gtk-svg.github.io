@@ -1,17 +1,26 @@
 # hgzvt98gtk-svg.github.io
 
-Personal static site for `hussamfaroug.com`.
+Static personal site with generated metadata files, build output in `dist/`, and CI validation for source and build artifacts.
 
-## Generated-file ownership
+## Architecture
 
-Do not manually edit generated files when changing shared site metadata or templates.
+- `.github/scripts/site.config.mjs` is the shared source of truth for site metadata and runtime URLs.
+- `.github/scripts/build.config.mjs` holds build-specific settings for the dist pipeline.
+- `.github/scripts/site-files.mjs` owns generated file templates.
+- `.github/scripts/site-validation.mjs` owns shared validation target and content-check definitions.
+- `npm run generate` writes generated files to the repository root from shared templates.
+- `npm run build` minifies HTML/CSS/JS and copies other assets into `dist/`.
+- `npm run validate:site` validates required files, generated-file drift, and cross-reference/content checks for both root and `dist/`.
+- `npm run validate:xml` validates XML/SVG syntax for shared target files across both root and `dist/`.
+- `npm run validate:deps` validates local script/runtime module imports, fails on circular dependencies, and enforces low-level module boundaries.
 
-- Source of truth for site metadata: `/home/runner/work/hgzvt98gtk-svg.github.io/hgzvt98gtk-svg.github.io/.github/scripts/site.config.mjs`
-- Source of truth for generated templates: `/home/runner/work/hgzvt98gtk-svg.github.io/hgzvt98gtk-svg.github.io/.github/scripts/site-files.mjs`
-- Regenerate checked-in generated files: `npm run generate`
+## Local workflow
 
-## Validation and build
-
-- Validate cross-references and generated-file drift: `npm run validate:site`
-- Validate XML/SVG syntax in source and `dist`: `npm run validate:xml`
-- Build minified `dist/`: `npm run build`
+```bash
+npm ci
+npm run generate
+npm run build
+npm run validate:site
+npm run validate:xml
+npm run validate:deps
+```

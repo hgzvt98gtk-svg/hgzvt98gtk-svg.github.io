@@ -4,30 +4,23 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { siteConfig, siteUrls } from "./site.config.mjs";
-import { listXmlSyntaxFiles } from "./site-files.mjs";
-import { validateSiteConfig } from "./validate-config.mjs";
+import { siteConfig } from "./site.config.mjs";
+import { listXmlSyntaxFiles } from "./site-validation.mjs";
+import { runAcrossValidationRoots } from "./validation-roots.mjs";
 
-const root = join(fileURLToPath(new URL("../..", import.meta.url)));
-const run = promisify(execFile);
-
-validateSiteConfig(siteConfig, siteUrls);
+const execFileAsync = promisify(execFile);
+const root = fileURLToPath(new URL("../..", import.meta.url));
 
 async function mustExist(path) {
   await access(path, constants.F_OK);
 }
 
-async function validateXmllint(path) {
-  await run("xmllint", ["--noout", path]);
+async function validateRoot(rootInfo) {
+  const xmlPaths = listXmlSyntaxFiles(siteConfig).map((relativePath) => join(rootInfo.path, relativePath));
+  await Promise.all(xmlPaths.map((path) => mustExist(path)));
+  await execFileAsync("xmllint", ["--noout", ...xmlPaths]);
 }
 
-const xmlTargets = listXmlSyntaxFiles(siteConfig, siteUrls);
-for (const rootPath of [root, join(root, "dist")]) {
-  await Promise.all(xmlTargets.map(async (relativePath) => {
-    const fullPath = join(rootPath, relativePath);
-    await mustExist(fullPath);
-    await validateXmllint(fullPath);
-  }));
-}
+await runAcrossValidationRoots(root, validateRoot);
 
-console.log("Validated XML/SVG syntax in source and dist.");
+console.log("Validated XML/SVG syntax for source and dist.");
