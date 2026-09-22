@@ -60,6 +60,7 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
   const program = parse(scriptText, { ecmaVersion: "latest", sourceType: "module" });
   let hasProvideContextCall = false;
   const literalStrings = new Set();
+  let hasFetchJsonHelper = false;
   let fetchesAgentCard = false;
   let fetchesApiCatalog = false;
 
@@ -111,6 +112,28 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
         fetchesApiCatalog = true;
       }
     }
+
+    if (node.type === "CallExpression" && node.callee.type === "Identifier" && node.callee.name === "fetchJson") {
+      hasFetchJsonHelper = true;
+      const firstArg = node.arguments[0];
+      const fetchedLiteral = firstArg?.type === "Literal" && typeof firstArg.value === "string"
+        ? firstArg.value
+        : null;
+      const fetchedMember = firstArg?.type === "MemberExpression"
+        ? firstArg.property?.type === "Identifier"
+          ? firstArg.property.name
+          : firstArg.property?.type === "Literal" && typeof firstArg.property.value === "string"
+            ? firstArg.property.value
+            : null
+        : null;
+
+      if (fetchedLiteral === siteConfig.assetPaths.agentCard || fetchedMember === "agentCardPath") {
+        fetchesAgentCard = true;
+      }
+      if (fetchedLiteral === siteConfig.assetPaths.apiCatalog || fetchedMember === "apiCatalogPath") {
+        fetchesApiCatalog = true;
+      }
+    }
   });
 
   return hasProvideContextCall
@@ -118,6 +141,7 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
     && literalStrings.has(siteConfig.assetPaths.apiCatalog)
     && literalStrings.has(siteConfig.siteStatus)
     && literalStrings.has(siteConfig.domain)
+    && hasFetchJsonHelper
     && fetchesAgentCard
     && fetchesApiCatalog;
 }
