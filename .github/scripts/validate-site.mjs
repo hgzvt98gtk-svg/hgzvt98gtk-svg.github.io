@@ -78,9 +78,10 @@ async function validateGeneratedSource(rootInfo, read, filesToValidate) {
   await Promise.all([...filesToValidate].map(async ([relativePath, expectedContents]) => {
     const actualContents = await read(relativePath);
     const expectedRootContents = await expectedGeneratedContents(rootInfo.name, relativePath, expectedContents);
+    const remediationCommand = rootInfo.name === "." ? "npm run generate" : "npm run build";
     assert(
       equivalentGeneratedContents(relativePath, actualContents, expectedRootContents),
-      `${rootInfo.path}: ${relativePath} is out of date; run npm run generate`
+      `${rootInfo.path}: ${relativePath} is out of date; run ${remediationCommand}`
     );
   }));
 }
@@ -114,9 +115,9 @@ async function validateSpecialCases(rootPath, read) {
   const manualTargetContents = Object.fromEntries(await Promise.all(
     Object.entries(manualReadTargets).map(async ([key, relativePath]) => [key, await read(relativePath)])
   ));
-  const { index, privacy, sitemap, llms, agentCard: agentCardText, apiCatalog: apiCatalogText, mtaSts: mtaStsText } = manualTargetContents;
+  const { index, privacy, robots, sitemap, llms, agentCard: agentCardText, apiCatalog: apiCatalogText, mtaSts: mtaStsText } = manualTargetContents;
 
-  assert(assertNoOutdatedReferences(index, privacy, sitemap, llms), `${rootPath}: found outdated URL references`);
+  assert(assertNoOutdatedReferences(index, privacy, robots, sitemap, llms, mtaStsText), `${rootPath}: found outdated URL references`);
 
   const agentCard = JSON.parse(agentCardText);
   const apiCatalog = JSON.parse(apiCatalogText);

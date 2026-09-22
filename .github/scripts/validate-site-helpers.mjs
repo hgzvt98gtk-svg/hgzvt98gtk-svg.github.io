@@ -19,8 +19,8 @@ export function equivalentGeneratedContents(relativePath, actualContents, expect
   return normalizeWhitespace(actualContents) === normalizeWhitespace(expectedContents);
 }
 
-export function assertNoOutdatedReferences(index, privacy, sitemap, llms) {
-  return !/(social-preview\.png|https:\/\/hussamfaroug\.com\/Privacy(?=$|[\s"'<>]))/.test(`${index}\n${privacy}\n${sitemap}\n${llms}`);
+export function assertNoOutdatedReferences(index, privacy, robots, sitemap, llms, mtaSts) {
+  return !/(social-preview\.png|https:\/\/hussamfaroug\.com\/Privacy(?=$|[^.]))/.test(`${index}\n${privacy}\n${robots}\n${sitemap}\n${llms}\n${mtaSts}`);
 }
 
 export function validateAgentCard(agentCard, siteConfig, siteUrls) {
@@ -154,6 +154,7 @@ export function validateMtaStsDocument(documentText, siteConfig) {
 export const manualReadTargets = Object.freeze({
   index: siteFilePaths.index,
   privacy: siteFilePaths.privacy,
+  robots: siteFilePaths.robots,
   sitemap: siteFilePaths.sitemap,
   llms: siteFilePaths.llms,
   agentCard: siteFilePaths.agentCard,
