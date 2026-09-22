@@ -16,6 +16,8 @@ Static personal site with generated metadata files, build output in `dist/`, and
 
 ## Local workflow
 
+Install `xmllint` before running XML/SVG validation (`libxml2-utils` on Ubuntu/Debian).
+
 ```bash
 npm ci
 npm run generate
