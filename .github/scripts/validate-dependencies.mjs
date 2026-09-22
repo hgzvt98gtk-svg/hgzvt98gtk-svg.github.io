@@ -169,7 +169,7 @@ validateBoundaryRuleCoverage(graph);
 const boundaryViolations = findBoundaryViolations(graph);
 if (boundaryViolations.length > 0) {
   const violationList = boundaryViolations
-    .map(({ fromPath, toPath }) => `${fromPath.replace(`${root}/`, "")} -> ${toPath.replace(`${root}/`, "")}`)
+    .map(({ fromPath, toPath }) => `${relativeToRoot(fromPath)} -> ${relativeToRoot(toPath)}`)
     .join("\n");
   throw new Error(
     `Dependency boundary violation(s) detected:\n${violationList}\n\n`

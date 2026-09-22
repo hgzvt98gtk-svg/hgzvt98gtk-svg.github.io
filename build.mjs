@@ -68,6 +68,20 @@ async function fileSignature(source) {
   return `${stats.size}:${stats.mtimeMs}`;
 }
 
+function copiesVerbatim(source) {
+  const extension = extname(source).toLowerCase();
+  return extension !== ".html"
+    && extension !== ".htm"
+    && extension !== ".css"
+    && extension !== ".js"
+    && extension !== ".mjs";
+}
+
+async function fileContentsMatch(leftPath, rightPath) {
+  const [left, right] = await Promise.all([readFile(leftPath), readFile(rightPath)]);
+  return left.equals(right);
+}
+
 async function removeEmptyParentDirectories(path) {
   let currentDirectory = dirname(path);
 
@@ -145,7 +159,9 @@ for (const { source, relativeSource, signature, destinationExists } of sourceMet
   nextManifest.files[relativeSource] = signature;
 
   if (!forceRebuild && previousManifest.files[relativeSource] === signature && destinationExists) {
-    continue;
+    if (!copiesVerbatim(source) || await fileContentsMatch(source, join(output, relativeSource))) {
+      continue;
+    }
   }
 
   buildQueue.push(source);

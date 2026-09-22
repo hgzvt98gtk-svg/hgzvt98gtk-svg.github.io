@@ -138,13 +138,14 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
 
 export function validateMtaStsDocument(documentText, siteConfig) {
   const lines = documentText.trim().split(/\r?\n/);
-  const mxLines = lines.filter((line) => line.startsWith("mx: "));
-  const mxValues = mxLines.map((line) => line.slice("mx: ".length));
+  const expectedLines = [
+    `version: ${siteConfig.mtaSts.version}`,
+    `mode: ${siteConfig.mtaSts.mode}`,
+    ...siteConfig.mtaSts.mx.map((mx) => `mx: ${mx}`),
+    `max_age: ${siteConfig.mtaSts.maxAge}`
+  ];
 
-  return lines[0] === `version: ${siteConfig.mtaSts.version}`
-    && lines[1] === `mode: ${siteConfig.mtaSts.mode}`
-    && lines.at(-1) === `max_age: ${siteConfig.mtaSts.maxAge}`
-    && JSON.stringify(mxValues) === JSON.stringify(siteConfig.mtaSts.mx);
+  return JSON.stringify(lines) === JSON.stringify(expectedLines);
 }
 
 export const manualReadTargets = Object.freeze({
