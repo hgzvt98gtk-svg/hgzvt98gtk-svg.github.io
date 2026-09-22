@@ -143,7 +143,8 @@ export function validateMtaStsDocument(documentText, siteConfig) {
   return lines[0] === `version: ${siteConfig.mtaSts.version}`
     && lines[1] === `mode: ${siteConfig.mtaSts.mode}`
     && lines.at(-1) === `max_age: ${siteConfig.mtaSts.maxAge}`
-    && mxLines.length === siteConfig.mtaSts.mx.length;
+    && mxLines.length === siteConfig.mtaSts.mx.length
+    && siteConfig.mtaSts.mx.every((mx) => lines.includes(`mx: ${mx}`));
 }
 
 export const manualReadTargets = Object.freeze({
