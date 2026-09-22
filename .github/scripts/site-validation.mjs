@@ -65,9 +65,7 @@ export function listSiteContentChecks(siteConfig, siteUrls) {
       pattern: `url\\((["'])?${siteConfig.assetPaths.background.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\1?\\)`,
       message: `${contentCheckFiles.style} missing background asset`
     },
-    { type: "contains", file: contentCheckFiles.appScript, value: siteConfig.assetPaths.agentCard, message: `${contentCheckFiles.appScript} missing agent-card fetch` },
-    { type: "contains", file: contentCheckFiles.appScript, value: siteConfig.assetPaths.apiCatalog, message: `${contentCheckFiles.appScript} missing api-catalog fetch` },
-    { type: "contains", file: contentCheckFiles.appScript, value: siteConfig.siteStatus, message: `${contentCheckFiles.appScript} missing site status` },
+    { type: "runtimeScript", file: contentCheckFiles.appScript, message: `${contentCheckFiles.appScript} missing expected runtime metadata wiring` },
     { type: "contains", file: contentCheckFiles.sitemap, value: siteUrls.privacy, message: `${contentCheckFiles.sitemap} missing privacy URL` },
     { type: "contains", file: contentCheckFiles.robots, value: `Sitemap: ${siteUrls.sitemap}`, message: `${contentCheckFiles.robots} missing sitemap URL` },
     { type: "contains", file: contentCheckFiles.llms, value: siteUrls.privacy, message: `${contentCheckFiles.llms} missing privacy URL` }

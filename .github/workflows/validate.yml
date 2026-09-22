@@ -33,7 +33,7 @@ jobs:
           set -euo pipefail
           npm run generate
           npm run build
-      - name: Validate local files, XML/SVG, and dependency graph in parallel
+      - name: Validate local files, XML/SVG, and module dependencies in parallel
         shell: bash
         run: |
           set -euo pipefail
