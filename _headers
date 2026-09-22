@@ -1,6 +1,6 @@
 /.well-known/*
   Cross-Origin-Resource-Policy: cross-origin
-  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Origin: https://hussamfaroug.com
 
 /*
   Cross-Origin-Resource-Policy: same-origin

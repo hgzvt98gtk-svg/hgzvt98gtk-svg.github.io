@@ -5,6 +5,9 @@ const runtimeContract = Object.freeze({
 });
 
 async function fetchJson(path, label) {
+      const timeoutMs = 8000;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       const pageOrigin = globalThis.location?.origin;
       if (typeof pageOrigin !== "string" || pageOrigin.length === 0) {
         throw new Error(`Failed to fetch ${label}: missing page origin`);
@@ -21,7 +24,8 @@ async function fetchJson(path, label) {
         headers: {
           Accept: "application/json"
         },
-        redirect: "error"
+        redirect: "error",
+        signal: controller.signal
       });
 
       if (!response.ok) {
@@ -35,8 +39,13 @@ async function fetchJson(path, label) {
 
       try {
         return await response.json();
-      } catch {
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          throw new Error(`Failed to fetch ${label}: timed out after ${timeoutMs}ms`);
+        }
         throw new Error(`Failed to fetch ${label}: invalid JSON response`);
+      } finally {
+        clearTimeout(timeoutId);
       }
     }
 
