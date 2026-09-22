@@ -1,4 +1,5 @@
 import { contentCheckFiles, listAssetRelativePaths, requiredStaticAssetPathKeys, xmlSyntaxAssetPathKeys } from "./site-paths.mjs";
+import { escapeRegex } from "./validate-site-helpers.mjs";
 
 export function listRequiredSiteFiles(siteConfig, renderedFiles) {
   return [
@@ -52,7 +53,7 @@ export function listSiteContentChecks(siteConfig, siteUrls) {
     {
       type: "regex",
       file: contentCheckFiles.style,
-      pattern: `url\\((["'])?${siteConfig.assetPaths.background.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\1?\\)`,
+      pattern: `url\\((["'])?${escapeRegex(siteConfig.assetPaths.background)}\\1?\\)`,
       message: `${contentCheckFiles.style} missing background asset`
     },
     { type: "runtimeScript", file: contentCheckFiles.appScript, message: `${contentCheckFiles.appScript} missing expected runtime metadata wiring` },
