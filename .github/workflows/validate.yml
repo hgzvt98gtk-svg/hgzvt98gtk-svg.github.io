@@ -26,7 +26,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y libxml2-utils
           fi
-          npm ci
+          npm ci --prefer-offline --no-audit
       - name: Build site
         shell: bash
         run: |
@@ -43,9 +43,4 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for root in . dist; do
-            xmllint --noout "$root/sitemap.xml"
-            xmllint --noout "$root/HF.svg"
-            xmllint --noout "$root/social-preview.svg"
-            xmllint --noout "$root/.well-known/bimi/logo.svg"
-          done
+          npm run validate:xml

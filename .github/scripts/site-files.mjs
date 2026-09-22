@@ -1,4 +1,8 @@
-export function renderSiteFiles(siteConfig, siteUrls) {
+function toRelativePath(pathname) {
+  return pathname.replace(/^\//, "");
+}
+
+function renderPageFiles(siteConfig, siteUrls) {
   return new Map([
     ["index.html", `<!doctype html>
 <html lang="en">
@@ -30,6 +34,39 @@ export function renderSiteFiles(siteConfig, siteUrls) {
 </body>
 </html>
 `],
+    ["Privacy.html", `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="${siteConfig.themeColor}">
+  <title>${siteConfig.pageTitles.privacy}</title>
+  <meta name="description" content="${siteConfig.descriptions.privacy}">
+  <link rel="canonical" href="${siteUrls.privacy}">
+  <link rel="icon" href="${siteConfig.assetPaths.icon}" type="image/svg+xml">
+  <link rel="stylesheet" href="${siteConfig.assetPaths.stylesheet}">
+</head>
+<body class="document">
+  <main class="policy" aria-labelledby="privacy-title">
+    <h1 id="privacy-title">Privacy Policy</h1>
+    <p class="updated">Last updated: ${siteConfig.privacyLastUpdated}</p>
+    <h2>Overview</h2>
+    <p>This is a static personal website. It does not provide accounts, contact forms, analytics, advertising, or embedded third-party scripts.</p>
+    <h2>Information collected</h2>
+    <p>The site does not intentionally collect personal information or set cookies. Hosting and delivery providers may process technical request data, such as IP address, browser information, and request time, in server logs and security systems.</p>
+    <h2>Email and external links</h2>
+    <p>If you email <a href="mailto:${siteConfig.email}">${siteConfig.email}</a>, your email provider will process your message. External websites have their own privacy policies.</p>
+    <h2>Changes</h2>
+    <p>This policy may be updated when the site or its providers change. The date above identifies the latest revision.</p>
+  </main>
+</body>
+</html>
+`]
+  ]);
+}
+
+function renderRuntimeFiles(siteConfig, siteUrls) {
+  return new Map([
     ["app.js", `if ("modelContext" in navigator) {
   navigator.modelContext.provideContext({
     tools: [
@@ -61,34 +98,6 @@ export function renderSiteFiles(siteConfig, siteUrls) {
   });
 }
 `],
-    ["Privacy.html", `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="${siteConfig.themeColor}">
-  <title>${siteConfig.pageTitles.privacy}</title>
-  <meta name="description" content="${siteConfig.descriptions.privacy}">
-  <link rel="canonical" href="${siteUrls.privacy}">
-  <link rel="icon" href="${siteConfig.assetPaths.icon}" type="image/svg+xml">
-  <link rel="stylesheet" href="${siteConfig.assetPaths.stylesheet}">
-</head>
-<body class="document">
-  <main class="policy" aria-labelledby="privacy-title">
-    <h1 id="privacy-title">Privacy Policy</h1>
-    <p class="updated">Last updated: ${siteConfig.privacyLastUpdated}</p>
-    <h2>Overview</h2>
-    <p>This is a static personal website. It does not provide accounts, contact forms, analytics, advertising, or embedded third-party scripts.</p>
-    <h2>Information collected</h2>
-    <p>The site does not intentionally collect personal information or set cookies. Hosting and delivery providers may process technical request data, such as IP address, browser information, and request time, in server logs and security systems.</p>
-    <h2>Email and external links</h2>
-    <p>If you email <a href="mailto:${siteConfig.email}">${siteConfig.email}</a>, your email provider will process your message. External websites have their own privacy policies.</p>
-    <h2>Changes</h2>
-    <p>This policy may be updated when the site or its providers change. The date above identifies the latest revision.</p>
-  </main>
-</body>
-</html>
-`],
     ["robots.txt", `User-agent: *
 Allow: /
 
@@ -119,23 +128,115 @@ Sitemap: ${siteUrls.sitemap}
 
 ## Contact
 - Email: ${siteConfig.email}
-`],
-    [".well-known/agent-card.json", `${JSON.stringify({
+`]
+  ]);
+}
+
+function renderWellKnownFiles(siteConfig, siteUrls) {
+  return new Map([
+    [toRelativePath(siteConfig.assetPaths.agentCard), `${JSON.stringify({
       name: siteConfig.personName,
       url: siteUrls.home,
       description: siteConfig.descriptions.agentCard,
       status: siteConfig.siteStatus
     }, null, 2)}
 `],
-    [".well-known/api-catalog", `${JSON.stringify({
+    [toRelativePath(siteConfig.assetPaths.apiCatalog), `${JSON.stringify({
       site: siteUrls.home,
       apis: siteConfig.apis
     }, null, 2)}
 `],
-    [".well-known/mta-sts.txt", `version: ${siteConfig.mtaSts.version}
+    [toRelativePath(siteConfig.assetPaths.mtaSts), `version: ${siteConfig.mtaSts.version}
 mode: ${siteConfig.mtaSts.mode}
 ${siteConfig.mtaSts.mx.map((mx) => `mx: ${mx}`).join("\n")}
 max_age: ${siteConfig.mtaSts.maxAge}
 `]
   ]);
 }
+
+export function renderSiteFiles(siteConfig, siteUrls) {
+  return new Map([
+    ...renderPageFiles(siteConfig, siteUrls),
+    ...renderRuntimeFiles(siteConfig, siteUrls),
+    ...renderWellKnownFiles(siteConfig, siteUrls)
+  ]);
+}
+
+export function listRequiredSiteFiles(siteConfig) {
+  return [
+    ...renderSiteFiles(siteConfig, {
+      home: "",
+      privacy: "",
+      socialPreview: "",
+      sitemap: ""
+    }).keys(),
+    toRelativePath(siteConfig.assetPaths.stylesheet),
+    toRelativePath(siteConfig.assetPaths.icon),
+    toRelativePath(siteConfig.assetPaths.background),
+    toRelativePath(siteConfig.assetPaths.socialPreview),
+    toRelativePath(siteConfig.assetPaths.bimiLogo)
+  ];
+}
+
+export function listXmlSyntaxFiles(siteConfig) {
+  return [
+    toRelativePath(siteConfig.assetPaths.sitemap),
+    toRelativePath(siteConfig.assetPaths.icon),
+    toRelativePath(siteConfig.assetPaths.socialPreview),
+    toRelativePath(siteConfig.assetPaths.bimiLogo)
+  ];
+}
+
+export function listSiteContentChecks(siteConfig, siteUrls) {
+  return [
+    {
+      type: "attribute",
+      file: "index.html",
+      attribute: "href",
+      value: siteConfig.assetPaths.stylesheet,
+      message: "index.html missing stylesheet link"
+    },
+    {
+      type: "attribute",
+      file: "index.html",
+      attribute: "href",
+      value: siteConfig.assetPaths.icon,
+      message: "index.html missing icon link"
+    },
+    {
+      type: "attribute",
+      file: "index.html",
+      attribute: "src",
+      value: siteConfig.assetPaths.appScript,
+      message: "index.html missing app script"
+    },
+    { type: "contains", file: "index.html", value: siteUrls.socialPreview, message: "index.html missing social preview URL" },
+    {
+      type: "attribute",
+      file: "Privacy.html",
+      attribute: "href",
+      value: siteConfig.assetPaths.stylesheet,
+      message: "Privacy.html missing stylesheet link"
+    },
+    {
+      type: "attribute",
+      file: "Privacy.html",
+      attribute: "href",
+      value: siteConfig.assetPaths.icon,
+      message: "Privacy.html missing icon link"
+    },
+    {
+      type: "regex",
+      file: "style.css",
+      pattern: `url\\((["'])?${siteConfig.assetPaths.background.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\1?\\)`,
+      message: "style.css missing background asset"
+    },
+    { type: "contains", file: "app.js", value: siteConfig.assetPaths.agentCard, message: "app.js missing agent-card fetch" },
+    { type: "contains", file: "app.js", value: siteConfig.assetPaths.apiCatalog, message: "app.js missing api-catalog fetch" },
+    { type: "contains", file: "app.js", value: siteConfig.siteStatus, message: "app.js missing site status" },
+    { type: "contains", file: "sitemap.xml", value: siteUrls.privacy, message: "sitemap.xml missing privacy URL" },
+    { type: "contains", file: "robots.txt", value: `Sitemap: ${siteUrls.sitemap}`, message: "robots.txt missing sitemap URL" },
+    { type: "contains", file: "llms.txt", value: siteUrls.privacy, message: "llms.txt missing privacy URL" }
+  ];
+}
+
