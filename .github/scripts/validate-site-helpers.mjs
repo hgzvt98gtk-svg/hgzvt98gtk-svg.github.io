@@ -58,32 +58,51 @@ function walkAst(node, visit) {
 
 export function validateRuntimeAppScript(scriptText, siteConfig) {
   const program = parse(scriptText, { ecmaVersion: "latest", sourceType: "module" });
-  const fetchTargets = new Set();
-  const statusValues = new Set();
+  let hasProvideContextCall = false;
+  let hasRuntimeContract = false;
 
   walkAst(program, (node) => {
-    if (node.type === "CallExpression" && node.callee?.type === "Identifier" && node.callee.name === "fetch") {
-      const [firstArgument] = node.arguments;
-      if (firstArgument?.type === "Literal" && typeof firstArgument.value === "string") {
-        fetchTargets.add(firstArgument.value);
+    if (node.type === "CallExpression" && node.callee?.type === "MemberExpression") {
+      const propertyName = node.callee.property?.type === "Identifier"
+        ? node.callee.property.name
+        : node.callee.property?.type === "Literal"
+          ? node.callee.property.value
+          : null;
+      if (propertyName === "provideContext") {
+        hasProvideContextCall = true;
       }
     }
 
-    if (node.type === "Property") {
-      const keyName = node.key?.type === "Identifier"
-        ? node.key.name
-        : node.key?.type === "Literal"
-          ? node.key.value
-          : null;
-      if (keyName === "status" && node.value?.type === "Literal" && typeof node.value.value === "string") {
-        statusValues.add(node.value.value);
-      }
+    if (node.type !== "ObjectExpression") {
+      return;
     }
+
+    const objectEntries = Object.fromEntries(node.properties.flatMap((property) => {
+      if (property.type !== "Property" || property.computed) {
+        return [];
+      }
+      const keyName = property.key?.type === "Identifier"
+        ? property.key.name
+        : property.key?.type === "Literal"
+          ? property.key.value
+          : null;
+      if (typeof keyName !== "string") {
+        return [];
+      }
+      if (property.value?.type !== "Literal" || typeof property.value.value !== "string") {
+        return [];
+      }
+      return [[keyName, property.value.value]];
+    }));
+
+    hasRuntimeContract = hasRuntimeContract || (
+      objectEntries.agentCardPath === siteConfig.assetPaths.agentCard
+      && objectEntries.apiCatalogPath === siteConfig.assetPaths.apiCatalog
+      && objectEntries.siteStatus === siteConfig.siteStatus
+    );
   });
 
-  return fetchTargets.has(siteConfig.assetPaths.agentCard)
-    && fetchTargets.has(siteConfig.assetPaths.apiCatalog)
-    && statusValues.has(siteConfig.siteStatus);
+  return hasProvideContextCall && hasRuntimeContract;
 }
 
 export function validateMtaStsDocument(documentText, siteConfig) {

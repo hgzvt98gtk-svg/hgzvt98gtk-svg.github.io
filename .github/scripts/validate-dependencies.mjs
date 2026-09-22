@@ -152,7 +152,10 @@ if (boundaryViolations.length > 0) {
   const violationList = boundaryViolations
     .map(({ fromPath, toPath }) => `${fromPath.replace(`${root}/`, "")} -> ${toPath.replace(`${root}/`, "")}`)
     .join("\n");
-  throw new Error(`Dependency boundary violation(s) detected:\n${violationList}`);
+  throw new Error(
+    `Dependency boundary violation(s) detected:\n${violationList}\n\n`
+    + "If a low-level module intentionally needs new dependencies, update boundaryRules in .github/scripts/validate-dependencies.mjs."
+  );
 }
 
 console.log(`Validated dependency graph for ${files.length} modules (no cycles, boundaries respected).`);
