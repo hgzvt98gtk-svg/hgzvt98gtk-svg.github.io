@@ -160,8 +160,9 @@ const sourceMetadata = await Promise.all(sources.map(async (source) => {
   return { source, relativeSource, destination, signature, destinationExists };
 }));
 
+const currentRelativeSources = new Set(sourceMetadata.map(({ relativeSource }) => relativeSource));
 const currentDestinations = new Set(sourceMetadata.map(({ destination }) => destination));
-const staleFiles = Object.keys(previousManifest.files).filter((relativeSource) => !(relativeSource in nextManifest.files));
+const staleFiles = Object.keys(previousManifest.files).filter((relativeSource) => !currentRelativeSources.has(relativeSource));
 for (const relativeSource of staleFiles) {
   const destination = join(output, relativeSource);
   if (currentDestinations.has(destination)) {
