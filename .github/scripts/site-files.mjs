@@ -13,10 +13,6 @@ function escapeJsString(value) {
   return JSON.stringify(String(value));
 }
 
-function encodeMailtoAddress(email) {
-  return encodeURI(`mailto:${String(email)}`);
-}
-
 function renderPageFiles(siteConfig, siteUrls) {
   const personName = escapeHtml(siteConfig.personName);
   const domain = escapeHtml(siteConfig.domain);
@@ -32,7 +28,7 @@ function renderPageFiles(siteConfig, siteUrls) {
   const appScriptImportPath = escapeJsString(siteConfig.assetPaths.appScript);
   const privacyLastUpdated = escapeHtml(siteConfig.privacyLastUpdated);
   const email = escapeHtml(siteConfig.email);
-  const mailtoHref = escapeHtml(encodeMailtoAddress(siteConfig.email));
+  const mailtoHref = escapeHtml(encodeURI(`mailto:${String(siteConfig.email)}`));
 
   return new Map([
     [siteFilePaths.index, `<!doctype html>
@@ -107,6 +103,7 @@ function renderRuntimeFiles(siteConfig, siteUrls) {
   apiCatalogPath: ${escapeJsString(siteConfig.assetPaths.apiCatalog)},
   siteStatus: ${escapeJsString(siteConfig.siteStatus)}
 });
+const runtimeJsonCache = new Map();
 
 async function fetchJson(path, label) {
       const timeoutMs = 8000;
@@ -153,30 +150,41 @@ async function fetchJson(path, label) {
       }
     }
 
-if ("modelContext" in navigator) {
-  navigator.modelContext.provideContext({
-    tools: [
-      {
-        name: "get-site-info",
-        description: ${escapeJsString(`Get information about ${siteConfig.domain}`)},
-        inputSchema: { type: "object", properties: {} },
-        execute: async () => ({ host: ${escapeJsString(siteConfig.domain)}, status: runtimeContract.siteStatus })
-      },
-      {
-        name: "get-agent-card",
-        description: "Get the AI agent card for this site",
-        inputSchema: { type: "object", properties: {} },
-        execute: async () => fetchJson(runtimeContract.agentCardPath, "agent card")
-      },
-      {
-        name: "get-api-catalog",
-        description: "Get the API catalog for this site",
-        inputSchema: { type: "object", properties: {} },
-        execute: async () => fetchJson(runtimeContract.apiCatalogPath, "api catalog")
+async function fetchCachedJson(path, label) {
+      if (!runtimeJsonCache.has(path)) {
+        runtimeJsonCache.set(
+          path,
+          fetchJson(path, label).catch((error) => {
+            runtimeJsonCache.delete(path);
+            throw error;
+          })
+        );
       }
-    ]
-  });
+      return runtimeJsonCache.get(path);
 }
+
+navigator.modelContext.provideContext({
+  tools: [
+    {
+      name: "get-site-info",
+      description: ${escapeJsString(`Get information about ${siteConfig.domain}`)},
+      inputSchema: { type: "object", properties: {} },
+      execute: async () => ({ host: ${escapeJsString(siteConfig.domain)}, status: runtimeContract.siteStatus })
+    },
+    {
+      name: "get-agent-card",
+      description: "Get the AI agent card for this site",
+      inputSchema: { type: "object", properties: {} },
+      execute: async () => fetchCachedJson(runtimeContract.agentCardPath, "agent card")
+    },
+    {
+      name: "get-api-catalog",
+      description: "Get the API catalog for this site",
+      inputSchema: { type: "object", properties: {} },
+      execute: async () => fetchCachedJson(runtimeContract.apiCatalogPath, "api catalog")
+    }
+  ]
+});
 `],
     [siteFilePaths.robots, `User-agent: *
 Allow: /

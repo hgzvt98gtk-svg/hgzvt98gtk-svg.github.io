@@ -27,13 +27,21 @@ function toRelativePath(path) {
 
 async function listSourceFiles(directory) {
   const sources = [];
-  const directories = [directory];
+  let directories = [directory];
 
   while (directories.length > 0) {
-    const currentDirectory = directories.pop();
-    const entries = await readdir(currentDirectory, { withFileTypes: true });
-    for (const entry of entries) {
-      const path = join(currentDirectory, entry.name);
+    const currentBatch = directories;
+    directories = [];
+    const batchEntries = await Promise.all(
+      currentBatch.map(async (currentDirectory) => ({
+        currentDirectory,
+        entries: await readdir(currentDirectory, { withFileTypes: true })
+      }))
+    );
+
+    for (const { currentDirectory, entries } of batchEntries) {
+      for (const entry of entries) {
+        const path = join(currentDirectory, entry.name);
       if (entry.isDirectory()) {
         if (!ignoredDirectoryNames.has(entry.name)) {
           directories.push(path);
@@ -43,6 +51,7 @@ async function listSourceFiles(directory) {
       if (sourceExtensions.has(extname(entry.name))) {
         sources.push(path);
       }
+    }
     }
   }
 

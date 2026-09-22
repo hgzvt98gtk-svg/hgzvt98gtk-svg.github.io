@@ -44,8 +44,8 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
     /name\s*:\s*["']get-agent-card["']/,
     /name\s*:\s*["']get-api-catalog["']/,
     /status\s*:\s*runtimeContract\.siteStatus/,
-    /fetchJson\s*\(\s*runtimeContract\.agentCardPath\s*,\s*["']agent card["']\s*\)/,
-    /fetchJson\s*\(\s*runtimeContract\.apiCatalogPath\s*,\s*["']api catalog["']\s*\)/
+    /fetch(?:Cached)?Json\s*\(\s*runtimeContract\.agentCardPath\s*,\s*["']agent card["']\s*\)/,
+    /fetch(?:Cached)?Json\s*\(\s*runtimeContract\.apiCatalogPath\s*,\s*["']api catalog["']\s*\)/
   ];
 
   const requiredLiterals = [
