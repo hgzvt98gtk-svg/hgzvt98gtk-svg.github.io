@@ -40,3 +40,30 @@ export const requiredAssetPathKeys = Object.freeze([
   "bimiLogo",
   "mtaSts"
 ]);
+
+export const requiredStaticAssetPathKeys = Object.freeze([
+  "stylesheet",
+  "icon",
+  "background",
+  "socialPreview",
+  "bimiLogo"
+]);
+
+export const xmlSyntaxAssetPathKeys = Object.freeze([
+  "sitemap",
+  "icon",
+  "socialPreview",
+  "bimiLogo"
+]);
+
+export const derivedSiteUrlAssetPathKeys = Object.freeze({
+  privacy: "privacyPage",
+  socialPreview: "socialPreview",
+  sitemap: "sitemap",
+  agentCard: "agentCard",
+  apiCatalog: "apiCatalog",
+  llms: "llms",
+  robots: "robots",
+  mtaSts: "mtaSts",
+  bimiLogo: "bimiLogo"
+});

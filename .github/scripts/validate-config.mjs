@@ -1,4 +1,4 @@
-import { requiredAssetPathKeys } from "./site-paths.mjs";
+import { derivedSiteUrlAssetPathKeys, requiredAssetPathKeys } from "./site-paths.mjs";
 
 function assert(condition, message) {
   if (!condition) {
@@ -29,20 +29,8 @@ export function validateSiteConfig(siteConfig, siteUrls) {
   assert(siteConfig.origin === `https://${siteConfig.domain}`, "siteConfig.origin must match siteConfig.domain");
   assert(typeof siteUrls.home === "string" && siteUrls.home === `${siteConfig.origin}/`, "siteUrls.home must match siteConfig.origin/");
 
-  const expectedDerivedUrls = {
-    privacy: siteConfig.assetPaths.privacyPage,
-    socialPreview: siteConfig.assetPaths.socialPreview,
-    sitemap: siteConfig.assetPaths.sitemap,
-    agentCard: siteConfig.assetPaths.agentCard,
-    apiCatalog: siteConfig.assetPaths.apiCatalog,
-    llms: siteConfig.assetPaths.llms,
-    robots: siteConfig.assetPaths.robots,
-    mtaSts: siteConfig.assetPaths.mtaSts,
-    bimiLogo: siteConfig.assetPaths.bimiLogo
-  };
-
-  for (const [urlKey, path] of Object.entries(expectedDerivedUrls)) {
-    const expected = new URL(path, `${siteConfig.origin}/`).toString();
+  for (const [urlKey, assetPathKey] of Object.entries(derivedSiteUrlAssetPathKeys)) {
+    const expected = new URL(siteConfig.assetPaths[assetPathKey], `${siteConfig.origin}/`).toString();
     assert(typeof siteUrls[urlKey] === "string" && siteUrls[urlKey] === expected, `siteUrls.${urlKey} must match origin + asset path`);
   }
 

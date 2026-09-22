@@ -1,20 +1,5 @@
-import { contentCheckFiles } from "./site-paths.mjs";
+import { contentCheckFiles, requiredStaticAssetPathKeys, xmlSyntaxAssetPathKeys } from "./site-paths.mjs";
 import { toAssetRelativePath } from "./path-utils.mjs";
-
-const requiredAssetPathKeys = Object.freeze([
-  "stylesheet",
-  "icon",
-  "background",
-  "socialPreview",
-  "bimiLogo"
-]);
-
-const xmlSyntaxAssetPathKeys = Object.freeze([
-  "sitemap",
-  "icon",
-  "socialPreview",
-  "bimiLogo"
-]);
 
 function listAssetPathsByKey(siteConfig, keys) {
   return keys.map((key) => toAssetRelativePath(siteConfig.assetPaths[key]));
@@ -23,7 +8,7 @@ function listAssetPathsByKey(siteConfig, keys) {
 export function listRequiredSiteFiles(siteConfig, renderedFiles) {
   return [
     ...renderedFiles.keys(),
-    ...listAssetPathsByKey(siteConfig, requiredAssetPathKeys)
+    ...listAssetPathsByKey(siteConfig, requiredStaticAssetPathKeys)
   ];
 }
 
