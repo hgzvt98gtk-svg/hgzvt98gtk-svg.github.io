@@ -2,20 +2,26 @@ import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { siteConfig, siteUrls } from "./site.config.mjs";
+import { siteConfig } from "./site.config.mjs";
 import { renderSiteFiles } from "./site-files.mjs";
+import { siteUrls } from "./site-urls.mjs";
+import { listRequiredSiteFiles, listSiteContentChecks } from "./site-validation.mjs";
 import { validateSiteConfig } from "./validate-config.mjs";
+import { runAcrossValidationRoots } from "./validation-roots.mjs";
+import {
+  assertNoOutdatedReferences,
+  equivalentGeneratedContents,
+  includesAttribute,
+  manualReadTargets,
+  validateAgentCard,
+  validateApiCatalog,
+  validateRuntimeAppScript,
+  validateMtaStsDocument
+} from "./validate-site-helpers.mjs";
 
 const root = join(fileURLToPath(new URL("../..", import.meta.url)));
 validateSiteConfig(siteConfig, siteUrls);
 const generatedFiles = renderSiteFiles(siteConfig, siteUrls);
-const staticFiles = [
-  "style.css",
-  "HF.svg",
-  "Background.jpeg",
-  "social-preview.svg",
-  ".well-known/bimi/logo.svg"
-];
 
 function assert(condition, message) {
   if (!condition) {
@@ -23,76 +29,83 @@ function assert(condition, message) {
   }
 }
 
-function includesAttribute(contents, attribute, value) {
-  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = new RegExp(`${attribute}\\s*=\\s*["']${escaped}["']`);
-  return pattern.test(contents);
-}
-
 async function mustExist(path) {
   await access(path, constants.F_OK);
 }
 
-async function read(rootPath, relativePath) {
-  return readFile(join(rootPath, relativePath), "utf8");
+function createRootReader(rootPath) {
+  const cache = new Map();
+  return async function read(relativePath) {
+    if (!cache.has(relativePath)) {
+      cache.set(relativePath, readFile(join(rootPath, relativePath), "utf8"));
+    }
+    return cache.get(relativePath);
+  };
 }
 
-async function validateRoot(rootPath, { expectGeneratedSource } = {}) {
-  const required = [...generatedFiles.keys(), ...staticFiles];
-  await Promise.all(required.map((relativePath) => mustExist(join(rootPath, relativePath))));
+async function validateGeneratedSource(rootPath, read) {
+  await Promise.all([...generatedFiles].map(async ([relativePath, expectedContents]) => {
+    const actualContents = await read(relativePath);
+    assert(
+      equivalentGeneratedContents(relativePath, actualContents, expectedContents),
+      `${rootPath}: ${relativePath} is out of date; run npm run generate`
+    );
+  }));
+}
 
-  if (expectGeneratedSource) {
-    await Promise.all([...generatedFiles.entries()].map(async ([relativePath, expectedContents]) => {
-      const actualContents = await read(rootPath, relativePath);
-      assert(actualContents === expectedContents, `${rootPath}: ${relativePath} is out of date; run npm run generate`);
-    }));
+async function validateContentChecks(rootPath, read) {
+  const contentChecks = listSiteContentChecks(siteConfig, siteUrls);
+  const uniqueFiles = [...new Set(contentChecks.map(({ file }) => file))];
+  const contentByFile = new Map(await Promise.all(uniqueFiles.map(async (file) => [file, await read(file)])));
+
+  for (const check of contentChecks) {
+    const contents = contentByFile.get(check.file);
+    if (check.type === "attribute") {
+      assert(includesAttribute(contents, check.attribute, check.value), `${rootPath}: ${check.message}`);
+      continue;
+    }
+    if (check.type === "contains") {
+      assert(contents.includes(check.value), `${rootPath}: ${check.message}`);
+      continue;
+    }
+    if (check.type === "regex") {
+      assert(new RegExp(check.pattern).test(contents), `${rootPath}: ${check.message}`);
+      continue;
+    }
+    if (check.type === "runtimeScript") {
+      assert(validateRuntimeAppScript(contents, siteConfig), `${rootPath}: ${check.message}`);
+    }
   }
+}
 
-  const [index, privacy, style, appScript, sitemap, robots, llms, agentCardText, apiCatalogText, mtaSts] = await Promise.all([
-    read(rootPath, "index.html"),
-    read(rootPath, "Privacy.html"),
-    read(rootPath, "style.css"),
-    read(rootPath, "app.js"),
-    read(rootPath, "sitemap.xml"),
-    read(rootPath, "robots.txt"),
-    read(rootPath, "llms.txt"),
-    read(rootPath, ".well-known/agent-card.json"),
-    read(rootPath, ".well-known/api-catalog"),
-    read(rootPath, ".well-known/mta-sts.txt")
-  ]);
+async function validateSpecialCases(rootPath, read) {
+  const manualTargetContents = Object.fromEntries(await Promise.all(
+    Object.entries(manualReadTargets).map(async ([key, relativePath]) => [key, await read(relativePath)])
+  ));
+  const { index, privacy, sitemap, llms, agentCard: agentCardText, apiCatalog: apiCatalogText, mtaSts: mtaStsText } = manualTargetContents;
 
-  assert(includesAttribute(index, "href", siteConfig.assetPaths.stylesheet), `${rootPath}: index.html missing stylesheet link`);
-  assert(includesAttribute(index, "href", siteConfig.assetPaths.icon), `${rootPath}: index.html missing icon link`);
-  assert(includesAttribute(index, "src", siteConfig.assetPaths.appScript), `${rootPath}: index.html missing app script`);
-  assert(index.includes(siteUrls.socialPreview), `${rootPath}: index.html missing social preview URL`);
-  assert(includesAttribute(privacy, "href", siteConfig.assetPaths.stylesheet), `${rootPath}: Privacy.html missing stylesheet link`);
-  assert(includesAttribute(privacy, "href", siteConfig.assetPaths.icon), `${rootPath}: Privacy.html missing icon link`);
-  assert(new RegExp(`url\\((["'])?${siteConfig.assetPaths.background.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\1?\\)`).test(style), `${rootPath}: style.css missing background asset`);
-  assert(appScript.includes(siteConfig.assetPaths.agentCard), `${rootPath}: app.js missing agent-card fetch`);
-  assert(appScript.includes(siteConfig.assetPaths.apiCatalog), `${rootPath}: app.js missing api-catalog fetch`);
-  assert(appScript.includes(siteConfig.siteStatus), `${rootPath}: app.js missing site status`);
-  assert(sitemap.includes(siteUrls.privacy), `${rootPath}: sitemap.xml missing privacy URL`);
-  assert(robots.includes(`Sitemap: ${siteUrls.sitemap}`), `${rootPath}: robots.txt missing sitemap URL`);
-  assert(llms.includes(siteUrls.privacy), `${rootPath}: llms.txt missing privacy URL`);
-  assert(!/(social-preview\.png|https:\/\/hussamfaroug\.com\/Privacy[^.])/.test(`${index}\n${privacy}\n${sitemap}\n${llms}`), `${rootPath}: found outdated URL references`);
+  assert(assertNoOutdatedReferences(index, privacy, sitemap, llms), `${rootPath}: found outdated URL references`);
 
   const agentCard = JSON.parse(agentCardText);
   const apiCatalog = JSON.parse(apiCatalogText);
-  assert(agentCard.name === siteConfig.personName, `${rootPath}: unexpected agent-card name`);
-  assert(agentCard.url === siteUrls.home, `${rootPath}: unexpected agent-card url`);
-  assert(agentCard.status === siteConfig.siteStatus, `${rootPath}: unexpected agent-card status`);
-  assert(apiCatalog.site === siteUrls.home, `${rootPath}: unexpected api-catalog site`);
-  assert(Array.isArray(apiCatalog.apis), `${rootPath}: api-catalog apis must be an array`);
-
-  const lines = mtaSts.trim().split("\n");
-  assert(lines[0] === `version: ${siteConfig.mtaSts.version}`, `${rootPath}: invalid MTA-STS version`);
-  assert(lines[1] === `mode: ${siteConfig.mtaSts.mode}`, `${rootPath}: invalid MTA-STS mode`);
-  assert(lines.at(-1) === `max_age: ${siteConfig.mtaSts.maxAge}`, `${rootPath}: invalid MTA-STS max_age`);
-  assert(siteConfig.mtaSts.mx.every((mx) => lines.includes(`mx: ${mx}`)), `${rootPath}: invalid MTA-STS mx values`);
-  assert(lines.filter((line) => line.startsWith("mx: ")).length === siteConfig.mtaSts.mx.length, `${rootPath}: invalid MTA-STS mx count`);
+  assert(validateAgentCard(agentCard, siteConfig, siteUrls), `${rootPath}: invalid agent-card metadata`);
+  assert(validateApiCatalog(apiCatalog, siteUrls), `${rootPath}: invalid api-catalog metadata`);
+  assert(validateMtaStsDocument(mtaStsText, siteConfig), `${rootPath}: invalid MTA-STS document`);
 }
 
-await validateRoot(root, { expectGeneratedSource: true });
-await validateRoot(join(root, "dist"));
+async function validateRoot(rootInfo) {
+  const required = listRequiredSiteFiles(siteConfig, generatedFiles);
+  await Promise.all(required.map((relativePath) => mustExist(join(rootInfo.path, relativePath))));
+  const read = createRootReader(rootInfo.path);
+
+  if (rootInfo.name === ".") {
+    await validateGeneratedSource(rootInfo.path, read);
+  }
+
+  await validateContentChecks(rootInfo.path, read);
+  await validateSpecialCases(rootInfo.path, read);
+}
+
+await runAcrossValidationRoots(root, validateRoot);
 
 console.log("Validated source and dist site references.");

@@ -1,31 +1,72 @@
-import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import CleanCSS from "clean-css";
 import { minify as minifyHtml } from "html-minifier-terser";
 import { minify as minifyJs } from "terser";
+import { buildConfig } from "./.github/scripts/build.config.mjs";
+import { validateBuildConfig } from "./.github/scripts/validate-config.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const output = join(root, "dist");
-const excluded = new Set([".git", ".github", "dist", "node_modules", "build.mjs", "package-lock.json", "package.json"]);
-const concurrency = 8;
+const manifestPath = join(output, ".build-manifest.json");
+validateBuildConfig(buildConfig);
+const excluded = new Set(buildConfig.excludedNames);
+const concurrency = buildConfig.concurrency;
+const configFingerprint = JSON.stringify(buildConfig);
+
+async function exists(path) {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 async function filesIn(directory) {
-  const entries = await readdir(directory, { withFileTypes: true });
+  const pending = [directory];
   const files = [];
 
-  for (const entry of entries) {
-    if (excluded.has(entry.name)) continue;
-    const path = join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...await filesIn(path));
-    else files.push(path);
+  while (pending.length > 0) {
+    const currentDirectory = pending.pop();
+    const entries = await readdir(currentDirectory, { withFileTypes: true });
+
+    for (const entry of entries) {
+      if (excluded.has(entry.name)) continue;
+      const path = join(currentDirectory, entry.name);
+      if (entry.isDirectory()) {
+        pending.push(path);
+      } else {
+        files.push(path);
+      }
+    }
   }
 
   return files;
 }
 
-await rm(output, { recursive: true, force: true });
-await mkdir(output, { recursive: true });
+async function loadManifest() {
+  if (!await exists(manifestPath)) {
+    return { configFingerprint: "", files: {} };
+  }
+
+  try {
+    const text = await readFile(manifestPath, "utf8");
+    const parsed = JSON.parse(text);
+    return {
+      configFingerprint: parsed.configFingerprint ?? "",
+      files: typeof parsed.files === "object" && parsed.files !== null ? parsed.files : {}
+    };
+  } catch {
+    return { configFingerprint: "", files: {} };
+  }
+}
+
+async function fileSignature(source) {
+  const stats = await stat(source);
+  return `${stats.size}:${stats.mtimeMs}`;
+}
 
 async function buildFile(source) {
   const destination = join(output, relative(root, source));
@@ -63,9 +104,45 @@ async function buildFile(source) {
   await copyFile(source, destination);
 }
 
-const sources = await filesIn(root);
-for (let index = 0; index < sources.length; index += concurrency) {
-  await Promise.all(sources.slice(index, index + concurrency).map(buildFile));
+await mkdir(output, { recursive: true });
+
+const [sources, previousManifest] = await Promise.all([
+  filesIn(root),
+  loadManifest()
+]);
+
+const forceRebuild = previousManifest.configFingerprint !== configFingerprint;
+const nextManifest = { configFingerprint, files: {} };
+const buildQueue = [];
+const sourceMetadata = await Promise.all(sources.map(async (source) => {
+  const relativeSource = relative(root, source);
+  const destination = join(output, relativeSource);
+  const signature = await fileSignature(source);
+  const destinationExists = forceRebuild ? false : await exists(destination);
+  return { source, relativeSource, destination, signature, destinationExists };
+}));
+
+for (const { source, relativeSource, signature, destinationExists } of sourceMetadata) {
+  nextManifest.files[relativeSource] = signature;
+
+  if (!forceRebuild && previousManifest.files[relativeSource] === signature && destinationExists) {
+    continue;
+  }
+
+  buildQueue.push(source);
 }
 
-console.log(`Built minified site in ${relative(root, output)}/`);
+for (let index = 0; index < buildQueue.length; index += concurrency) {
+  await Promise.all(buildQueue.slice(index, index + concurrency).map(buildFile));
+}
+
+const staleFiles = Object.keys(previousManifest.files).filter((relativeSource) => !(relativeSource in nextManifest.files));
+for (const relativeSource of staleFiles) {
+  const destination = join(output, relativeSource);
+  if (await exists(destination)) {
+    await unlink(destination);
+  }
+}
+
+await writeFile(manifestPath, `${JSON.stringify(nextManifest, null, 2)}\n`);
+console.log(`Built minified site in ${relative(root, output)}/ (${buildQueue.length} changed file${buildQueue.length === 1 ? "" : "s"}).`);
