@@ -54,6 +54,15 @@ jobs:
             ) &
           }
 
+          validation_status() {
+            local name="$1"
+            if [ ! -f "${log_dir}/${name}.status" ]; then
+              printf '1\n'
+              return
+            fi
+            cat "${log_dir}/${name}.status"
+          }
+
           run_validation site npm run validate:site
           run_validation xml npm run validate:xml
           run_validation deps npm run validate:deps
@@ -63,15 +72,15 @@ jobs:
           failures=0
           failed_jobs=()
 
-          if [ "$(cat "${log_dir}/site.status")" -ne 0 ]; then
+          if [ "$(validation_status site)" -ne 0 ]; then
             failures=$((failures + 1))
             failed_jobs+=("site")
           fi
-          if [ "$(cat "${log_dir}/xml.status")" -ne 0 ]; then
+          if [ "$(validation_status xml)" -ne 0 ]; then
             failures=$((failures + 1))
             failed_jobs+=("xml")
           fi
-          if [ "$(cat "${log_dir}/deps.status")" -ne 0 ]; then
+          if [ "$(validation_status deps)" -ne 0 ]; then
             failures=$((failures + 1))
             failed_jobs+=("deps")
           fi
