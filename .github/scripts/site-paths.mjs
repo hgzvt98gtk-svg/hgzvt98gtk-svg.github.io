@@ -56,18 +56,6 @@ export const xmlSyntaxAssetPathKeys = Object.freeze([
   "bimiLogo"
 ]);
 
-export const derivedSiteUrlAssetPathKeys = Object.freeze({
-  privacy: "privacyPage",
-  socialPreview: "socialPreview",
-  sitemap: "sitemap",
-  agentCard: "agentCard",
-  apiCatalog: "apiCatalog",
-  llms: "llms",
-  robots: "robots",
-  mtaSts: "mtaSts",
-  bimiLogo: "bimiLogo"
-});
-
 function toAssetRelativePath(pathname) {
   return pathname.replace(/^\//, "");
 }

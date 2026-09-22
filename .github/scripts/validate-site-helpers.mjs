@@ -1,7 +1,7 @@
 import { generatedJsonFiles, siteFilePaths } from "./site-paths.mjs";
 
 export function includesAttribute(contents, attribute, value) {
-  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const escaped = escapeRegex(value);
   const pattern = new RegExp(`${attribute}\\s*=\\s*["']${escaped}["']`);
   return pattern.test(contents);
 }

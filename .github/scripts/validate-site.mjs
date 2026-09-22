@@ -23,12 +23,16 @@ const root = join(fileURLToPath(new URL("../..", import.meta.url)));
 validateSiteConfig(siteConfig, siteUrls);
 const generatedFiles = renderSiteFiles(siteConfig, siteUrls);
 const contentChecks = listSiteContentChecks(siteConfig, siteUrls);
+const contentCheckUniqueFiles = [...new Set(contentChecks.map(({ file }) => file))];
+const manualReadTargetEntries = Object.entries(manualReadTargets);
+const manualReadTargetPaths = manualReadTargetEntries.map(([, relativePath]) => relativePath);
 const readTargets = new Set([
   ...generatedFiles.keys(),
-  ...new Set(contentChecks.map(({ file }) => file)),
-  ...Object.values(manualReadTargets)
+  ...contentCheckUniqueFiles,
+  ...manualReadTargetPaths
 ]);
 const requiredFiles = listRequiredSiteFiles(siteConfig, generatedFiles);
+const requiredExistenceOnlyFiles = requiredFiles.filter((relativePath) => !readTargets.has(relativePath));
 
 async function mustExist(path) {
   await access(path, constants.F_OK);
@@ -54,8 +58,7 @@ async function validateGeneratedSource(rootPath, read) {
   }));
 }
 async function validateContentChecks(rootPath, read) {
-  const uniqueFiles = [...new Set(contentChecks.map(({ file }) => file))];
-  const contentByFile = new Map(await Promise.all(uniqueFiles.map(async (file) => [file, await read(file)])));
+  const contentByFile = new Map(await Promise.all(contentCheckUniqueFiles.map(async (file) => [file, await read(file)])));
 
   for (const check of contentChecks) {
     const contents = contentByFile.get(check.file);
@@ -79,7 +82,7 @@ async function validateContentChecks(rootPath, read) {
 
 async function validateSpecialCases(rootPath, read) {
   const manualTargetContents = Object.fromEntries(await Promise.all(
-    Object.entries(manualReadTargets).map(async ([key, relativePath]) => [key, await read(relativePath)])
+    manualReadTargetEntries.map(async ([key, relativePath]) => [key, await read(relativePath)])
   ));
   const { index, privacy, sitemap, llms, agentCard: agentCardText, apiCatalog: apiCatalogText, mtaSts: mtaStsText } = manualTargetContents;
 
@@ -94,9 +97,7 @@ async function validateSpecialCases(rootPath, read) {
 
 async function validateRoot(rootInfo) {
   await Promise.all(
-    requiredFiles
-      .filter((relativePath) => !readTargets.has(relativePath))
-      .map((relativePath) => mustExist(join(rootInfo.path, relativePath)))
+    requiredExistenceOnlyFiles.map((relativePath) => mustExist(join(rootInfo.path, relativePath)))
   );
   const read = createRootReader(rootInfo.path);
 
