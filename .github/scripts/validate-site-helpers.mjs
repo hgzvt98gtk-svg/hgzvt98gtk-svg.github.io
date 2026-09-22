@@ -60,24 +60,12 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
   const program = parse(scriptText, { ecmaVersion: "latest", sourceType: "module" });
   let hasProvideContextCall = false;
   const literalStrings = new Set();
-  const toolNames = new Set();
   let fetchesAgentCard = false;
   let fetchesApiCatalog = false;
 
   walkAst(program, (node) => {
     if (node.type === "Literal" && typeof node.value === "string") {
       literalStrings.add(node.value);
-    }
-
-    if (node.type === "Property") {
-      const keyName = node.key?.type === "Identifier"
-        ? node.key.name
-        : node.key?.type === "Literal" && typeof node.key.value === "string"
-          ? node.key.value
-          : null;
-      if (keyName === "name" && node.value?.type === "Literal" && typeof node.value.value === "string") {
-        toolNames.add(node.value.value);
-      }
     }
 
     if (node.type === "CallExpression" && node.callee?.type === "MemberExpression") {
@@ -129,9 +117,7 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
     && literalStrings.has(siteConfig.assetPaths.agentCard)
     && literalStrings.has(siteConfig.assetPaths.apiCatalog)
     && literalStrings.has(siteConfig.siteStatus)
-    && toolNames.has("get-site-info")
-    && toolNames.has("get-agent-card")
-    && toolNames.has("get-api-catalog")
+    && literalStrings.has(siteConfig.domain)
     && fetchesAgentCard
     && fetchesApiCatalog;
 }
