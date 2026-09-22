@@ -4,11 +4,24 @@ const runtimeContract = Object.freeze({
   siteStatus: "agent-ready"
 });
 
-    async function fetchJson(path, label) {
-      const response = await fetch(path, {
+async function fetchJson(path, label) {
+      const pageOrigin = globalThis.location?.origin;
+      if (typeof pageOrigin !== "string" || pageOrigin.length === 0) {
+        throw new Error(`Failed to fetch ${label}: missing page origin`);
+      }
+
+      const url = new URL(path, pageOrigin);
+      if (url.origin !== pageOrigin || url.pathname !== path || url.search || url.hash) {
+        throw new Error(`Failed to fetch ${label}: unexpected URL`);
+      }
+
+      const response = await fetch(url, {
+        cache: "no-store",
+        credentials: "same-origin",
         headers: {
           Accept: "application/json"
-        }
+        },
+        redirect: "error"
       });
 
       if (!response.ok) {
@@ -27,9 +40,9 @@ const runtimeContract = Object.freeze({
       }
     }
 
-    if ("modelContext" in navigator) {
-      navigator.modelContext.provideContext({
-        tools: [
+if ("modelContext" in navigator) {
+  navigator.modelContext.provideContext({
+    tools: [
       {
         name: "get-site-info",
         description: "Get information about hussamfaroug.com",
