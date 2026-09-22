@@ -59,9 +59,27 @@ function walkAst(node, visit) {
 export function validateRuntimeAppScript(scriptText, siteConfig) {
   const program = parse(scriptText, { ecmaVersion: "latest", sourceType: "module" });
   let hasProvideContextCall = false;
-  let hasRuntimeContract = false;
+  const literalStrings = new Set();
+  const toolNames = new Set();
+  let fetchesAgentCard = false;
+  let fetchesApiCatalog = false;
 
   walkAst(program, (node) => {
+    if (node.type === "Literal" && typeof node.value === "string") {
+      literalStrings.add(node.value);
+    }
+
+    if (node.type === "Property") {
+      const keyName = node.key?.type === "Identifier"
+        ? node.key.name
+        : node.key?.type === "Literal" && typeof node.key.value === "string"
+          ? node.key.value
+          : null;
+      if (keyName === "name" && node.value?.type === "Literal" && typeof node.value.value === "string") {
+        toolNames.add(node.value.value);
+      }
+    }
+
     if (node.type === "CallExpression" && node.callee?.type === "MemberExpression") {
       const propertyName = node.callee.property?.type === "Identifier"
         ? node.callee.property.name
@@ -73,36 +91,49 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
       }
     }
 
-    if (node.type !== "ObjectExpression") {
-      return;
+    if (
+      node.type === "CallExpression"
+      && (
+        (node.callee.type === "Identifier" && node.callee.name === "fetch")
+        || (
+          node.callee.type === "MemberExpression"
+          && (
+            (node.callee.property.type === "Identifier" && node.callee.property.name === "fetch")
+            || (node.callee.property.type === "Literal" && node.callee.property.value === "fetch")
+          )
+        )
+      )
+    ) {
+      const firstArg = node.arguments[0];
+      const fetchedLiteral = firstArg?.type === "Literal" && typeof firstArg.value === "string"
+        ? firstArg.value
+        : null;
+      const fetchedMember = firstArg?.type === "MemberExpression"
+        ? firstArg.property?.type === "Identifier"
+          ? firstArg.property.name
+          : firstArg.property?.type === "Literal" && typeof firstArg.property.value === "string"
+            ? firstArg.property.value
+            : null
+        : null;
+
+      if (fetchedLiteral === siteConfig.assetPaths.agentCard || fetchedMember === "agentCardPath") {
+        fetchesAgentCard = true;
+      }
+      if (fetchedLiteral === siteConfig.assetPaths.apiCatalog || fetchedMember === "apiCatalogPath") {
+        fetchesApiCatalog = true;
+      }
     }
-
-    const objectEntries = Object.fromEntries(node.properties.flatMap((property) => {
-      if (property.type !== "Property" || property.computed) {
-        return [];
-      }
-      const keyName = property.key?.type === "Identifier"
-        ? property.key.name
-        : property.key?.type === "Literal"
-          ? property.key.value
-          : null;
-      if (typeof keyName !== "string") {
-        return [];
-      }
-      if (property.value?.type !== "Literal" || typeof property.value.value !== "string") {
-        return [];
-      }
-      return [[keyName, property.value.value]];
-    }));
-
-    hasRuntimeContract = hasRuntimeContract || (
-      objectEntries.agentCardPath === siteConfig.assetPaths.agentCard
-      && objectEntries.apiCatalogPath === siteConfig.assetPaths.apiCatalog
-      && objectEntries.siteStatus === siteConfig.siteStatus
-    );
   });
 
-  return hasProvideContextCall && hasRuntimeContract;
+  return hasProvideContextCall
+    && literalStrings.has(siteConfig.assetPaths.agentCard)
+    && literalStrings.has(siteConfig.assetPaths.apiCatalog)
+    && literalStrings.has(siteConfig.siteStatus)
+    && toolNames.has("get-site-info")
+    && toolNames.has("get-agent-card")
+    && toolNames.has("get-api-catalog")
+    && fetchesAgentCard
+    && fetchesApiCatalog;
 }
 
 export function validateMtaStsDocument(documentText, siteConfig) {

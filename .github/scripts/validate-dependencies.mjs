@@ -132,6 +132,17 @@ function findBoundaryViolations(graph) {
   return violations;
 }
 
+function validateBoundaryRuleCoverage(graph) {
+  const graphFileNames = new Set([...graph.keys()].map((path) => basename(path)));
+  const staleBoundaryRules = [...boundaryRules.keys()].filter((fileName) => !graphFileNames.has(fileName));
+  if (staleBoundaryRules.length > 0) {
+    throw new Error(
+      `boundaryRules has entries for files that are not in the dependency graph: ${staleBoundaryRules.join(", ")}.\n`
+      + "Remove stale entries or update boundaryRules for renamed files."
+    );
+  }
+}
+
 const files = [...new Set([...(await listSourceFiles(scriptRoot)), ...entryFiles])].map((filePath) => normalize(filePath));
 const fileSet = new Set(files);
 const graph = new Map();
@@ -146,6 +157,8 @@ if (cycle) {
   const display = cycle.map((path) => path.replace(`${root}/`, "")).join(" -> ");
   throw new Error(`Circular dependency detected: ${display}`);
 }
+
+validateBoundaryRuleCoverage(graph);
 
 const boundaryViolations = findBoundaryViolations(graph);
 if (boundaryViolations.length > 0) {
