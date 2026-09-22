@@ -9,7 +9,6 @@ const entryFiles = [join(root, "build.mjs"), join(root, "app.js")];
 const sourceExtensions = new Set([".mjs", ".js"]);
 const boundaryRules = new Map([
   ["site-paths.mjs", new Set()],
-  ["path-utils.mjs", new Set()],
   ["site.config.mjs", new Set()],
   ["build.config.mjs", new Set()],
   ["validation-roots.mjs", new Set()],
@@ -19,20 +18,13 @@ const boundaryRules = new Map([
 
 async function listSourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
-  const files = [];
-
-  for (const entry of entries) {
+  return (await Promise.all(entries.map(async (entry) => {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
-      files.push(...await listSourceFiles(path));
-      continue;
+      return listSourceFiles(path);
     }
-    if (sourceExtensions.has(extname(entry.name))) {
-      files.push(path);
-    }
-  }
-
-  return files;
+    return sourceExtensions.has(extname(entry.name)) ? [path] : [];
+  }))).flat();
 }
 
 function resolveImportPath(importerPath, specifier, fileSet) {
@@ -151,12 +143,9 @@ function validateBoundaryRuleCoverage(graph) {
 
 const files = [...new Set([...(await listSourceFiles(scriptRoot)), ...entryFiles])].map((filePath) => normalize(filePath));
 const fileSet = new Set(files);
-const graph = new Map();
-
-for (const filePath of files) {
-  const imports = await parseImports(filePath, fileSet);
-  graph.set(filePath, imports);
-}
+const graph = new Map(
+  await Promise.all(files.map(async (filePath) => [filePath, await parseImports(filePath, fileSet)]))
+);
 
 const cycle = findCycle(graph);
 if (cycle) {

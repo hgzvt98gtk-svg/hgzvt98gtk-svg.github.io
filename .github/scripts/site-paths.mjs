@@ -67,3 +67,11 @@ export const derivedSiteUrlAssetPathKeys = Object.freeze({
   mtaSts: "mtaSts",
   bimiLogo: "bimiLogo"
 });
+
+function toAssetRelativePath(pathname) {
+  return pathname.replace(/^\//, "");
+}
+
+export function listAssetRelativePaths(siteConfig, keys) {
+  return keys.map((key) => toAssetRelativePath(siteConfig.assetPaths[key]));
+}

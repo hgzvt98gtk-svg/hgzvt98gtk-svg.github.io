@@ -95,7 +95,16 @@ async function validateSpecialCases(rootPath, read) {
 
 async function validateRoot(rootInfo) {
   const required = listRequiredSiteFiles(siteConfig, generatedFiles);
-  await Promise.all(required.map((relativePath) => mustExist(join(rootInfo.path, relativePath))));
+  const readTargets = new Set([
+    ...generatedFiles.keys(),
+    ...new Set(listSiteContentChecks(siteConfig, siteUrls).map(({ file }) => file)),
+    ...Object.values(manualReadTargets)
+  ]);
+  await Promise.all(
+    required
+      .filter((relativePath) => !readTargets.has(relativePath))
+      .map((relativePath) => mustExist(join(rootInfo.path, relativePath)))
+  );
   const read = createRootReader(rootInfo.path);
 
   if (rootInfo.name === ".") {
