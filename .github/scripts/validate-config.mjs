@@ -1,4 +1,10 @@
-import { derivedSiteUrlAssetPathKeys, requiredAssetPathKeys } from "./site-paths.mjs";
+import { requiredAssetPathKeys } from "./site-paths.mjs";
+
+const requiredDerivedSiteUrls = Object.freeze({
+  privacy: "privacyPage",
+  socialPreview: "socialPreview",
+  sitemap: "sitemap"
+});
 
 export function assert(condition, message) {
   if (!condition) {
@@ -40,7 +46,7 @@ export function validateSiteConfig(siteConfig, siteUrls) {
   assert(siteConfig.origin === `https://${siteConfig.domain}`, "siteConfig.origin must match siteConfig.domain");
   assert(typeof siteUrls.home === "string" && siteUrls.home === `${siteConfig.origin}/`, "siteUrls.home must match siteConfig.origin/");
 
-  for (const [urlKey, assetPathKey] of Object.entries(derivedSiteUrlAssetPathKeys)) {
+  for (const [urlKey, assetPathKey] of Object.entries(requiredDerivedSiteUrls)) {
     const expected = new URL(siteConfig.assetPaths[assetPathKey], `${siteConfig.origin}/`).toString();
     assert(typeof siteUrls[urlKey] === "string" && siteUrls[urlKey] === expected, `siteUrls.${urlKey} must match origin + asset path`);
   }

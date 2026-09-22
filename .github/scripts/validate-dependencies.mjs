@@ -9,12 +9,13 @@ const entryFiles = [join(root, "build.mjs"), join(root, "app.js")];
 const sourceExtensions = new Set([".mjs", ".js"]);
 const boundaryRules = new Map([
   ["site-paths.mjs", new Set()],
-  ["site.config.mjs", new Set()],
+  ["site.config.mjs", new Set(["site-paths.mjs"])],
   ["build.config.mjs", new Set()],
   ["validation-roots.mjs", new Set()],
   ["site-urls.mjs", new Set(["site.config.mjs", "site-paths.mjs"])],
   ["validate-config.mjs", new Set(["site-paths.mjs"])]
 ]);
+const rootPrefix = `${root}/`;
 
 async function listSourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -66,22 +67,20 @@ async function parseImports(filePath, fileSet) {
   return importSpecifiers.map((specifier) => resolveImportPath(filePath, specifier, fileSet)).filter(Boolean);
 }
 
-function relativeToRoot(path) {
-  return path.replace(`${root}/`, "");
-}
-
 function findCycle(graph) {
   const state = new Map();
   const stack = [];
+  const stackIndexes = new Map();
 
   function dfs(node) {
     state.set(node, "visiting");
+    stackIndexes.set(node, stack.length);
     stack.push(node);
 
     for (const neighbor of graph.get(node) ?? []) {
       const neighborState = state.get(neighbor);
       if (neighborState === "visiting") {
-        const start = stack.indexOf(neighbor);
+        const start = stackIndexes.get(neighbor);
         return [...stack.slice(start), neighbor];
       }
       if (!neighborState) {
@@ -92,6 +91,7 @@ function findCycle(graph) {
       }
     }
 
+    stackIndexes.delete(node);
     stack.pop();
     state.set(node, "visited");
     return null;
@@ -109,19 +109,19 @@ function findCycle(graph) {
   return null;
 }
 
-function findBoundaryViolations(graph) {
+function findBoundaryViolations(graph, fileInfoByPath) {
   const violations = [];
 
   for (const [fromPath, toPaths] of graph) {
-    const fromFileName = basename(fromPath);
-    const allowedImports = boundaryRules.get(fromFileName);
+    const fromInfo = fileInfoByPath.get(fromPath);
+    const allowedImports = boundaryRules.get(fromInfo.fileName);
     if (!allowedImports) {
       continue;
     }
 
     for (const toPath of toPaths) {
-      const importedFileName = basename(toPath);
-      if (!allowedImports.has(importedFileName)) {
+      const toInfo = fileInfoByPath.get(toPath);
+      if (!allowedImports.has(toInfo.fileName)) {
         violations.push({ fromPath, toPath });
       }
     }
@@ -130,8 +130,8 @@ function findBoundaryViolations(graph) {
   return violations;
 }
 
-function validateBoundaryRuleCoverage(graph) {
-  const graphFileNames = new Set([...graph.keys()].map((path) => basename(path)));
+function validateBoundaryRuleCoverage(fileInfoByPath) {
+  const graphFileNames = new Set([...fileInfoByPath.values()].map(({ fileName }) => fileName));
   const staleBoundaryRules = [...boundaryRules.keys()].filter((fileName) => !graphFileNames.has(fileName));
   if (staleBoundaryRules.length > 0) {
     throw new Error(
@@ -143,22 +143,26 @@ function validateBoundaryRuleCoverage(graph) {
 
 const files = [...new Set([...(await listSourceFiles(scriptRoot)), ...entryFiles])].map((filePath) => normalize(filePath));
 const fileSet = new Set(files);
+const fileInfoByPath = new Map(files.map((filePath) => [filePath, {
+  fileName: basename(filePath),
+  relativePath: filePath.startsWith(rootPrefix) ? filePath.slice(rootPrefix.length) : filePath
+}]));
 const graph = new Map(
   await Promise.all(files.map(async (filePath) => [filePath, await parseImports(filePath, fileSet)]))
 );
 
 const cycle = findCycle(graph);
 if (cycle) {
-  const display = cycle.map(relativeToRoot).join(" -> ");
+  const display = cycle.map((path) => fileInfoByPath.get(path).relativePath).join(" -> ");
   throw new Error(`Circular dependency detected: ${display}`);
 }
 
-validateBoundaryRuleCoverage(graph);
+validateBoundaryRuleCoverage(fileInfoByPath);
 
-const boundaryViolations = findBoundaryViolations(graph);
+const boundaryViolations = findBoundaryViolations(graph, fileInfoByPath);
 if (boundaryViolations.length > 0) {
   const violationList = boundaryViolations
-    .map(({ fromPath, toPath }) => `${fromPath.replace(`${root}/`, "")} -> ${toPath.replace(`${root}/`, "")}`)
+    .map(({ fromPath, toPath }) => `${fileInfoByPath.get(fromPath).relativePath} -> ${fileInfoByPath.get(toPath).relativePath}`)
     .join("\n");
   throw new Error(
     `Dependency boundary violation(s) detected:\n${violationList}\n\n`
