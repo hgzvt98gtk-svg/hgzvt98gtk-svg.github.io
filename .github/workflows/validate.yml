@@ -44,36 +44,41 @@ jobs:
 
           log_dir="$(mktemp -d)"
 
-          (
-            set -euo pipefail
-            npm run validate:site
-          ) >"${log_dir}/site.log" 2>&1 &
-          site_pid=$!
+          run_validation() {
+            local name="$1"
+            shift
+            (
+              set +e
+              "$@" >"${log_dir}/${name}.log" 2>&1
+              printf '%s\n' "$?" >"${log_dir}/${name}.status"
+            ) &
+          }
 
-          (
-            set -euo pipefail
-            npm run validate:xml
-          ) >"${log_dir}/xml.log" 2>&1 &
-          xml_pid=$!
-
-          (
-            set -euo pipefail
-            npm run validate:deps
-          ) >"${log_dir}/deps.log" 2>&1 &
-          deps_pid=$!
+          validation_status() {
+            local name="$1"
+            if [ ! -f "${log_dir}/${name}.status" ]; then
+              printf '1\n'
+              return
+            fi
+            cat "${log_dir}/${name}.status"
+          }
+          run_validation site npm run validate:site
+          run_validation xml npm run validate:xml
+          run_validation deps npm run validate:deps
+          wait
 
           failures=0
           failed_jobs=()
 
-          if ! wait "$site_pid"; then
+          if [ "$(validation_status site)" -ne 0 ]; then
             failures=$((failures + 1))
             failed_jobs+=("site")
           fi
-          if ! wait "$xml_pid"; then
+          if [ "$(validation_status xml)" -ne 0 ]; then
             failures=$((failures + 1))
             failed_jobs+=("xml")
           fi
-          if ! wait "$deps_pid"; then
+          if [ "$(validation_status deps)" -ne 0 ]; then
             failures=$((failures + 1))
             failed_jobs+=("deps")
           fi
