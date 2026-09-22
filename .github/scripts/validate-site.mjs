@@ -2,8 +2,9 @@ import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { siteConfig, siteUrls } from "./site.config.mjs";
+import { siteConfig } from "./site.config.mjs";
 import { renderSiteFiles } from "./site-files.mjs";
+import { siteUrls } from "./site-urls.mjs";
 import { listRequiredSiteFiles, listSiteContentChecks } from "./site-validation.mjs";
 import { validateSiteConfig } from "./validate-config.mjs";
 import { runAcrossValidationRoots } from "./validation-roots.mjs";
@@ -11,7 +12,7 @@ import {
   assertNoOutdatedReferences,
   equivalentGeneratedContents,
   includesAttribute,
-  listManualReadTargets,
+  manualReadTargets,
   validateAgentCard,
   validateApiCatalog,
   validateMtaStsDocument
@@ -67,9 +68,10 @@ async function validateContentChecks(rootPath) {
 }
 
 async function validateSpecialCases(rootPath) {
-  const [index, privacy, sitemap, llms, agentCardText, apiCatalogText, mtaStsText] = await Promise.all(
-    listManualReadTargets().map((relativePath) => read(rootPath, relativePath))
-  );
+  const manualTargetContents = Object.fromEntries(await Promise.all(
+    Object.entries(manualReadTargets).map(async ([key, relativePath]) => [key, await read(rootPath, relativePath)])
+  ));
+  const { index, privacy, sitemap, llms, agentCard: agentCardText, apiCatalog: apiCatalogText, mtaSts: mtaStsText } = manualTargetContents;
 
   assert(assertNoOutdatedReferences(index, privacy, sitemap, llms), `${rootPath}: found outdated URL references`);
 

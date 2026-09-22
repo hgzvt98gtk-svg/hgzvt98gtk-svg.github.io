@@ -1,5 +1,5 @@
 import { contentCheckFiles } from "./site-paths.mjs";
-import { toAssetRelativePath } from "./site-files.mjs";
+import { toAssetRelativePath } from "./path-utils.mjs";
 
 export function listRequiredSiteFiles(siteConfig, renderedFiles) {
   return [

@@ -16,11 +16,11 @@ async function mustExist(path) {
 }
 
 async function validateRoot(rootInfo) {
-  for (const relativePath of listXmlSyntaxFiles(siteConfig)) {
+  await Promise.all(listXmlSyntaxFiles(siteConfig).map(async (relativePath) => {
     const path = join(rootInfo.path, relativePath);
     await mustExist(path);
     await execFileAsync("xmllint", ["--noout", path]);
-  }
+  }));
 }
 
 await runAcrossValidationRoots(root, validateRoot);
