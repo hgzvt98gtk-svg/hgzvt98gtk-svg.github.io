@@ -13,6 +13,7 @@
   "devDependencies": {
     "acorn": "^8.18.0",
     "clean-css": "^5.3.3",
+    "fast-xml-parser": "^5.11.1",
     "html-minifier-terser": "^7.2.0",
     "terser": "^5.36.0"
   }
