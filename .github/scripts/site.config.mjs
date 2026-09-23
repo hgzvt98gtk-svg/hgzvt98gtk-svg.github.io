@@ -32,7 +32,7 @@ export const siteConfig = {
   },
   mtaSts: {
     version: "STSv1",
-    mode: "testing",
+    mode: "enforce",
     maxAge: 604800,
     mx: ["mx01.mail.icloud.com", "mx02.mail.icloud.com"]
   },
