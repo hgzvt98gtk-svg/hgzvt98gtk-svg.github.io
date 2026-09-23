@@ -1,9 +1,61 @@
 const runtimeContract = Object.freeze({
   agentCardPath: "/.well-known/agent-card.json",
   apiCatalogPath: "/.well-known/api-catalog",
-  siteStatus: "agent-ready"
+  siteStatus: "agent-ready",
+  siteHost: "hussamfaroug.com",
+  homeUrl: "https://hussamfaroug.com/",
+  agentCardDescription: "Personal website and contact page for Hussam Faroug."
 });
 const runtimeJsonCache = new Map();
+
+function isPlainObject(value) {
+      return typeof value === "object" && value !== null && Object.getPrototypeOf(value) === Object.prototype;
+}
+
+function assertExactKeys(value, expectedKeys, label) {
+      const actualKeys = Object.keys(value).sort();
+      const expected = [...expectedKeys].sort();
+      if (actualKeys.length !== expected.length || actualKeys.some((key, index) => key !== expected[index])) {
+        throw new Error(`Failed to fetch ${label}: unexpected JSON shape`);
+      }
+}
+
+function validateAgentCardPayload(value) {
+      if (!isPlainObject(value)) {
+        throw new Error("Failed to fetch agent card: expected object response");
+      }
+      assertExactKeys(value, ["description", "name", "status", "url"], "agent card");
+      if (typeof value.name !== "string" || value.name.length === 0) {
+        throw new Error("Failed to fetch agent card: invalid name");
+      }
+      if (typeof value.description !== "string" || value.description !== runtimeContract.agentCardDescription) {
+        throw new Error("Failed to fetch agent card: invalid description");
+      }
+      if (typeof value.status !== "string" || value.status !== runtimeContract.siteStatus) {
+        throw new Error("Failed to fetch agent card: invalid status");
+      }
+      if (typeof value.url !== "string" || value.url !== runtimeContract.homeUrl) {
+        throw new Error("Failed to fetch agent card: invalid url");
+      }
+      return Object.freeze({ ...value });
+}
+
+function validateApiCatalogPayload(value) {
+      if (!isPlainObject(value)) {
+        throw new Error("Failed to fetch api catalog: expected object response");
+      }
+      assertExactKeys(value, ["apis", "site"], "api catalog");
+      if (typeof value.site !== "string" || value.site !== runtimeContract.homeUrl) {
+        throw new Error("Failed to fetch api catalog: invalid site");
+      }
+      if (!Array.isArray(value.apis) || !value.apis.every((entry) => isPlainObject(entry))) {
+        throw new Error("Failed to fetch api catalog: invalid apis");
+      }
+      return Object.freeze({
+        site: value.site,
+        apis: Object.freeze(value.apis.map((entry) => Object.freeze({ ...entry })))
+      });
+}
 
 async function fetchJson(path, label) {
       const timeoutMs = 8000;
@@ -39,10 +91,20 @@ async function fetchJson(path, label) {
       }
 
       try {
-        return await response.json();
+        const payload = await response.json();
+        if (label === "agent card") {
+          return validateAgentCardPayload(payload);
+        }
+        if (label === "api catalog") {
+          return validateApiCatalogPayload(payload);
+        }
+        throw new Error(`Failed to fetch ${label}: unsupported payload type`);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           throw new Error(`Failed to fetch ${label}: timed out after ${timeoutMs}ms`);
+        }
+        if (error instanceof Error && error.message.startsWith(`Failed to fetch ${label}:`)) {
+          throw error;
         }
         throw new Error(`Failed to fetch ${label}: invalid JSON response`);
       } finally {
