@@ -39,6 +39,10 @@ export function validateApiCatalog(apiCatalog, siteUrls) {
 export function validateRuntimeAppScript(scriptText, siteConfig) {
   const requiredPatterns = [
     /async function fetchJson\s*\(/,
+    /function validateAgentCardPayload\s*\(/,
+    /function validateApiCatalogPayload\s*\(/,
+    /assertExactKeys\s*\(\s*value\s*,\s*\[\s*["']description["']\s*,\s*["']name["']\s*,\s*["']status["']\s*,\s*["']url["']\s*\]\s*,\s*["']agent card["']\s*\)/,
+    /assertExactKeys\s*\(\s*value\s*,\s*\[\s*["']apis["']\s*,\s*["']site["']\s*\]\s*,\s*["']api catalog["']\s*\)/,
     /provideContext\s*\(/,
     /name\s*:\s*["']get-site-info["']/,
     /name\s*:\s*["']get-agent-card["']/,
@@ -53,6 +57,7 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
     siteConfig.assetPaths.apiCatalog,
     siteConfig.siteStatus,
     siteConfig.domain,
+    siteConfig.descriptions.agentCard,
     `Get information about ${siteConfig.domain}`
   ];
 
