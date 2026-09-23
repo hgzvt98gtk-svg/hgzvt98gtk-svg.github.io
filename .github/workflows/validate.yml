@@ -18,16 +18,6 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Install xmllint when missing
-        shell: bash
-        run: |
-          set -euo pipefail
-          if ! command -v xmllint >/dev/null 2>&1; then
-            sudo apt-get install -y --no-install-recommends libxml2-utils || {
-              sudo apt-get update
-              sudo apt-get install -y --no-install-recommends libxml2-utils
-            }
-          fi
       - name: Install Node dependencies
         shell: bash
         run: npm ci --prefer-offline --no-audit

@@ -16,13 +16,9 @@ Static personal site with generated metadata files, build output in `dist/`, and
 
 ## Local workflow
 
-Install `xmllint` before running XML/SVG validation (`libxml2-utils` on Ubuntu/Debian).
+Install Node dependencies, then run the full local validation pipeline with one command.
 
 ```bash
 npm ci
-npm run generate
-npm run build
-npm run validate:site
-npm run validate:xml
-npm run validate:deps
+npm run validate
 ```

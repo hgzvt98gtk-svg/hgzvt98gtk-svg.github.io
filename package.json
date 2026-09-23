@@ -5,6 +5,7 @@
   "scripts": {
     "generate": "node .github/scripts/generate-site.mjs",
     "build": "node build.mjs",
+    "validate": "npm run generate && npm run build && npm run validate:site && npm run validate:xml && npm run validate:deps",
     "validate:site": "node .github/scripts/validate-site.mjs",
     "validate:xml": "node .github/scripts/validate-xml-syntax.mjs",
     "validate:deps": "node .github/scripts/validate-dependencies.mjs"
@@ -12,6 +13,7 @@
   "devDependencies": {
     "acorn": "^8.18.0",
     "clean-css": "^5.3.3",
+    "fast-xml-parser": "^5.11.1",
     "html-minifier-terser": "^7.2.0",
     "terser": "^5.36.0"
   }
