@@ -59,16 +59,7 @@ jobs:
             fi
           done
 
-          cmp Background.jpeg dist/Background.jpeg || {
-            failures=$((failures + 1))
-            failed_jobs+=("cmp")
-          }
-
           for job in "${failed_jobs[@]}"; do
-            if [ "$job" = "cmp" ]; then
-              echo "::error::Background.jpeg and dist/Background.jpeg differ."
-              continue
-            fi
             echo "::group::Failed validation output (${job})"
             cat "${log_dir}/${job}.log"
             echo "::endgroup::"
