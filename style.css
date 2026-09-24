@@ -10,7 +10,7 @@ html, body { min-height: 100%; }
 body {
   min-height: 100vh;
   color: var(--text);
-  background: #0b0b0d url("/Background.jpeg") center / cover no-repeat fixed;
+  background: #0b0b0d url("https://assets.hussamfaroug.com/Background.jpeg") center / cover no-repeat fixed;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 body::before {

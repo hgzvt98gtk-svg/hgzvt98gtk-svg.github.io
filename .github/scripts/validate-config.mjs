@@ -12,6 +12,10 @@ export function assert(condition, message) {
   }
 }
 
+function isExternalUrl(value) {
+  return /^https?:\/\//.test(value);
+}
+
 function validatePathOnlyAssetPath(path, key) {
   assert(!path.startsWith("//"), `siteConfig.assetPaths.${key} must not start with //`);
   assert(!/[?#]/.test(path), `siteConfig.assetPaths.${key} must not include a query string or fragment`);
@@ -22,13 +26,26 @@ function validatePathOnlyAssetPath(path, key) {
   assert(parsed.pathname === path, `siteConfig.assetPaths.${key} must be a normalized absolute path`);
 }
 
+function validateExternalAssetPath(path, key) {
+  try {
+    const parsed = new URL(path);
+    assert(parsed.protocol === "https:", `siteConfig.assetPaths.${key} external URL must use HTTPS`);
+  } catch {
+    assert(false, `siteConfig.assetPaths.${key} is not a valid URL`);
+  }
+}
+
 function validateAssetPaths(assetPaths) {
   assert(typeof assetPaths === "object" && assetPaths !== null, "siteConfig.assetPaths must be an object");
 
   for (const key of requiredAssetPathKeys) {
     assert(typeof assetPaths[key] === "string" && assetPaths[key].length > 0, `siteConfig.assetPaths.${key} must be a non-empty string`);
-    assert(assetPaths[key].startsWith("/"), `siteConfig.assetPaths.${key} must start with /`);
-    validatePathOnlyAssetPath(assetPaths[key], key);
+    if (isExternalUrl(assetPaths[key])) {
+      validateExternalAssetPath(assetPaths[key], key);
+    } else {
+      assert(assetPaths[key].startsWith("/"), `siteConfig.assetPaths.${key} must start with / or be an external URL`);
+      validatePathOnlyAssetPath(assetPaths[key], key);
+    }
   }
 }
 
