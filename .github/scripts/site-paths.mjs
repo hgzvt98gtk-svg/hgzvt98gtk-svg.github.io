@@ -53,12 +53,19 @@ export const xmlSyntaxAssetPathKeys = Object.freeze([
   "bimiLogo"
 ]);
 
+function isExternalUrl(value) {
+  return /^https?:\/\//.test(value);
+}
+
 function toAssetRelativePath(pathname) {
   return pathname.replace(/^\//, "");
 }
 
 export function listAssetRelativePaths(siteConfig, keys) {
-  return keys.map((key) => toAssetRelativePath(siteConfig.assetPaths[key]));
+  return keys
+    .map((key) => siteConfig.assetPaths[key])
+    .filter((path) => !isExternalUrl(path))
+    .map((path) => toAssetRelativePath(path));
 }
 
 export function listRenderedAndStaticFiles(siteConfig, renderedFiles) {
