@@ -1,6 +1,19 @@
 {
-  "name": "Hussam Faroug",
-  "url": "https://hussamfaroug.com/",
-  "description": "Personal website and contact page for Hussam Faroug.",
-  "status": "agent-ready"
+  "linkset": [
+    {
+      "anchor": "https://hussamfaroug.com/.well-known/api-catalog",
+      "item": [
+        {
+          "href": "https://hussamfaroug.com/",
+          "title": "Main Web Service"
+        }
+      ],
+      "service-doc": [
+        {
+          "href": "https://hussamfaroug.com/",
+          "type": "text/html"
+        }
+      ]
+    }
+  ]
 }
