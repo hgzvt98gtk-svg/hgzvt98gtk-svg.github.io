@@ -2,10 +2,10 @@
   "linkset": [
     {
       "anchor": "https://hussamfaroug.com/.well-known/api-catalog",
-      "item": [
+      "service-desc": [
         {
-          "href": "https://hussamfaroug.com/",
-          "title": "Main Web Service"
+          "href": "https://hussamfaroug.com/.well-known/mcp/server-card.json",
+          "type": "application/vnd.mcp.server+json"
         }
       ],
       "service-doc": [
