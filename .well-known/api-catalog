@@ -2,9 +2,16 @@
   "linkset": [
     {
       "anchor": "https://hussamfaroug.com/.well-known/api-catalog",
+      "service-desc": [
+        {
+          "href": "https://hussamfaroug.com/",
+          "type": "application/json"
+        }
+      ],
       "service-doc": [
         {
-          "href": "https://hussamfaroug.com/"
+          "href": "https://hussamfaroug.com/",
+          "type": "text/html"
         }
       ]
     }
