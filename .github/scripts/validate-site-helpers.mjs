@@ -33,7 +33,8 @@ export function validateAgentCard(agentCard, siteConfig, siteUrls) {
 }
 
 export function validateApiCatalog(apiCatalog, siteUrls) {
-  return apiCatalog.site === siteUrls.home && Array.isArray(apiCatalog.apis);
+  return Array.isArray(apiCatalog.linkset)
+    && apiCatalog.linkset.some((entry) => entry.anchor === siteUrls.home);
 }
 
 export function validateRuntimeAppScript(scriptText, siteConfig) {
@@ -62,8 +63,7 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
     "description",
     "status",
     "url",
-    "apis",
-    "site",
+    "linkset",
     `Get information about ${siteConfig.domain}`
   ];
 
