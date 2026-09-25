@@ -144,16 +144,12 @@ function validateApiCatalogPayload(value) {
       if (!isPlainObject(value)) {
         throw new Error("Failed to fetch api catalog: expected object response");
       }
-      assertExactKeys(value, ["apis", "site"], "api catalog");
-      if (typeof value.site !== "string" || value.site !== runtimeContract.homeUrl) {
-        throw new Error("Failed to fetch api catalog: invalid site");
-      }
-      if (!Array.isArray(value.apis) || !value.apis.every((entry) => isPlainObject(entry))) {
-        throw new Error("Failed to fetch api catalog: invalid apis");
+      assertExactKeys(value, ["linkset"], "api catalog");
+      if (!Array.isArray(value.linkset) || !value.linkset.every((entry) => isPlainObject(entry))) {
+        throw new Error("Failed to fetch api catalog: invalid linkset");
       }
       return Object.freeze({
-        site: value.site,
-        apis: Object.freeze(value.apis.map((entry) => Object.freeze({ ...entry })))
+        linkset: Object.freeze(value.linkset.map((entry) => Object.freeze({ ...entry })))
       });
 }
 
@@ -292,8 +288,23 @@ function renderWellKnownFiles(siteConfig, siteUrls) {
     }, null, 2)}
 `],
     [siteFilePaths.apiCatalog, `${JSON.stringify({
-      site: siteUrls.home,
-      apis: siteConfig.apis
+      linkset: [
+        {
+          anchor: siteUrls.home,
+          "service-desc": [
+            {
+              href: `${siteUrls.home}/.well-known/mcp/server-card.json`,
+              type: "application/json"
+            }
+          ],
+          "service-doc": [
+            {
+              href: `${siteUrls.home}/auth.md`,
+              type: "text/markdown"
+            }
+          ]
+        }
+      ]
     }, null, 2)}
 `],
     [siteFilePaths.mtaSts, `version: ${siteConfig.mtaSts.version}
