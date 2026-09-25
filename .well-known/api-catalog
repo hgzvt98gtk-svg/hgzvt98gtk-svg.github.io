@@ -1,4 +1,12 @@
 {
-  "site": "https://hussamfaroug.com/",
-  "apis": []
+  "linkset": [
+    {
+      "anchor": "https://hussamfaroug.com/.well-known/api-catalog",
+      "service-doc": [
+        {
+          "href": "https://hussamfaroug.com/"
+        }
+      ]
+    }
+  ]
 }
