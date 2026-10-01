@@ -103,6 +103,7 @@ const buildQueue = [];
 const sourceMetadata = await Promise.all(sources.map(async (source) => {
   const relativeSource = relative(root, source);
   const metadata = await stat(source);
+  const destination = join(output, relativeSource);
   const previous = previousManifest.files[relativeSource];
   const previousSignature = typeof previous === "string" ? previous : previous?.signature;
   const signature = previous
@@ -111,10 +112,11 @@ const sourceMetadata = await Promise.all(sources.map(async (source) => {
     && previousSignature
     ? previousSignature
     : await fileSignature(source);
-  return { source, relativeSource, metadata, signature };
+  const destinationExists = Boolean(await statIfExists(destination));
+  return { source, relativeSource, metadata, signature, destinationExists };
 }));
 
-for (const { source, relativeSource, metadata, signature } of sourceMetadata) {
+for (const { source, relativeSource, metadata, signature, destinationExists } of sourceMetadata) {
   nextManifest.files[relativeSource] = {
     signature,
     size: metadata.size,
@@ -124,8 +126,7 @@ for (const { source, relativeSource, metadata, signature } of sourceMetadata) {
   const previous = previousManifest.files[relativeSource];
   const previousSignature = typeof previous === "string" ? previous : previous?.signature;
   if (!forceRebuild && previousSignature === signature) {
-    const destination = join(output, relativeSource);
-    if (await statIfExists(destination)) {
+    if (destinationExists) {
       continue;
     }
   }

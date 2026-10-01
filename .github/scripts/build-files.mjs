@@ -1,4 +1,4 @@
-import { listRenderedAndStaticFiles } from "./site-paths.mjs";
+import { listAssetRelativePaths, requiredStaticAssetPathKeys } from "./site-paths.mjs";
 
 const passthroughBuildFiles = Object.freeze([
   "CNAME",
@@ -8,7 +8,7 @@ const passthroughBuildFiles = Object.freeze([
 export function listBuildFiles(siteConfig, renderedFiles) {
   return [
     ...new Set([
-      ...listRenderedAndStaticFiles(siteConfig, renderedFiles),
+      ...listAssetRelativePaths(siteConfig, requiredStaticAssetPathKeys, renderedFiles.keys()),
       ...passthroughBuildFiles
     ])
   ];

@@ -61,18 +61,12 @@ function toAssetRelativePath(pathname) {
   return pathname.replace(/^\//, "");
 }
 
-export function listAssetRelativePaths(siteConfig, keys) {
-  return keys
+export function listAssetRelativePaths(siteConfig, keys, renderedFiles = []) {
+  return [
+    ...renderedFiles,
+    ...keys
     .map((key) => siteConfig.assetPaths[key])
     .filter((path) => !isExternalUrl(path))
-    .map((path) => toAssetRelativePath(path));
-}
-
-export function listRenderedAndStaticFiles(siteConfig, renderedFiles) {
-  return [
-    ...new Set([
-      ...renderedFiles.keys(),
-      ...listAssetRelativePaths(siteConfig, requiredStaticAssetPathKeys)
-    ])
+    .map((path) => toAssetRelativePath(path))
   ];
 }

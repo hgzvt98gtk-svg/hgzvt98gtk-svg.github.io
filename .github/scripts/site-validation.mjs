@@ -1,4 +1,4 @@
-import { contentCheckFiles, listAssetRelativePaths, listRenderedAndStaticFiles, xmlSyntaxAssetPathKeys } from "./site-paths.mjs";
+import { contentCheckFiles, listAssetRelativePaths, xmlSyntaxAssetPathKeys } from "./site-paths.mjs";
 import { escapeRegex } from "./validate-site-helpers.mjs";
 
 export function listXmlSyntaxFiles(siteConfig) {
