@@ -6,7 +6,7 @@ import { siteConfig } from "./site.config.mjs";
 import { renderSiteFiles } from "./site-files.mjs";
 import { siteUrls } from "./site-urls.mjs";
 import { listSiteContentChecks } from "./site-validation.mjs";
-import { listRenderedAndStaticFiles } from "./site-paths.mjs";
+import { listAssetRelativePaths, requiredStaticAssetPathKeys } from "./site-paths.mjs";
 import { assert, validateSiteConfig } from "./validate-config.mjs";
 import { runAcrossValidationRoots } from "./validation-roots.mjs";
 import {
@@ -33,7 +33,7 @@ const readTargets = new Set([
   ...contentCheckUniqueFiles,
   ...manualReadTargetPaths
 ]);
-const requiredFiles = listRenderedAndStaticFiles(siteConfig, generatedFiles);
+const requiredFiles = listAssetRelativePaths(siteConfig, requiredStaticAssetPathKeys, generatedFiles.keys());
 const requiredExistenceOnlyFiles = requiredFiles.filter((relativePath) => !readTargets.has(relativePath));
 
 function createRootReader(rootPath) {
