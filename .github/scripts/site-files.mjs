@@ -120,14 +120,18 @@ function assertExactKeys(value, expectedKeys, label) {
       }
 }
 
-function validateAgentCardPayload(value) {
+function validatePayload(value, expectedKeys, label) {
       if (!isPlainObject(value)) {
-        throw new Error("Failed to fetch agent card: expected object response");
+        throw new Error(\`Failed to fetch \${label}: expected object response\`);
       }
-      assertExactKeys(value, ${JSON.stringify(agentCardKeys)}, "agent card");
-      if (typeof value.name !== "string" || value.name.length === 0) {
-        throw new Error("Failed to fetch agent card: invalid name");
-      }
+      assertExactKeys(value, expectedKeys, label);
+}
+
+function validateAgentCardPayload(value) {
+          validatePayload(value, ${JSON.stringify(agentCardKeys)}, "agent card");
+          if (typeof value.name !== "string" || value.name.length === 0) {
+            throw new Error("Failed to fetch agent card: invalid name");
+          }
       if (typeof value.description !== "string" || value.description !== runtimeContract.agentCardDescription) {
         throw new Error("Failed to fetch agent card: invalid description");
       }
@@ -141,10 +145,7 @@ function validateAgentCardPayload(value) {
 }
 
 function validateApiCatalogPayload(value) {
-      if (!isPlainObject(value)) {
-        throw new Error("Failed to fetch api catalog: expected object response");
-      }
-      assertExactKeys(value, ${JSON.stringify(apiCatalogKeys)}, "api catalog");
+      validatePayload(value, ${JSON.stringify(apiCatalogKeys)}, "api catalog");
       if (typeof value.site !== "string" || value.site !== runtimeContract.homeUrl) {
         throw new Error("Failed to fetch api catalog: invalid site");
       }

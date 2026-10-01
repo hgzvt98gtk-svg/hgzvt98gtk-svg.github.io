@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, join, normalize, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "acorn";
@@ -203,25 +203,41 @@ const nextCache = { files: {} };
 const graph = new Map(
   await Promise.all(files.map(async (filePath) => {
     const relativePath = toRelativePath(filePath);
-    const signature = await fileSignature(filePath);
+    const metadata = await stat(filePath);
     const cached = previousCache.files[relativePath];
     let imports = null;
+    let signature = cached?.signature;
 
-    if (cached?.signature === signature && Array.isArray(cached.imports)) {
+    if (
+      cached?.size === metadata.size
+      && cached?.mtimeMs === metadata.mtimeMs
+      && typeof cached.signature === "string"
+      && Array.isArray(cached.imports)
+    ) {
+      const cachedSignature = cached.signature;
       const restoredImports = cached.imports
         .map((importPath) => normalize(join(root, importPath)))
         .filter((importPath) => fileSet.has(importPath));
       if (restoredImports.length === cached.imports.length) {
         imports = restoredImports;
+        nextCache.files[relativePath] = {
+          signature: cachedSignature,
+          size: metadata.size,
+          mtimeMs: metadata.mtimeMs,
+          imports: imports.map((importPath) => toRelativePath(importPath))
+        };
       }
     }
 
     if (!imports) {
+      signature = await fileSignature(filePath);
       imports = await parseImports(filePath, fileSet);
     }
 
     nextCache.files[relativePath] = {
       signature,
+      size: metadata.size,
+      mtimeMs: metadata.mtimeMs,
       imports: imports.map((importPath) => toRelativePath(importPath))
     };
 
