@@ -27,13 +27,30 @@ export function assertNoOutdatedReferences(index, privacy, sitemap, llms) {
 }
 
 export function validateAgentCard(agentCard, siteConfig, siteUrls) {
-  return agentCard.name === siteConfig.personName
+  return isPlainObject(agentCard)
+    && hasExactKeys(agentCard, ["description", "name", "status", "url"])
+    && agentCard.name === siteConfig.personName
     && agentCard.url === siteUrls.home
+    && agentCard.description === siteConfig.descriptions.agentCard
     && agentCard.status === siteConfig.siteStatus;
 }
 
 export function validateApiCatalog(apiCatalog, siteUrls) {
-  return apiCatalog.site === siteUrls.home && Array.isArray(apiCatalog.apis);
+  return isPlainObject(apiCatalog)
+    && hasExactKeys(apiCatalog, ["apis", "site"])
+    && apiCatalog.site === siteUrls.home
+    && Array.isArray(apiCatalog.apis)
+    && apiCatalog.apis.every(isPlainObject);
+}
+
+function isPlainObject(value) {
+  return typeof value === "object" && value !== null && Object.getPrototypeOf(value) === Object.prototype;
+}
+
+function hasExactKeys(value, expectedKeys) {
+  const actualKeys = Object.keys(value).sort();
+  const expected = [...expectedKeys].sort();
+  return actualKeys.length === expected.length && actualKeys.every((key, index) => key === expected[index]);
 }
 
 export function validateRuntimeAppScript(scriptText, siteConfig) {
