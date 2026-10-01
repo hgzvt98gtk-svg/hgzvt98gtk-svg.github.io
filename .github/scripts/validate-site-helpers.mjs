@@ -1,4 +1,5 @@
 import { generatedJsonFiles, siteFilePaths } from "./site-paths.mjs";
+import { agentCardKeys, apiCatalogKeys } from "./runtime-contract.mjs";
 
 export function includesAttribute(contents, attribute, value) {
   const escaped = escapeRegex(value);
@@ -28,7 +29,7 @@ export function assertNoOutdatedReferences(index, privacy, sitemap, llms) {
 
 export function validateAgentCard(agentCard, siteConfig, siteUrls) {
   return isPlainObject(agentCard)
-    && hasExactKeys(agentCard, ["description", "name", "status", "url"])
+    && hasExactKeys(agentCard, agentCardKeys)
     && agentCard.name === siteConfig.personName
     && agentCard.url === siteUrls.home
     && agentCard.description === siteConfig.descriptions.agentCard
@@ -37,7 +38,7 @@ export function validateAgentCard(agentCard, siteConfig, siteUrls) {
 
 export function validateApiCatalog(apiCatalog, siteUrls) {
   return isPlainObject(apiCatalog)
-    && hasExactKeys(apiCatalog, ["apis", "site"])
+    && hasExactKeys(apiCatalog, apiCatalogKeys)
     && apiCatalog.site === siteUrls.home
     && Array.isArray(apiCatalog.apis)
     && apiCatalog.apis.every(isPlainObject);
