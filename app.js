@@ -2,7 +2,6 @@ const runtimeContract = Object.freeze({
   agentCardPath: "/.well-known/agent-card.json",
   apiCatalogPath: "/.well-known/api-catalog",
   siteStatus: "agent-ready",
-  siteHost: "hussamfaroug.com",
   homeUrl: "https://hussamfaroug.com/",
   agentCardDescription: "Personal website and contact page for Hussam Faroug."
 });

@@ -1,19 +1,4 @@
 {
-  "linkset": [
-    {
-      "anchor": "https://hussamfaroug.com",
-      "service-desc": [
-        {
-          "href": "https://hussamfaroug.com/.well-known/mcp/server-card.json",
-          "type": "application/json"
-        }
-      ],
-      "service-doc": [
-        {
-          "href": "https://hussamfaroug.com/auth.md",
-          "type": "text/markdown"
-        }
-      ]
-    }
-  ]
+  "site": "https://hussamfaroug.com/",
+  "apis": []
 }
