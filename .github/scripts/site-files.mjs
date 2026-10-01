@@ -102,7 +102,6 @@ function renderRuntimeFiles(siteConfig, siteUrls) {
   agentCardPath: ${escapeJsString(siteConfig.assetPaths.agentCard)},
   apiCatalogPath: ${escapeJsString(siteConfig.assetPaths.apiCatalog)},
   siteStatus: ${escapeJsString(siteConfig.siteStatus)},
-  siteHost: ${escapeJsString(siteConfig.domain)},
   homeUrl: ${escapeJsString(siteUrls.home)},
   agentCardDescription: ${escapeJsString(siteConfig.descriptions.agentCard)}
 });

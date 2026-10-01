@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, join, normalize, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "acorn";
@@ -203,7 +203,7 @@ const nextCache = { files: {} };
 const graph = new Map(
   await Promise.all(files.map(async (filePath) => {
     const relativePath = toRelativePath(filePath);
-    const signature = fileSignature(await stat(filePath));
+    const signature = await fileSignature(filePath);
     const cached = previousCache.files[relativePath];
     let imports = null;
 

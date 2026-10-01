@@ -1,4 +1,4 @@
-import { requiredAssetPathKeys } from "./site-paths.mjs";
+import { isExternalUrl, requiredAssetPathKeys } from "./site-paths.mjs";
 
 const requiredDerivedSiteUrls = Object.freeze({
   privacy: "privacyPage",
@@ -10,10 +10,6 @@ export function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
   }
-}
-
-function isExternalUrl(value) {
-  return /^https?:\/\//.test(value);
 }
 
 function validatePathOnlyAssetPath(path, key) {
