@@ -107,8 +107,7 @@ const nextManifest = { configFingerprint, files: {} };
 const buildQueue = [];
 const sourceMetadata = await Promise.all(sources.map(async (source) => {
   const relativeSource = relative(root, source);
-  const sourceStats = await stat(source);
-  const signature = fileSignature(sourceStats);
+  const signature = await fileSignature(source);
   return { source, relativeSource, signature };
 }));
 
