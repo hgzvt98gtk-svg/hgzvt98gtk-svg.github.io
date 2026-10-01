@@ -53,7 +53,7 @@ export const xmlSyntaxAssetPathKeys = Object.freeze([
   "bimiLogo"
 ]);
 
-function isExternalUrl(value) {
+export function isExternalUrl(value) {
   return /^https?:\/\//.test(value);
 }
 
