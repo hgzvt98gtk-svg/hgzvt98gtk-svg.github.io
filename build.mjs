@@ -17,7 +17,6 @@ const output = join(root, "dist");
 const manifestPath = join(output, ".build-manifest.json");
 validateBuildConfig(buildConfig);
 validateSiteConfig(siteConfig, siteUrls);
-const excluded = new Set(buildConfig.excludedNames);
 const concurrency = buildConfig.concurrency;
 const configFingerprint = JSON.stringify(buildConfig);
 const renderedFiles = renderSiteFiles(siteConfig, siteUrls);
@@ -94,11 +93,7 @@ async function buildFile(source) {
 await mkdir(output, { recursive: true });
 
 const [sources, previousManifest] = await Promise.all([
-  Promise.resolve(
-    listBuildFiles(siteConfig, renderedFiles)
-      .filter((relativePath) => !relativePath.split("/").some((segment) => excluded.has(segment)))
-      .map((relativePath) => join(root, relativePath))
-  ),
+  listBuildFiles(siteConfig, renderedFiles).map((relativePath) => join(root, relativePath)),
   loadManifest()
 ]);
 
@@ -107,14 +102,28 @@ const nextManifest = { configFingerprint, files: {} };
 const buildQueue = [];
 const sourceMetadata = await Promise.all(sources.map(async (source) => {
   const relativeSource = relative(root, source);
-  const signature = await fileSignature(source);
-  return { source, relativeSource, signature };
+  const metadata = await stat(source);
+  const previous = previousManifest.files[relativeSource];
+  const previousSignature = typeof previous === "string" ? previous : previous?.signature;
+  const signature = previous
+    && previous.size === metadata.size
+    && previous.mtimeMs === metadata.mtimeMs
+    && previousSignature
+    ? previousSignature
+    : await fileSignature(source);
+  return { source, relativeSource, metadata, signature };
 }));
 
-for (const { source, relativeSource, signature } of sourceMetadata) {
-  nextManifest.files[relativeSource] = signature;
+for (const { source, relativeSource, metadata, signature } of sourceMetadata) {
+  nextManifest.files[relativeSource] = {
+    signature,
+    size: metadata.size,
+    mtimeMs: metadata.mtimeMs
+  };
 
-  if (!forceRebuild && previousManifest.files[relativeSource] === signature) {
+  const previous = previousManifest.files[relativeSource];
+  const previousSignature = typeof previous === "string" ? previous : previous?.signature;
+  if (!forceRebuild && previousSignature === signature) {
     const destination = join(output, relativeSource);
     if (await statIfExists(destination)) {
       continue;

@@ -1,4 +1,5 @@
 import { siteFilePaths } from "./site-paths.mjs";
+import { agentCardKeys, apiCatalogKeys } from "./runtime-contract.mjs";
 
 function escapeHtml(value) {
   return String(value)
@@ -123,7 +124,7 @@ function validateAgentCardPayload(value) {
       if (!isPlainObject(value)) {
         throw new Error("Failed to fetch agent card: expected object response");
       }
-      assertExactKeys(value, ["description", "name", "status", "url"], "agent card");
+      assertExactKeys(value, ${JSON.stringify(agentCardKeys)}, "agent card");
       if (typeof value.name !== "string" || value.name.length === 0) {
         throw new Error("Failed to fetch agent card: invalid name");
       }
@@ -143,7 +144,7 @@ function validateApiCatalogPayload(value) {
       if (!isPlainObject(value)) {
         throw new Error("Failed to fetch api catalog: expected object response");
       }
-      assertExactKeys(value, ["apis", "site"], "api catalog");
+      assertExactKeys(value, ${JSON.stringify(apiCatalogKeys)}, "api catalog");
       if (typeof value.site !== "string" || value.site !== runtimeContract.homeUrl) {
         throw new Error("Failed to fetch api catalog: invalid site");
       }

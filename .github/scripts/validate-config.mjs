@@ -70,7 +70,5 @@ export function validateSiteConfig(siteConfig, siteUrls) {
 
 export function validateBuildConfig(buildConfig) {
   assert(typeof buildConfig === "object" && buildConfig !== null, "buildConfig must be an object");
-  assert(Array.isArray(buildConfig.excludedNames), "buildConfig.excludedNames must be an array");
-  assert(buildConfig.excludedNames.every((entry) => typeof entry === "string" && entry.length > 0), "buildConfig.excludedNames entries must be non-empty strings");
   assert(Number.isInteger(buildConfig.concurrency) && buildConfig.concurrency > 0, "buildConfig.concurrency must be a positive integer");
 }
