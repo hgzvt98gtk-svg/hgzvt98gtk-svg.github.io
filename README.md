@@ -22,3 +22,4 @@ Install Node dependencies, then run the full local validation pipeline with one 
 npm ci
 npm run validate
 ```
+test
