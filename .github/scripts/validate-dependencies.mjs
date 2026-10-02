@@ -11,6 +11,7 @@ const cacheVersion = 2;
 const entryFiles = [join(root, "build.mjs"), join(root, "app.js")];
 const sourceExtensions = new Set([".mjs", ".js"]);
 const ignoredDirectoryNames = new Set([".git", "node_modules", "dist", ".cache"]);
+const intentionallyUnreachableModules = new Set([]);
 const boundaryRules = new Map([
   ["site-paths.mjs", new Set()],
   ["site.config.mjs", new Set(["site-paths.mjs"])],
@@ -308,9 +309,24 @@ if (boundaryViolations.length > 0) {
 }
 
 const unreachableModules = findUnreachableModules(graph, [...entryFiles, ...npmScriptEntryFiles]);
-if (unreachableModules.length > 0) {
-  const display = unreachableModules.map((path) => toRelativePath(path)).sort().join("\n");
-  console.warn(`Potentially unreachable modules (report only):\n${display}`);
+const unreachableModulePaths = unreachableModules.map(toRelativePath);
+const unexpectedUnreachableModules = unreachableModulePaths
+  .filter((relativePath) => !intentionallyUnreachableModules.has(relativePath))
+  .sort();
+const staleAllowlistEntries = [...intentionallyUnreachableModules]
+  .filter((relativePath) => !unreachableModulePaths.includes(relativePath))
+  .sort();
+
+if (unexpectedUnreachableModules.length > 0) {
+  throw new Error(
+    `Unreachable modules detected:\n${unexpectedUnreachableModules.join("\n")}\n`
+    + "Remove unused modules, add intentional standalone modules to intentionallyUnreachableModules, "
+    + "or register executable entry points in package.json."
+  );
+}
+
+if (staleAllowlistEntries.length > 0) {
+  throw new Error(`intentionallyUnreachableModules contains reachable or unknown modules:\n${staleAllowlistEntries.join("\n")}`);
 }
 
 await saveCache(nextCache);
