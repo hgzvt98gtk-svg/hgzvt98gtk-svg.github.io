@@ -7,7 +7,7 @@ import { fileSignature } from "./file-signature.mjs";
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const scriptRoot = join(root, ".github", "scripts");
 const cachePath = join(root, ".cache", "validate-dependencies.json");
-const cacheVersion = 1;
+const cacheVersion = 2;
 const entryFiles = [join(root, "build.mjs"), join(root, "app.js")];
 const sourceExtensions = new Set([".mjs", ".js"]);
 const ignoredDirectoryNames = new Set([".git", "node_modules", "dist", ".cache"]);
@@ -94,6 +94,28 @@ async function parseImports(filePath, fileSet) {
     }
     return [];
   });
+
+  function collectDynamicImports(node) {
+    if (!node || typeof node !== "object") {
+      return;
+    }
+    if (
+      node.type === "ImportExpression"
+      && node.source?.type === "Literal"
+      && typeof node.source.value === "string"
+    ) {
+      importSpecifiers.push(node.source.value);
+    }
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) {
+        value.forEach(collectDynamicImports);
+      } else {
+        collectDynamicImports(value);
+      }
+    }
+  }
+
+  collectDynamicImports(program);
   return importSpecifiers.map((specifier) => resolveImportPath(filePath, specifier, fileSet)).filter(Boolean);
 }
 
