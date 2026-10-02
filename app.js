@@ -62,52 +62,52 @@ async function fetchJson(path, label) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       try {
-      const pageOrigin = globalThis.location?.origin;
-      if (typeof pageOrigin !== "string" || pageOrigin.length === 0) {
-        throw new Error(`Failed to fetch ${label}: missing page origin`);
-      }
-
-      const url = new URL(path, pageOrigin);
-      if (url.origin !== pageOrigin || url.pathname !== path || url.search || url.hash) {
-        throw new Error(`Failed to fetch ${label}: unexpected URL`);
-      }
-
-      const response = await fetch(url, {
-        cache: "no-store",
-        credentials: "same-origin",
-        headers: {
-          Accept: "application/json"
-        },
-        redirect: "error",
-        signal: controller.signal
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${label}: HTTP ${response.status}`);
-      }
-
-      const contentType = response.headers.get("content-type") ?? "";
-      if (!contentType.toLowerCase().includes("application/json")) {
-        throw new Error(`Failed to fetch ${label}: expected application/json response`);
-      }
-
-      let payload;
-      try {
-        payload = await response.json();
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          throw error;
+        const pageOrigin = globalThis.location?.origin;
+        if (typeof pageOrigin !== "string" || pageOrigin.length === 0) {
+          throw new Error(`Failed to fetch ${label}: missing page origin`);
         }
-        throw new Error(`Failed to fetch ${label}: invalid JSON response`, { cause: error });
-      }
 
-      if (label === "agent card") {
-        return validateAgentCardPayload(payload);
-      }
-      if (label === "api catalog") {
-        return validateApiCatalogPayload(payload);
-      }
-      throw new Error(`Failed to fetch ${label}: unsupported payload type`);
+        const url = new URL(path, pageOrigin);
+        if (url.origin !== pageOrigin || url.pathname !== path || url.search || url.hash) {
+          throw new Error(`Failed to fetch ${label}: unexpected URL`);
+        }
+
+        const response = await fetch(url, {
+          cache: "no-store",
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json"
+          },
+          redirect: "error",
+          signal: controller.signal
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${label}: HTTP ${response.status}`);
+        }
+
+        const contentType = response.headers.get("content-type") ?? "";
+        if (!contentType.toLowerCase().includes("application/json")) {
+          throw new Error(`Failed to fetch ${label}: expected application/json response`);
+        }
+
+        let payload;
+        try {
+          payload = await response.json();
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") {
+            throw error;
+          }
+          throw new Error(`Failed to fetch ${label}: invalid JSON response`, { cause: error });
+        }
+
+        if (label === "agent card") {
+          return validateAgentCardPayload(payload);
+        }
+        if (label === "api catalog") {
+          return validateApiCatalogPayload(payload);
+        }
+        throw new Error(`Failed to fetch ${label}: unsupported payload type`);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           throw new Error(`Failed to fetch ${label}: timed out after ${timeoutMs}ms`);
