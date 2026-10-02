@@ -113,14 +113,14 @@ await runInBatches(sources, concurrency, async (source, index) => {
   const destination = join(output, relativeSource);
   const previous = previousManifest.files[relativeSource];
   const previousSignature = typeof previous === "string" ? previous : previous?.signature;
-  const unchanged = !forceRebuild && previousSignature === signature;
-  const destinationExists = unchanged ? Boolean(await statIfExists(destination)) : false;
   const signature = previous
     && previous.size === metadata.size
     && previous.mtimeMs === metadata.mtimeMs
     && previousSignature
     ? previousSignature
     : await fileSignature(source);
+  const unchanged = !forceRebuild && previousSignature === signature;
+  const destinationExists = unchanged ? Boolean(await statIfExists(destination)) : false;
   sourceMetadata[index] = { source, relativeSource, metadata, signature, unchanged, destinationExists };
 });
 
