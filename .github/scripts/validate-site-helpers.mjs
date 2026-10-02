@@ -1,5 +1,8 @@
 import { generatedJsonFiles } from "./site-paths.mjs";
-import { agentCardKeys, apiCatalogKeys, hasExactKeys, isPlainObject } from "./runtime-contract.mjs";
+import {
+  isAgentCardPayload,
+  isApiCatalogPayload
+} from "./runtime-contract.mjs";
 
 export function includesAttribute(contents, attribute, value) {
   const escaped = escapeRegex(value);
@@ -28,8 +31,7 @@ export function assertNoOutdatedReferences(index, privacy, sitemap, llms) {
 }
 
 export function validateAgentCard(agentCard, siteConfig, siteUrls) {
-  return isPlainObject(agentCard)
-    && hasExactKeys(agentCard, agentCardKeys)
+  return isAgentCardPayload(agentCard)
     && agentCard.name === siteConfig.personName
     && agentCard.url === siteUrls.home
     && agentCard.description === siteConfig.descriptions.agentCard
@@ -37,11 +39,8 @@ export function validateAgentCard(agentCard, siteConfig, siteUrls) {
 }
 
 export function validateApiCatalog(apiCatalog, siteUrls) {
-  return isPlainObject(apiCatalog)
-    && hasExactKeys(apiCatalog, apiCatalogKeys)
+  return isApiCatalogPayload(apiCatalog)
     && apiCatalog.site === siteUrls.home
-    && Array.isArray(apiCatalog.apis)
-    && apiCatalog.apis.every(isPlainObject);
 }
 
 export function validateRuntimeAppScript(scriptText, siteConfig) {
@@ -49,7 +48,8 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
     /async function fetchJson\s*\(/,
     /function validateAgentCardPayload\s*\(/,
     /function validateApiCatalogPayload\s*\(/,
-    /assertExactKeys\s*\(/,
+    /isAgentCardPayload\s*\(/,
+    /isApiCatalogPayload\s*\(/,
     /provideContext\s*\(/,
     /name\s*:\s*["']get-site-info["']/,
     /name\s*:\s*["']get-agent-card["']/,

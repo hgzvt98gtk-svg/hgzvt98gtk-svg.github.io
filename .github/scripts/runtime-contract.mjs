@@ -10,3 +10,20 @@ export function hasExactKeys(value, expectedKeys) {
   const expected = [...expectedKeys].sort();
   return actualKeys.length === expected.length && actualKeys.every((key, index) => key === expected[index]);
 }
+
+export function isAgentCardPayload(value) {
+  return isPlainObject(value)
+    && hasExactKeys(value, agentCardKeys)
+    && typeof value.description === "string"
+    && typeof value.name === "string"
+    && typeof value.status === "string"
+    && typeof value.url === "string";
+}
+
+export function isApiCatalogPayload(value) {
+  return isPlainObject(value)
+    && hasExactKeys(value, apiCatalogKeys)
+    && Array.isArray(value.apis)
+    && value.apis.every(isPlainObject)
+    && typeof value.site === "string";
+}

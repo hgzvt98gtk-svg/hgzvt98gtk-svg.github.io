@@ -182,6 +182,23 @@ function findCycle(graph) {
   return null;
 }
 
+function findUnreachableModules(graph, roots) {
+  const reachable = new Set();
+  const pending = [...roots];
+
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (reachable.has(current) || !graph.has(current)) {
+      continue;
+    }
+
+    reachable.add(current);
+    pending.push(...graph.get(current));
+  }
+
+  return [...graph.keys()].filter((filePath) => !reachable.has(filePath));
+}
+
 function findBoundaryViolations(graph, fileInfoByPath) {
   const violations = [];
 
@@ -216,6 +233,10 @@ function validateBoundaryRuleCoverage(fileInfoByPath) {
 
 const files = [...new Set([...(await listSourceFiles(scriptRoot)), ...entryFiles])].map((filePath) => normalize(filePath));
 const fileSet = new Set(files);
+const packageJson = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+const npmScriptEntryFiles = Object.values(packageJson.scripts ?? [])
+  .flatMap((command) => [...command.matchAll(/\bnode\s+([^\s;&|]+)/g)])
+  .map(([, filePath]) => normalize(resolve(root, filePath.replace(/^["']|["']$/g, ""))));
 const fileInfoByPath = new Map(files.map((filePath) => [filePath, {
   fileName: basename(filePath),
   relativePath: toRelativePath(filePath)
@@ -284,6 +305,12 @@ if (boundaryViolations.length > 0) {
     `Dependency boundary violation(s) detected:\n${violationList}\n\n`
     + "If a low-level module intentionally needs new dependencies, update boundaryRules in .github/scripts/validate-dependencies.mjs."
   );
+}
+
+const unreachableModules = findUnreachableModules(graph, [...entryFiles, ...npmScriptEntryFiles]);
+if (unreachableModules.length > 0) {
+  const display = unreachableModules.map((path) => toRelativePath(path)).sort().join("\n");
+  console.warn(`Potentially unreachable modules (report only):\n${display}`);
 }
 
 await saveCache(nextCache);
