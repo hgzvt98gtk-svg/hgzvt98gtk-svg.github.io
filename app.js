@@ -11,28 +11,37 @@ function isPlainObject(value) {
   return typeof value === "object" && value !== null && Object.getPrototypeOf(value) === Object.prototype;
 }
 
+const agentCardKeys = ["description","name","status","url"];
+const apiCatalogKeys = ["apis","site"];
+
 function hasExactKeys(value, expectedKeys) {
   const actualKeys = Object.keys(value).sort();
   const expected = [...expectedKeys].sort();
   return actualKeys.length === expected.length && actualKeys.every((key, index) => key === expected[index]);
 }
 
-function assertExactKeys(value, expectedKeys, label) {
-      if (!hasExactKeys(value, expectedKeys)) {
-        throw new Error(`Failed to fetch ${label}: unexpected JSON shape`);
-      }
+function isAgentCardPayload(value) {
+  return isPlainObject(value)
+    && hasExactKeys(value, agentCardKeys)
+    && typeof value.description === "string"
+    && typeof value.name === "string"
+    && typeof value.status === "string"
+    && typeof value.url === "string";
 }
 
-function validatePayload(value, expectedKeys, label) {
-      if (!isPlainObject(value)) {
-        throw new Error(`Failed to fetch ${label}: expected object response`);
-      }
-      assertExactKeys(value, expectedKeys, label);
+function isApiCatalogPayload(value) {
+  return isPlainObject(value)
+    && hasExactKeys(value, apiCatalogKeys)
+    && Array.isArray(value.apis)
+    && value.apis.every(isPlainObject)
+    && typeof value.site === "string";
 }
 
 function validateAgentCardPayload(value) {
-          validatePayload(value, ["description","name","status","url"], "agent card");
-          if (typeof value.name !== "string" || value.name.length === 0) {
+          if (!isAgentCardPayload(value)) {
+            throw new Error("Failed to fetch agent card: invalid JSON shape");
+          }
+          if (value.name.length === 0) {
             throw new Error("Failed to fetch agent card: invalid name");
           }
       if (typeof value.description !== "string" || value.description !== runtimeContract.agentCardDescription) {
@@ -48,12 +57,11 @@ function validateAgentCardPayload(value) {
 }
 
 function validateApiCatalogPayload(value) {
-      validatePayload(value, ["apis","site"], "api catalog");
+      if (!isApiCatalogPayload(value)) {
+        throw new Error("Failed to fetch api catalog: invalid JSON shape");
+      }
       if (typeof value.site !== "string" || value.site !== runtimeContract.homeUrl) {
         throw new Error("Failed to fetch api catalog: invalid site");
-      }
-      if (!Array.isArray(value.apis) || !value.apis.every((entry) => isPlainObject(entry))) {
-        throw new Error("Failed to fetch api catalog: invalid apis");
       }
       return Object.freeze({
         site: value.site,

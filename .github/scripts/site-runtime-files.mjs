@@ -1,5 +1,12 @@
 import { siteFilePaths } from "./site-paths.mjs";
-import { agentCardKeys, apiCatalogKeys, hasExactKeys, isPlainObject } from "./runtime-contract.mjs";
+import {
+  agentCardKeys,
+  apiCatalogKeys,
+  hasExactKeys,
+  isAgentCardPayload,
+  isApiCatalogPayload,
+  isPlainObject
+} from "./runtime-contract.mjs";
 import { escapeJsString } from "./escape-js-string.mjs";
 
 export function renderRuntimeFiles(siteConfig, siteUrls) {
@@ -15,24 +22,20 @@ const runtimeJsonCache = new Map();
 
 ${isPlainObject.toString()}
 
+const agentCardKeys = ${JSON.stringify(agentCardKeys)};
+const apiCatalogKeys = ${JSON.stringify(apiCatalogKeys)};
+
 ${hasExactKeys.toString()}
 
-function assertExactKeys(value, expectedKeys, label) {
-      if (!hasExactKeys(value, expectedKeys)) {
-        throw new Error(\`Failed to fetch \${label}: unexpected JSON shape\`);
-      }
-}
+${isAgentCardPayload.toString()}
 
-function validatePayload(value, expectedKeys, label) {
-      if (!isPlainObject(value)) {
-        throw new Error(\`Failed to fetch \${label}: expected object response\`);
-      }
-      assertExactKeys(value, expectedKeys, label);
-}
+${isApiCatalogPayload.toString()}
 
 function validateAgentCardPayload(value) {
-          validatePayload(value, ${JSON.stringify(agentCardKeys)}, "agent card");
-          if (typeof value.name !== "string" || value.name.length === 0) {
+          if (!isAgentCardPayload(value)) {
+            throw new Error("Failed to fetch agent card: invalid JSON shape");
+          }
+          if (value.name.length === 0) {
             throw new Error("Failed to fetch agent card: invalid name");
           }
       if (typeof value.description !== "string" || value.description !== runtimeContract.agentCardDescription) {
@@ -48,12 +51,11 @@ function validateAgentCardPayload(value) {
 }
 
 function validateApiCatalogPayload(value) {
-      validatePayload(value, ${JSON.stringify(apiCatalogKeys)}, "api catalog");
+      if (!isApiCatalogPayload(value)) {
+        throw new Error("Failed to fetch api catalog: invalid JSON shape");
+      }
       if (typeof value.site !== "string" || value.site !== runtimeContract.homeUrl) {
         throw new Error("Failed to fetch api catalog: invalid site");
-      }
-      if (!Array.isArray(value.apis) || !value.apis.every((entry) => isPlainObject(entry))) {
-        throw new Error("Failed to fetch api catalog: invalid apis");
       }
       return Object.freeze({
         site: value.site,
