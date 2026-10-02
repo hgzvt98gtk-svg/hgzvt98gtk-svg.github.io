@@ -38,8 +38,9 @@ jobs:
             [site]="npm run validate:site"
             [xml]="npm run validate:xml"
             [deps]="npm run validate:deps"
+            [assets]="npm run validate:external-assets"
           )
-          validation_jobs=(site xml deps)
+          validation_jobs=(site xml deps assets)
 
           for job in "${validation_jobs[@]}"; do
             (
