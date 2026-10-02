@@ -1,5 +1,15 @@
-import { contentCheckFiles, listAssetRelativePaths, xmlSyntaxAssetPathKeys } from "./site-paths.mjs";
+import { contentCheckFiles, listAssetRelativePaths, siteFilePaths, xmlSyntaxAssetPathKeys } from "./site-paths.mjs";
 import { escapeRegex } from "./validate-site-helpers.mjs";
+
+export const manualReadTargets = Object.freeze({
+  index: siteFilePaths.index,
+  privacy: siteFilePaths.privacy,
+  sitemap: siteFilePaths.sitemap,
+  llms: siteFilePaths.llms,
+  agentCard: siteFilePaths.agentCard,
+  apiCatalog: siteFilePaths.apiCatalog,
+  mtaSts: siteFilePaths.mtaSts
+});
 
 export function listXmlSyntaxFiles(siteConfig) {
   return listAssetRelativePaths(siteConfig, xmlSyntaxAssetPathKeys);

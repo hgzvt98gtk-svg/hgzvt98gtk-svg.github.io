@@ -1,5 +1,5 @@
-import { generatedJsonFiles, siteFilePaths } from "./site-paths.mjs";
-import { agentCardKeys, apiCatalogKeys } from "./runtime-contract.mjs";
+import { generatedJsonFiles } from "./site-paths.mjs";
+import { agentCardKeys, apiCatalogKeys, hasExactKeys, isPlainObject } from "./runtime-contract.mjs";
 
 export function includesAttribute(contents, attribute, value) {
   const escaped = escapeRegex(value);
@@ -42,16 +42,6 @@ export function validateApiCatalog(apiCatalog, siteUrls) {
     && apiCatalog.site === siteUrls.home
     && Array.isArray(apiCatalog.apis)
     && apiCatalog.apis.every(isPlainObject);
-}
-
-function isPlainObject(value) {
-  return typeof value === "object" && value !== null && Object.getPrototypeOf(value) === Object.prototype;
-}
-
-function hasExactKeys(value, expectedKeys) {
-  const actualKeys = Object.keys(value).sort();
-  const expected = [...expectedKeys].sort();
-  return actualKeys.length === expected.length && actualKeys.every((key, index) => key === expected[index]);
 }
 
 export function validateRuntimeAppScript(scriptText, siteConfig) {
@@ -106,13 +96,3 @@ export function validateMtaStsDocument(documentText, siteConfig) {
     && mxLines.length === siteConfig.mtaSts.mx.length
     && siteConfig.mtaSts.mx.every((mx) => lineSet.has(`mx: ${mx}`));
 }
-
-export const manualReadTargets = Object.freeze({
-  index: siteFilePaths.index,
-  privacy: siteFilePaths.privacy,
-  sitemap: siteFilePaths.sitemap,
-  llms: siteFilePaths.llms,
-  agentCard: siteFilePaths.agentCard,
-  apiCatalog: siteFilePaths.apiCatalog,
-  mtaSts: siteFilePaths.mtaSts
-});
