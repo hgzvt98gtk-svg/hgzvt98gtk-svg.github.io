@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { siteConfig } from "./site.config.mjs";
 import { renderSiteFiles } from "./site-files.mjs";
 import { siteUrls } from "./site-urls.mjs";
-import { listSiteContentChecks } from "./site-validation.mjs";
+import { listSiteContentChecks, manualReadTargets } from "./site-validation.mjs";
 import { listAssetRelativePaths, requiredStaticAssetPathKeys } from "./site-paths.mjs";
 import { assert, validateSiteConfig } from "./validate-config.mjs";
 import { runAcrossValidationRoots } from "./validation-roots.mjs";
@@ -13,7 +13,6 @@ import {
   assertNoOutdatedReferences,
   equivalentGeneratedContents,
   includesAttribute,
-  manualReadTargets,
   validateAgentCard,
   validateApiCatalog,
   validateRuntimeBootstrapScript,

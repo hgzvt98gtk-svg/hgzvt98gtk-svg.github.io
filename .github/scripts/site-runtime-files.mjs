@@ -1,5 +1,5 @@
 import { siteFilePaths } from "./site-paths.mjs";
-import { agentCardKeys, apiCatalogKeys } from "./runtime-contract.mjs";
+import { agentCardKeys, apiCatalogKeys, hasExactKeys, isPlainObject } from "./runtime-contract.mjs";
 import { escapeJsString } from "./escape-js-string.mjs";
 
 export function renderRuntimeFiles(siteConfig, siteUrls) {
@@ -13,14 +13,12 @@ export function renderRuntimeFiles(siteConfig, siteUrls) {
 });
 const runtimeJsonCache = new Map();
 
-function isPlainObject(value) {
-      return typeof value === "object" && value !== null && Object.getPrototypeOf(value) === Object.prototype;
-}
+${isPlainObject.toString()}
+
+${hasExactKeys.toString()}
 
 function assertExactKeys(value, expectedKeys, label) {
-      const actualKeys = Object.keys(value).sort();
-      const expected = [...expectedKeys].sort();
-      if (actualKeys.length !== expected.length || actualKeys.some((key, index) => key !== expected[index])) {
+      if (!hasExactKeys(value, expectedKeys)) {
         throw new Error(\`Failed to fetch \${label}: unexpected JSON shape\`);
       }
 }

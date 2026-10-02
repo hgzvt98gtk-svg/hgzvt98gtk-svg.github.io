@@ -8,13 +8,17 @@ const runtimeContract = Object.freeze({
 const runtimeJsonCache = new Map();
 
 function isPlainObject(value) {
-      return typeof value === "object" && value !== null && Object.getPrototypeOf(value) === Object.prototype;
+  return typeof value === "object" && value !== null && Object.getPrototypeOf(value) === Object.prototype;
+}
+
+function hasExactKeys(value, expectedKeys) {
+  const actualKeys = Object.keys(value).sort();
+  const expected = [...expectedKeys].sort();
+  return actualKeys.length === expected.length && actualKeys.every((key, index) => key === expected[index]);
 }
 
 function assertExactKeys(value, expectedKeys, label) {
-      const actualKeys = Object.keys(value).sort();
-      const expected = [...expectedKeys].sort();
-      if (actualKeys.length !== expected.length || actualKeys.some((key, index) => key !== expected[index])) {
+      if (!hasExactKeys(value, expectedKeys)) {
         throw new Error(`Failed to fetch ${label}: unexpected JSON shape`);
       }
 }

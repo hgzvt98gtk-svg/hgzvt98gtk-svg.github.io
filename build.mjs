@@ -33,6 +33,12 @@ async function statIfExists(path) {
   }
 }
 
+async function runInBatches(items, batchSize, action) {
+  for (let index = 0; index < items.length; index += batchSize) {
+    await Promise.all(items.slice(index, index + batchSize).map((item, offset) => action(item, index + offset)));
+  }
+}
+
 async function loadManifest() {
   try {
     const text = await readFile(manifestPath, "utf8");
@@ -100,7 +106,8 @@ const [sources, previousManifest] = await Promise.all([
 const forceRebuild = previousManifest.configFingerprint !== configFingerprint;
 const nextManifest = { configFingerprint, files: {} };
 const buildQueue = [];
-const sourceMetadata = await Promise.all(sources.map(async (source) => {
+const sourceMetadata = new Array(sources.length);
+await runInBatches(sources, concurrency, async (source, index) => {
   const relativeSource = relative(root, source);
   const metadata = await stat(source);
   const destination = join(output, relativeSource);
@@ -113,8 +120,8 @@ const sourceMetadata = await Promise.all(sources.map(async (source) => {
     ? previousSignature
     : await fileSignature(source);
   const destinationExists = Boolean(await statIfExists(destination));
-  return { source, relativeSource, metadata, signature, destinationExists };
-}));
+  sourceMetadata[index] = { source, relativeSource, metadata, signature, destinationExists };
+});
 
 for (const { source, relativeSource, metadata, signature, destinationExists } of sourceMetadata) {
   nextManifest.files[relativeSource] = {
@@ -134,23 +141,19 @@ for (const { source, relativeSource, metadata, signature, destinationExists } of
   buildQueue.push(source);
 }
 
-for (let index = 0; index < buildQueue.length; index += concurrency) {
-  await Promise.all(buildQueue.slice(index, index + concurrency).map(buildFile));
-}
+await runInBatches(buildQueue, concurrency, buildFile);
 
 const staleFiles = Object.keys(previousManifest.files).filter((relativeSource) => !(relativeSource in nextManifest.files));
-for (let index = 0; index < staleFiles.length; index += concurrency) {
-  await Promise.all(staleFiles.slice(index, index + concurrency).map(async (relativeSource) => {
-    const destination = join(output, relativeSource);
-    try {
-      await unlink(destination);
-    } catch (error) {
-      if (error?.code !== "ENOENT") {
-        throw error;
-      }
+await runInBatches(staleFiles, concurrency, async (relativeSource) => {
+  const destination = join(output, relativeSource);
+  try {
+    await unlink(destination);
+  } catch (error) {
+    if (error?.code !== "ENOENT") {
+      throw error;
     }
-  }));
-}
+  }
+});
 
 await writeFile(manifestPath, `${JSON.stringify(nextManifest, null, 2)}\n`);
 console.log(`Built minified site in ${relative(root, output)}/ (${buildQueue.length} changed file${buildQueue.length === 1 ? "" : "s"}).`);
