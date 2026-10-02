@@ -61,6 +61,7 @@ async function fetchJson(path, label) {
       const timeoutMs = 8000;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      try {
       const pageOrigin = globalThis.location?.origin;
       if (typeof pageOrigin !== "string" || pageOrigin.length === 0) {
         throw new Error(`Failed to fetch ${label}: missing page origin`);
@@ -90,23 +91,28 @@ async function fetchJson(path, label) {
         throw new Error(`Failed to fetch ${label}: expected application/json response`);
       }
 
+      let payload;
       try {
-        const payload = await response.json();
-        if (label === "agent card") {
-          return validateAgentCardPayload(payload);
+        payload = await response.json();
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          throw error;
         }
-        if (label === "api catalog") {
-          return validateApiCatalogPayload(payload);
-        }
-        throw new Error(`Failed to fetch ${label}: unsupported payload type`);
+        throw new Error(`Failed to fetch ${label}: invalid JSON response`, { cause: error });
+      }
+
+      if (label === "agent card") {
+        return validateAgentCardPayload(payload);
+      }
+      if (label === "api catalog") {
+        return validateApiCatalogPayload(payload);
+      }
+      throw new Error(`Failed to fetch ${label}: unsupported payload type`);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           throw new Error(`Failed to fetch ${label}: timed out after ${timeoutMs}ms`);
         }
-        if (error instanceof Error && error.message.startsWith(`Failed to fetch ${label}:`)) {
-          throw error;
-        }
-        throw new Error(`Failed to fetch ${label}: invalid JSON response`);
+        throw error;
       } finally {
         clearTimeout(timeoutId);
       }
