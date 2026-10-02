@@ -1,9 +1,6 @@
 import { siteFilePaths } from "./site-paths.mjs";
 import { agentCardKeys, apiCatalogKeys } from "./runtime-contract.mjs";
-
-function escapeJsString(value) {
-  return JSON.stringify(String(value));
-}
+import { escapeJsString } from "./escape-js-string.mjs";
 
 export function renderRuntimeFiles(siteConfig, siteUrls) {
   return new Map([
