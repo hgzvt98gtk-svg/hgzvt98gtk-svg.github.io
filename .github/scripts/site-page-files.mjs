@@ -1,4 +1,5 @@
 import { siteFilePaths } from "./site-paths.mjs";
+import { escapeJsString } from "./escape-js-string.mjs";
 
 function escapeHtml(value) {
   return String(value)
@@ -7,10 +8,6 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
-}
-
-function escapeJsString(value) {
-  return JSON.stringify(String(value));
 }
 
 export function renderPageFiles(siteConfig, siteUrls) {
