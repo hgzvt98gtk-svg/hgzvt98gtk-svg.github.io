@@ -31,31 +31,90 @@ ${isAgentCardPayload.toString()}
 
 ${isApiCatalogPayload.toString()}
 
+const fetchTimeoutMs = 8000;
+const fetchMaxRetries = 2;
+const fetchRetryBaseDelayMs = 500;
+const maxLoggedPayloadLength = 2000;
+
+function describeValue(value) {
+  try {
+    const text = JSON.stringify(value);
+    if (text === undefined) {
+      return String(value);
+    }
+    return text.length > maxLoggedPayloadLength ? \`\${text.slice(0, maxLoggedPayloadLength)}…\` : text;
+  } catch {
+    return String(value);
+  }
+}
+
+function describeType(value) {
+  if (value === null) {
+    return "null";
+  }
+  return Array.isArray(value) ? "array" : typeof value;
+}
+
+function describeShapeMismatch(value, expectedKeys, fieldChecks) {
+  if (!isPlainObject(value)) {
+    return { reason: "Payload is not a JSON object", expected: "object", actual: describeType(value) };
+  }
+  if (!hasExactKeys(value, expectedKeys)) {
+    return { reason: "Key mismatch", expected: [...expectedKeys].sort(), actual: Object.keys(value).sort() };
+  }
+  for (const [key, expected, isValid] of fieldChecks) {
+    if (!isValid(value[key])) {
+      return { reason: \`Invalid \${key}\`, expected, actual: describeType(value[key]) };
+    }
+  }
+  return { reason: "Invalid JSON shape", expected: "valid payload", actual: "unknown mismatch" };
+}
+
+function payloadValidationError(subject, reason, expected, actual, payload) {
+  const message = \`\${subject} validation failed: \${reason}. Expected: \${describeValue(expected)}, got: \${describeValue(actual)}\\nReceived payload: \${describeValue(payload)}\`;
+  console.error(message);
+  const error = new Error(message);
+  error.transient = false;
+  return error;
+}
+
 function validateAgentCardPayload(value) {
+  const subject = "Agent card";
   if (!isAgentCardPayload(value)) {
-    throw new Error("Failed to fetch agent card: invalid JSON shape");
+    const mismatch = describeShapeMismatch(value, agentCardKeys, [
+      ["description", "string", (field) => typeof field === "string"],
+      ["name", "string", (field) => typeof field === "string"],
+      ["status", "string", (field) => typeof field === "string"],
+      ["url", "string", (field) => typeof field === "string"]
+    ]);
+    throw payloadValidationError(subject, mismatch.reason, mismatch.expected, mismatch.actual, value);
   }
   if (value.name.length === 0) {
-    throw new Error("Failed to fetch agent card: invalid name");
+    throw payloadValidationError(subject, "Name mismatch", "non-empty string", value.name, value);
   }
   if (value.description !== runtimeContract.agentCardDescription) {
-    throw new Error("Failed to fetch agent card: invalid description");
+    throw payloadValidationError(subject, "Description mismatch", runtimeContract.agentCardDescription, value.description, value);
   }
   if (value.status !== runtimeContract.siteStatus) {
-    throw new Error("Failed to fetch agent card: invalid status");
+    throw payloadValidationError(subject, "Status mismatch", runtimeContract.siteStatus, value.status, value);
   }
   if (value.url !== runtimeContract.homeUrl) {
-    throw new Error("Failed to fetch agent card: invalid url");
+    throw payloadValidationError(subject, "URL mismatch", runtimeContract.homeUrl, value.url, value);
   }
   return Object.freeze({ ...value });
 }
 
 function validateApiCatalogPayload(value) {
+  const subject = "API catalog";
   if (!isApiCatalogPayload(value)) {
-    throw new Error("Failed to fetch api catalog: invalid JSON shape");
+    const mismatch = describeShapeMismatch(value, apiCatalogKeys, [
+      ["apis", "array of objects", (field) => Array.isArray(field) && field.every(isPlainObject)],
+      ["site", "string", (field) => typeof field === "string"]
+    ]);
+    throw payloadValidationError(subject, mismatch.reason, mismatch.expected, mismatch.actual, value);
   }
   if (value.site !== runtimeContract.homeUrl) {
-    throw new Error("Failed to fetch api catalog: invalid site");
+    throw payloadValidationError(subject, "Site mismatch", runtimeContract.homeUrl, value.site, value);
   }
   return Object.freeze({
     site: value.site,
@@ -63,58 +122,94 @@ function validateApiCatalogPayload(value) {
   });
 }
 
-async function fetchJson(path, label, validatePayload) {
-  const timeoutMs = 8000;
+function fetchError(message, transient, cause) {
+  const error = cause === undefined ? new Error(message) : new Error(message, { cause });
+  error.transient = transient;
+  return error;
+}
+
+function isAbortError(error) {
+  return typeof error === "object" && error !== null && error.name === "AbortError";
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchJsonAttempt(url, label, validatePayload) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = setTimeout(() => controller.abort(), fetchTimeoutMs);
   try {
-    const pageOrigin = globalThis.location?.origin;
-    if (typeof pageOrigin !== "string" || pageOrigin.length === 0) {
-      throw new Error(\`Failed to fetch \${label}: missing page origin\`);
+    let response;
+    try {
+      response = await fetch(url, {
+        cache: "no-store",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/json"
+        },
+        redirect: "error",
+        signal: controller.signal
+      });
+    } catch (error) {
+      if (isAbortError(error) && controller.signal.aborted) {
+        throw fetchError(\`Failed to fetch \${label}: timed out after \${fetchTimeoutMs}ms\`, true, error);
+      }
+      throw fetchError(\`Failed to fetch \${label}: network error (\${error?.message ?? error})\`, true, error);
     }
-
-    const url = new URL(path, pageOrigin);
-    if (url.origin !== pageOrigin || url.pathname !== path || url.search || url.hash) {
-      throw new Error(\`Failed to fetch \${label}: unexpected URL\`);
-    }
-
-    const response = await fetch(url, {
-      cache: "no-store",
-      credentials: "same-origin",
-      headers: {
-        Accept: "application/json"
-      },
-      redirect: "error",
-      signal: controller.signal
-    });
 
     if (!response.ok) {
-      throw new Error(\`Failed to fetch \${label}: HTTP \${response.status}\`);
+      throw fetchError(\`Failed to fetch \${label}: HTTP \${response.status}\`, response.status >= 500);
     }
 
     const contentType = response.headers.get("content-type") ?? "";
     if (!contentType.toLowerCase().includes("application/json")) {
-      throw new Error(\`Failed to fetch \${label}: expected application/json response\`);
+      throw fetchError(\`Failed to fetch \${label}: expected application/json response, got \${JSON.stringify(contentType)}\`, false);
     }
 
     let payload;
     try {
       payload = await response.json();
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        throw error;
+      if (isAbortError(error) && controller.signal.aborted) {
+        throw fetchError(\`Failed to fetch \${label}: timed out after \${fetchTimeoutMs}ms while reading response\`, true, error);
       }
-      throw new Error(\`Failed to fetch \${label}: invalid JSON response\`, { cause: error });
+      throw fetchError(\`Failed to fetch \${label}: invalid JSON response\`, false, error);
     }
 
     return validatePayload(payload);
-  } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error(\`Failed to fetch \${label}: timed out after \${timeoutMs}ms\`);
-    }
-    throw error;
   } finally {
     clearTimeout(timeoutId);
+  }
+}
+
+async function fetchJson(path, label, validatePayload) {
+  const pageOrigin = globalThis.location?.origin;
+  if (typeof pageOrigin !== "string" || pageOrigin.length === 0) {
+    throw fetchError(\`Failed to fetch \${label}: missing page origin\`, false);
+  }
+
+  const url = new URL(path, pageOrigin);
+  if (url.origin !== pageOrigin || url.pathname !== path || url.search || url.hash) {
+    throw fetchError(\`Failed to fetch \${label}: unexpected URL\`, false);
+  }
+
+  const maxAttempts = fetchMaxRetries + 1;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fetchJsonAttempt(url, label, validatePayload);
+    } catch (error) {
+      if (error?.transient !== true) {
+        throw error;
+      }
+      if (attempt + 1 >= maxAttempts) {
+        console.error(\`Giving up on \${label} (\${url.pathname}) after \${maxAttempts} attempts:\`, error.message);
+        throw fetchError(\`\${error.message} (failed after \${maxAttempts} attempts)\`, true, error);
+      }
+      const delayMs = 2 ** attempt * fetchRetryBaseDelayMs;
+      console.warn(\`Retrying \${label} (\${url.pathname}) in \${delayMs}ms after attempt \${attempt + 1}/\${maxAttempts} failed:\`, error.message);
+      await wait(delayMs);
+    }
   }
 }
 
@@ -131,28 +226,36 @@ async function fetchCachedJson(path, label, validatePayload) {
   return runtimeJsonCache.get(path);
 }
 
-navigator.modelContext.provideContext({
-  tools: [
-    {
-      name: "get-site-info",
-      description: ${escapeJsString(`Get information about ${siteConfig.domain}`)},
-      inputSchema: { type: "object", properties: {} },
-      execute: async () => ({ host: ${escapeJsString(siteConfig.domain)}, status: runtimeContract.siteStatus })
-    },
-    {
-      name: "get-agent-card",
-      description: "Get the AI agent card for this site",
-      inputSchema: { type: "object", properties: {} },
-      execute: async () => fetchCachedJson(runtimeContract.agentCardPath, "agent card", validateAgentCardPayload)
-    },
-    {
-      name: "get-api-catalog",
-      description: "Get the API catalog for this site",
-      inputSchema: { type: "object", properties: {} },
-      execute: async () => fetchCachedJson(runtimeContract.apiCatalogPath, "api catalog", validateApiCatalogPayload)
-    }
-  ]
-});
+function logToolRegistrationError(error) {
+  console.error("Failed to register modelContext tools; continuing without tools:", error);
+}
+
+try {
+  Promise.resolve(navigator.modelContext.provideContext({
+    tools: [
+      {
+        name: "get-site-info",
+        description: ${escapeJsString(`Get information about ${siteConfig.domain}`)},
+        inputSchema: { type: "object", properties: {} },
+        execute: async () => ({ host: ${escapeJsString(siteConfig.domain)}, status: runtimeContract.siteStatus })
+      },
+      {
+        name: "get-agent-card",
+        description: "Get the AI agent card for this site",
+        inputSchema: { type: "object", properties: {} },
+        execute: async () => fetchCachedJson(runtimeContract.agentCardPath, "agent card", validateAgentCardPayload)
+      },
+      {
+        name: "get-api-catalog",
+        description: "Get the API catalog for this site",
+        inputSchema: { type: "object", properties: {} },
+        execute: async () => fetchCachedJson(runtimeContract.apiCatalogPath, "api catalog", validateApiCatalogPayload)
+      }
+    ]
+  })).catch(logToolRegistrationError);
+} catch (error) {
+  logToolRegistrationError(error);
+}
 `]
   ]);
 }
