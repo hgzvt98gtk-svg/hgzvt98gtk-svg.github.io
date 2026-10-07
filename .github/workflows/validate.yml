@@ -27,7 +27,7 @@ jobs:
           set -euo pipefail
           npm run generate
           npm run build
-      - name: Validate local files, XML/SVG, and module dependencies in parallel
+      - name: Validate site files, XML/SVG, external assets, and dependencies in parallel
         shell: bash
         run: |
           set -euo pipefail
@@ -37,9 +37,10 @@ jobs:
           declare -A commands=(
             [site]="npm run validate:site"
             [xml]="npm run validate:xml"
+            [assets]="npm run validate:external-assets"
             [deps]="npm run validate:deps"
           )
-          validation_jobs=(site xml deps)
+          validation_jobs=(site xml assets deps)
 
           for job in "${validation_jobs[@]}"; do
             (
