@@ -2,7 +2,6 @@ import { siteFilePaths } from "./site-paths.mjs";
 import {
   agentCardKeys,
   apiCatalogKeys,
-  hasExactKeys,
   isAgentCardPayload,
   isApiCatalogPayload,
   isPlainObject
@@ -25,7 +24,10 @@ ${isPlainObject.toString()}
 const agentCardKeys = ${JSON.stringify(agentCardKeys)};
 const apiCatalogKeys = ${JSON.stringify(apiCatalogKeys)};
 
-${hasExactKeys.toString()}
+function hasExactKeys(value, expectedKeys) {
+  const actualKeys = Object.keys(value).sort();
+  return actualKeys.length === expectedKeys.length && actualKeys.every((key, index) => key === expectedKeys[index]);
+}
 
 ${isAgentCardPayload.toString()}
 
@@ -60,7 +62,7 @@ function describeShapeMismatch(value, expectedKeys, fieldChecks) {
     return { reason: "Payload is not a JSON object", expected: "object", actual: describeType(value) };
   }
   if (!hasExactKeys(value, expectedKeys)) {
-    return { reason: "Key mismatch", expected: [...expectedKeys].sort(), actual: Object.keys(value).sort() };
+    return { reason: "Key mismatch", expected: [...expectedKeys], actual: Object.keys(value).sort() };
   }
   for (const [key, expected, isValid] of fieldChecks) {
     if (!isValid(value[key])) {
@@ -106,19 +108,28 @@ function validateAgentCardPayload(value) {
 
 function validateApiCatalogPayload(value) {
   const subject = "API catalog";
-  if (!isApiCatalogPayload(value)) {
+  if (!isPlainObject(value) || !hasExactKeys(value, apiCatalogKeys) || !Array.isArray(value.apis)) {
     const mismatch = describeShapeMismatch(value, apiCatalogKeys, [
-      ["apis", "array of objects", (field) => Array.isArray(field) && field.every(isPlainObject)],
+      ["apis", "array of objects", Array.isArray],
       ["site", "string", (field) => typeof field === "string"]
     ]);
     throw payloadValidationError(subject, mismatch.reason, mismatch.expected, mismatch.actual, value);
+  }
+  const apis = value.apis.map((entry) => {
+    if (!isPlainObject(entry)) {
+      throw payloadValidationError(subject, "Invalid apis", "array of objects", describeType(value.apis), value);
+    }
+    return Object.freeze({ ...entry });
+  });
+  if (typeof value.site !== "string") {
+    throw payloadValidationError(subject, "Invalid site", "string", describeType(value.site), value);
   }
   if (value.site !== runtimeContract.homeUrl) {
     throw payloadValidationError(subject, "Site mismatch", runtimeContract.homeUrl, value.site, value);
   }
   return Object.freeze({
     site: value.site,
-    apis: Object.freeze(value.apis.map((entry) => Object.freeze({ ...entry })))
+    apis: Object.freeze(apis)
   });
 }
 
