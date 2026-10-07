@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promis
 import os from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { removeStaleFile, validateBuildManifest } from "./build-manifest.mjs";
+import { readBuildManifest, removeStaleFile, validateBuildManifest } from "./build-manifest.mjs";
 
 test("validates manifest structure and file metadata", () => {
   const manifest = validateBuildManifest({
@@ -33,6 +33,15 @@ test("rejects malformed manifest structures and file keys", () => {
   ]) {
     assert.throws(() => validateBuildManifest(value));
   }
+});
+
+test("loads and validates the manifest before returning it", async (t) => {
+  const temporaryDirectory = await mkdtemp(join(os.tmpdir(), "build-manifest-"));
+  t.after(() => rm(temporaryDirectory, { recursive: true, force: true }));
+  const manifestPath = join(temporaryDirectory, "manifest.json");
+  await writeFile(manifestPath, JSON.stringify({ files: { "../outside": "signature" } }));
+
+  await assert.rejects(readBuildManifest(manifestPath), /Invalid build manifest file path/);
 });
 
 test("removes a legitimate stale file below the output directory", async (t) => {

@@ -84,7 +84,7 @@ const [sources, previousManifest] = await Promise.all([
 ]);
 
 const forceRebuild = previousManifest.configFingerprint !== configFingerprint;
-const nextManifest = { configFingerprint, files: {} };
+const nextManifest = { configFingerprint, files: Object.create(null) };
 const buildQueue = [];
 const sourceMetadata = new Array(sources.length);
 await runInBatches(sources, concurrency, async (source, index) => {
@@ -120,7 +120,7 @@ for (const { source, relativeSource, metadata, signature, unchanged, destination
 
 await runInBatches(buildQueue, concurrency, buildFile);
 
-const staleFiles = Object.keys(previousManifest.files).filter((relativeSource) => !(relativeSource in nextManifest.files));
+const staleFiles = Object.keys(previousManifest.files).filter((relativeSource) => !Object.hasOwn(nextManifest.files, relativeSource));
 await runInBatches(staleFiles, concurrency, async (relativeSource) => {
   await removeStaleFile(output, relativeSource);
 });
