@@ -1,5 +1,5 @@
-import { copyFile, mkdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
-import { dirname, extname, join, relative } from "node:path";
+import { copyFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { dirname, extname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import CleanCSS from "clean-css";
 import { minify as minifyHtml } from "html-minifier-terser";
@@ -11,6 +11,7 @@ import { siteConfig } from "./.github/scripts/site.config.mjs";
 import { siteUrls } from "./.github/scripts/site-urls.mjs";
 import { fileSignature } from "./.github/scripts/file-signature.mjs";
 import { validateBuildConfig, validateSiteConfig } from "./.github/scripts/validate-config.mjs";
+import { readBuildManifest, removeStaleFile } from "./.github/scripts/build-manifest.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const output = join(root, "dist");
@@ -36,27 +37,6 @@ async function statIfExists(path) {
 async function runInBatches(items, batchSize, action) {
   for (let index = 0; index < items.length; index += batchSize) {
     await Promise.all(items.slice(index, index + batchSize).map((item, offset) => action(item, index + offset)));
-  }
-}
-
-async function loadManifest() {
-  try {
-    const text = await readFile(manifestPath, "utf8");
-    let parsed;
-    try {
-      parsed = JSON.parse(text);
-    } catch (error) {
-      throw new Error(`Invalid build manifest at ${manifestPath}: ${error.message}`, { cause: error });
-    }
-    return {
-      configFingerprint: parsed.configFingerprint ?? "",
-      files: typeof parsed.files === "object" && parsed.files !== null ? parsed.files : {}
-    };
-  } catch (error) {
-    if (error?.code === "ENOENT") {
-      return { configFingerprint: "", files: {} };
-    }
-    throw error;
   }
 }
 
@@ -100,15 +80,15 @@ await mkdir(output, { recursive: true });
 
 const [sources, previousManifest] = await Promise.all([
   listBuildFiles(siteConfig, renderedFiles).map((relativePath) => join(root, relativePath)),
-  loadManifest()
+  readBuildManifest(manifestPath)
 ]);
 
 const forceRebuild = previousManifest.configFingerprint !== configFingerprint;
-const nextManifest = { configFingerprint, files: {} };
+const nextManifest = { configFingerprint, files: Object.create(null) };
 const buildQueue = [];
 const sourceMetadata = new Array(sources.length);
 await runInBatches(sources, concurrency, async (source, index) => {
-  const relativeSource = relative(root, source);
+  const relativeSource = relative(root, source).split(sep).join("/");
   const metadata = await stat(source);
   const destination = join(output, relativeSource);
   const previous = previousManifest.files[relativeSource];
@@ -140,16 +120,9 @@ for (const { source, relativeSource, metadata, signature, unchanged, destination
 
 await runInBatches(buildQueue, concurrency, buildFile);
 
-const staleFiles = Object.keys(previousManifest.files).filter((relativeSource) => !(relativeSource in nextManifest.files));
+const staleFiles = Object.keys(previousManifest.files).filter((relativeSource) => !Object.hasOwn(nextManifest.files, relativeSource));
 await runInBatches(staleFiles, concurrency, async (relativeSource) => {
-  const destination = join(output, relativeSource);
-  try {
-    await unlink(destination);
-  } catch (error) {
-    if (error?.code !== "ENOENT") {
-      throw error;
-    }
-  }
+  await removeStaleFile(output, relativeSource);
 });
 
 await writeFile(manifestPath, `${JSON.stringify(nextManifest, null, 2)}\n`);
