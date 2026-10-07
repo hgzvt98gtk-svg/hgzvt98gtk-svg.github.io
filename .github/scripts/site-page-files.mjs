@@ -53,6 +53,7 @@ export function renderPageFiles(siteConfig, siteUrls) {
 <body>
   <main class="landing" aria-label="${personName} personal website">
     <h1>${domain}</h1>
+    <a class="privacy-link" href="${escapeHtml(siteConfig.assetPaths.privacyPage)}">Privacy Policy</a>
   </main>
   <script type="module">
     if ("modelContext" in navigator) {
