@@ -30,6 +30,9 @@ jobs:
           set -euo pipefail
           npm run generate
           npm run build
+      - name: Run regression tests
+        shell: bash
+        run: npm test
       - name: Validate local files, XML/SVG, and module dependencies in parallel
         shell: bash
         run: |
