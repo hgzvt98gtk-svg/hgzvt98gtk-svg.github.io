@@ -1,5 +1,5 @@
-import { copyFile, mkdir, stat, writeFile } from "node:fs/promises";
-import { dirname, extname, join, relative } from "node:path";
+import { copyFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { dirname, extname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import CleanCSS from "clean-css";
 import { minify as minifyHtml } from "html-minifier-terser";
@@ -88,7 +88,7 @@ const nextManifest = { configFingerprint, files: Object.create(null) };
 const buildQueue = [];
 const sourceMetadata = new Array(sources.length);
 await runInBatches(sources, concurrency, async (source, index) => {
-  const relativeSource = relative(root, source);
+  const relativeSource = relative(root, source).split(sep).join("/");
   const metadata = await stat(source);
   const destination = join(output, relativeSource);
   const previous = previousManifest.files[relativeSource];
