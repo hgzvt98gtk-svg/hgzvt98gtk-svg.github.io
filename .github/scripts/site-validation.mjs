@@ -31,7 +31,14 @@ export function listSiteContentChecks(siteConfig, siteUrls) {
       value: siteConfig.assetPaths.icon,
       message: `${contentCheckFiles.index} missing icon link`
     },
-    { type: "runtimeBootstrap", file: contentCheckFiles.index, message: `${contentCheckFiles.index} missing modelContext-gated app script bootstrap` },
+    {
+      type: "attribute",
+      file: contentCheckFiles.index,
+      attribute: "src",
+      value: `/${siteFilePaths.bootstrapScript}`,
+      message: `${contentCheckFiles.index} missing external bootstrap script`
+    },
+    { type: "runtimeBootstrap", file: siteFilePaths.bootstrapScript, message: `${siteFilePaths.bootstrapScript} missing modelContext-gated app script bootstrap` },
     { type: "contains", file: contentCheckFiles.index, value: siteUrls.socialPreview, message: `${contentCheckFiles.index} missing social preview URL` },
     {
       type: "attribute",

@@ -16,6 +16,12 @@ Static personal site with generated metadata files, build output in `dist/`, and
 - `npm run validate:deps` validates static and string-literal dynamic imports between local script/runtime modules, fails on circular dependencies, and enforces low-level module boundaries.
 - `npm run validate:external-assets` checks remotely hosted images separately from local validation; CI runs it weekly or on demand.
 
+## Content Security Policy
+
+The home page loads a same-origin external module (`/bootstrap.js`) which imports `/app.js` only when `navigator.modelContext` is available. Stylesheets and fonts are same-origin; images use the site origin or `https://assets.hussamfaroug.com`. Runtime API requests are restricted to same-origin URLs and reject redirects. No external API allowances are needed.
+
+`_headers` defines the HTTP CSP without inline-script/style exceptions. Its `default-src 'self'` also restricts connections and frames to the site origin. The unused Cloudflare script/frame/connect sources are not enabled. GitHub Pages does not apply `_headers`; configure these response headers at the serving proxy/CDN and verify the deployed responses. With `Cross-Origin-Embedder-Policy: require-corp`, the approved image host must also provide compatible CORS or Cross-Origin-Resource-Policy headers.
+
 ## Local workflow
 
 Install Node dependencies, then run the full local validation pipeline with one command.
