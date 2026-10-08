@@ -2,6 +2,7 @@ export const siteFilePaths = Object.freeze({
   index: "index.html",
   privacy: "Privacy.html",
   appScript: "app.js",
+  bootstrapScript: "bootstrap.js",
   robots: "robots.txt",
   sitemap: "sitemap.xml",
   llms: "llms.txt",

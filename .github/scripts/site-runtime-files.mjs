@@ -11,6 +11,10 @@ import { escapeJsString } from "./escape-js-string.mjs";
 
 export function renderRuntimeFiles(siteConfig, siteUrls) {
   return new Map([
+    [siteFilePaths.bootstrapScript, `if ("modelContext" in navigator) {
+  import(${escapeJsString(siteConfig.assetPaths.appScript)});
+}
+`],
     [siteFilePaths.appScript, `const runtimeContract = Object.freeze({
   agentCardPath: ${escapeJsString(siteConfig.assetPaths.agentCard)},
   apiCatalogPath: ${escapeJsString(siteConfig.assetPaths.apiCatalog)},
