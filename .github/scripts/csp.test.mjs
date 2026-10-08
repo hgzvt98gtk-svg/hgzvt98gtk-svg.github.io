@@ -71,6 +71,33 @@ test("generated pages contain no inline scripts, handlers, styles, or legacy CSP
   assert.ok(includesAttribute(files.get(siteFilePaths.index), "src", `/${siteFilePaths.bootstrapScript}`));
 });
 
+test("generated pages use only same-origin active resource and navigation URLs", () => {
+  const attributeNames = new Map([
+    ["script", ["src"]],
+    ["link", ["href"]],
+    ["img", ["src"]],
+    ["iframe", ["src"]],
+    ["base", ["href"]],
+    ["form", ["action"]],
+    ["meta", ["content"]]
+  ]);
+
+  for (const [path, html] of files) {
+    if (!path.endsWith(".html")) continue;
+    for (const [tag, attributes] of attributeNames) {
+      const tagPattern = new RegExp(`<${tag}\\b([^>]*)>`, "gi");
+      for (const [, rawAttributes] of html.matchAll(tagPattern)) {
+        for (const attribute of attributes) {
+          const attributePattern = new RegExp(`(?:^|\\s)${attribute}\\s*=\\s*(["'])(.*?)\\1`, "i");
+          const value = rawAttributes.match(attributePattern)?.[2];
+          if (!value || (!value.startsWith("//") && !/^https?:\/\//i.test(value))) continue;
+          assert.equal(new URL(value, siteConfig.origin).origin, siteConfig.origin, `${path}: ${tag} ${attribute}`);
+        }
+      }
+    }
+  }
+});
+
 test("external bootstrap retains the feature-gated same-origin import before and after minification", async () => {
   const source = files.get(siteFilePaths.bootstrapScript);
   const statement = parse(source, { ecmaVersion: "latest", sourceType: "module" }).body;
@@ -102,10 +129,10 @@ test("HTTP CSP permits configured images without inline or external code excepti
     assert.deepEqual(directives.get(name), ["'self'"], name);
   }
   assert.deepEqual(directives.get("object-src"), ["'none'"]);
-  assert.deepEqual(directives.get("img-src"), ["'self'", "https://assets.hussamfaroug.com"]);
+  assert.deepEqual(directives.get("img-src"), ["'self'"]);
   for (const key of ["icon", "background"]) {
     const url = new URL(siteConfig.assetPaths[key], siteConfig.origin);
-    assert.ok(url.origin === siteConfig.origin || directives.get("img-src").includes(url.origin), key);
+    assert.equal(url.origin, siteConfig.origin, key);
   }
   assert.doesNotMatch(policy, /unsafe-inline|unsafe-eval|http:\/\//);
 });
