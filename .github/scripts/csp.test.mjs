@@ -17,7 +17,7 @@ test("generated pages contain no inline scripts, handlers, styles, or legacy CSP
     assert.doesNotMatch(html, /\s(?:on[a-z]+|style)\s*=/i, path);
     assert.doesNotMatch(html, /<(?:style|object|embed|applet|base)\b/i, path);
     assert.doesNotMatch(html, /http-equiv\s*=\s*["']Content-Security-Policy["']/i, path);
-    for (const [, attributes, contents] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    for (const [, attributes, contents] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi)) {
       assert.ok(includesAttribute(attributes, "src", `/${siteFilePaths.bootstrapScript}`), path);
       assert.equal(contents.trim(), "", path);
     }
