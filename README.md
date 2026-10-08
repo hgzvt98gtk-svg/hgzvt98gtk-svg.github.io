@@ -22,11 +22,23 @@ The home page loads a same-origin external module (`/bootstrap.js`) which import
 
 `_headers` defines the HTTP CSP without inline-script/style exceptions. Its `default-src 'self'` also restricts connections and frames to the site origin. The unused Cloudflare script/frame/connect sources are not enabled. GitHub Pages does not apply `_headers`; configure these response headers at the serving proxy/CDN and verify the deployed responses. With `Cross-Origin-Embedder-Policy: require-corp`, the approved image host must also provide compatible CORS or Cross-Origin-Resource-Policy headers.
 
+### Deployment verification
+
+- Apply the policy in `_headers` as an HTTP response header at the serving proxy/CDN for both `/` and `/Privacy.html`; copying the file to GitHub Pages alone does not enforce it. Do not replace it with a CSP meta tag, which cannot enforce `frame-ancestors`.
+- Inspect the final HTTPS responses for both pages and confirm the enforced `Content-Security-Policy` matches `_headers`. Check for additional policies or edge-injected scripts/frames before adding any exceptions.
+- In a browser, check both pages for CSP/COEP violations and confirm the favicon, background, stylesheet, and bootstrap load. In a browser supporting `navigator.modelContext`, invoke the agent-card and API-catalog tools and verify their same-origin JSON requests succeed without redirects.
+- Check the CDN image responses for compatible CORP headers or a CORS-enabled loading arrangement. The external-asset smoke check verifies status and content type only; it does not prove CSP/COEP compatibility.
+
+The current policy retains CDN images, same-origin connections/frames, same-origin base/form URLs, and same-origin embedding. Tightening these permissions requires product/deployment confirmation. SVG presentation attributes and XML `http://` namespace identifiers are not inline styles or insecure asset requests.
+
 ## Local workflow
 
-Install Node dependencies, then run the full local validation pipeline with one command.
+Install Node dependencies, generate/build the site, then run validation and tests.
 
 ```bash
 npm ci
 npm run validate
+npm test
 ```
+
+`npm test` includes CSP checks against generated templates, checked-in pages, and actual `dist/` artifacts, so run `npm run build` before testing if you have not run `npm run validate`. These checks do not verify deployed HTTP headers.
