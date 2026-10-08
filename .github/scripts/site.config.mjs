@@ -14,7 +14,7 @@ export const siteConfig = {
     stylesheet: "/style.css",
     appScript: `/${siteFilePaths.appScript}`,
     background: "https://assets.hussamfaroug.com/Background.jpeg",
-    socialPreview: "https://assets.hussamfaroug.com/social-preview.svg",
+    socialPreview: "/social-preview.svg",
     agentCard: `/${siteFilePaths.agentCard}`,
     apiCatalog: `/${siteFilePaths.apiCatalog}`,
     privacyPage: `/${siteFilePaths.privacy}`,

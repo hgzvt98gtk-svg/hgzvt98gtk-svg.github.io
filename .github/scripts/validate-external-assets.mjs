@@ -10,8 +10,9 @@ if (externalAssets.length === 0) {
   console.log("No externally hosted static assets to check.");
 } else {
   const results = await Promise.allSettled(externalAssets.map(async ([key, assetUrl]) => {
+    const expectedContentType = key === "stylesheet" ? "text/css" : "image/*";
     const response = await fetch(assetUrl, {
-      headers: { Accept: "image/*" },
+      headers: { Accept: expectedContentType },
       signal: AbortSignal.timeout(timeoutMs)
     });
 
@@ -21,8 +22,11 @@ if (externalAssets.length === 0) {
       }
 
       const contentType = response.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
-      if (!contentType?.startsWith("image/")) {
-        throw new Error(`expected image content type, received ${contentType ?? "none"}`);
+      const validContentType = key === "stylesheet"
+        ? contentType === expectedContentType
+        : contentType?.startsWith("image/");
+      if (!validContentType) {
+        throw new Error(`expected ${expectedContentType} content type, received ${contentType ?? "none"}`);
       }
     } finally {
       await response.body?.cancel();
