@@ -45,7 +45,7 @@ export function validateApiCatalog(apiCatalog, siteUrls) {
 
 export function validateRuntimeAppScript(scriptText, siteConfig) {
   const requiredPatterns = [
-    /if\s*\(\s*["']modelContext["']\s+in\s+navigator\s*\)/,
+    /if\s*\(\s*["']modelContext["']\s*in\s*navigator\s*\)/,
     /async function fetchJson\s*\(/,
     /function validateAgentCardPayload\s*\(/,
     /function validateApiCatalogPayload\s*\(/,
@@ -81,8 +81,8 @@ export function validateRuntimeAppScript(scriptText, siteConfig) {
 }
 
 export function validateRuntimeBootstrapScript(scriptText, siteConfig) {
-  const quotedPath = escapeRegex(JSON.stringify(siteConfig.assetPaths.appScript));
-  return new RegExp(`<script\\s+type=["']module["']\\s+src=["']${quotedPath}["']\\s*><\\/script>`).test(scriptText);
+  const appScriptPath = escapeRegex(siteConfig.assetPaths.appScript);
+  return new RegExp(`<script\\s+type=["']module["']\\s+src=["']${appScriptPath}["']\\s*><\\/script>`).test(scriptText);
 }
 
 export function validateMtaStsDocument(documentText, siteConfig) {
