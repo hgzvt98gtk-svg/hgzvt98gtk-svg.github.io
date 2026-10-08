@@ -13,6 +13,7 @@ export const siteConfig = {
     icon: "https://assets.hussamfaroug.com/HF.svg",
     stylesheet: "/style.css",
     appScript: `/${siteFilePaths.appScript}`,
+    bootstrapScript: "/bootstrap.js",
     background: "https://assets.hussamfaroug.com/Background.jpeg",
     socialPreview: "/social-preview.svg",
     agentCard: `/${siteFilePaths.agentCard}`,

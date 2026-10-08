@@ -20,6 +20,7 @@ export const contentCheckFiles = Object.freeze({
   privacy: siteFilePaths.privacy,
   style: "style.css",
   appScript: siteFilePaths.appScript,
+  bootstrapScript: "bootstrap.js",
   robots: siteFilePaths.robots,
   sitemap: siteFilePaths.sitemap,
   llms: siteFilePaths.llms
@@ -29,6 +30,7 @@ export const requiredAssetPathKeys = Object.freeze([
   "icon",
   "stylesheet",
   "appScript",
+  "bootstrapScript",
   "background",
   "socialPreview",
   "agentCard",
