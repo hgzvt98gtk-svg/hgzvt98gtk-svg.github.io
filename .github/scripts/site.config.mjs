@@ -10,10 +10,10 @@ export const siteConfig = {
   privacyLastModified: "2026-09-19",
   siteStatus: "agent-ready",
   assetPaths: {
-    icon: "https://assets.hussamfaroug.com/HF.svg",
+    icon: "/HF.svg",
     stylesheet: "/style.css",
     appScript: `/${siteFilePaths.appScript}`,
-    background: "https://assets.hussamfaroug.com/Background.jpeg",
+    background: "/Background.jpeg",
     socialPreview: "/social-preview.svg",
     agentCard: `/${siteFilePaths.agentCard}`,
     apiCatalog: `/${siteFilePaths.apiCatalog}`,

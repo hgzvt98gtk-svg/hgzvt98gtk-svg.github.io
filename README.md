@@ -7,7 +7,7 @@ Static personal site with generated metadata files, build output in `dist/`, and
 - `.github/scripts/site.config.mjs` is the shared source of truth for site metadata and runtime URLs.
 - `.github/scripts/build.config.mjs` holds build-specific settings for the dist pipeline.
 - `.github/scripts/site-files.mjs` combines the page, runtime, and metadata renderers in `.github/scripts/site-page-files.mjs`, `.github/scripts/site-runtime-files.mjs`, and `.github/scripts/site-metadata-files.mjs`.
-- `Background.jpeg` and `HF.svg` are retained as source copies for the corresponding CDN-hosted assets configured in `.github/scripts/site.config.mjs`. The social preview image is served from the site at `/social-preview.svg`.
+- `Background.jpeg` and `HF.svg` are served locally alongside the social preview image at `/social-preview.svg`.
 - `.github/scripts/site-validation.mjs` owns shared validation target and content-check definitions.
 - `npm run generate` writes generated files to the repository root from shared templates.
 - `npm run build` minifies HTML/CSS/JS and copies other assets into `dist/`.
@@ -18,9 +18,9 @@ Static personal site with generated metadata files, build output in `dist/`, and
 
 ## Content Security Policy
 
-The home page loads a same-origin external module (`/bootstrap.js`) which imports `/app.js` only when `navigator.modelContext` is available. Stylesheets and fonts are same-origin; images use the site origin or `https://assets.hussamfaroug.com`. Runtime API requests are restricted to same-origin URLs and reject redirects. No external API allowances are needed.
+The home page loads a same-origin external module (`/bootstrap.js`) which imports `/app.js` only when `navigator.modelContext` is available. Stylesheets, fonts, and images are same-origin. Runtime API requests are restricted to same-origin URLs and reject redirects. No external API allowances are needed.
 
-`_headers` defines the HTTP CSP without inline-script/style exceptions. Its `default-src 'self'` also restricts connections and frames to the site origin. The unused Cloudflare script/frame/connect sources are not enabled. GitHub Pages does not apply `_headers`; configure these response headers at the serving proxy/CDN and verify the deployed responses. With `Cross-Origin-Embedder-Policy: require-corp`, the approved image host must also provide compatible CORS or Cross-Origin-Resource-Policy headers.
+`_headers` defines the HTTP CSP without inline-script/style exceptions. Its `default-src 'self'` also restricts connections and frames to the site origin. The unused Cloudflare script/frame/connect sources are not enabled. GitHub Pages does not apply `_headers`; configure these response headers at the serving proxy/CDN and verify the deployed responses.
 
 ## Local workflow
 
