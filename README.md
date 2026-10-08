@@ -7,7 +7,7 @@ Static personal site with generated metadata files, build output in `dist/`, and
 - `.github/scripts/site.config.mjs` is the shared source of truth for site metadata and runtime URLs.
 - `.github/scripts/build.config.mjs` holds build-specific settings for the dist pipeline.
 - `.github/scripts/site-files.mjs` combines the page, runtime, and metadata renderers in `.github/scripts/site-page-files.mjs`, `.github/scripts/site-runtime-files.mjs`, and `.github/scripts/site-metadata-files.mjs`.
-- `Background.jpeg` and `HF.svg` are retained as source copies for the corresponding CDN-hosted assets configured in `.github/scripts/site.config.mjs`. The social preview image is served from the site at `/social-preview.svg`.
+- `Background.jpeg` and `HF.svg` are served locally so the strict same-origin content security policy also applies to images. The social preview image is served from the site at `/social-preview.svg`.
 - `.github/scripts/site-validation.mjs` owns shared validation target and content-check definitions.
 - `npm run generate` writes generated files to the repository root from shared templates.
 - `npm run build` minifies HTML/CSS/JS and copies other assets into `dist/`.

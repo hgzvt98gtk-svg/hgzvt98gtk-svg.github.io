@@ -230,8 +230,9 @@ function logToolRegistrationError(error) {
   console.error("Failed to register modelContext tools; continuing without tools:", error);
 }
 
-try {
-  Promise.resolve(navigator.modelContext.provideContext({
+if ("modelContext" in navigator) {
+  try {
+    Promise.resolve(navigator.modelContext.provideContext({
     tools: [
       {
         name: "get-site-info",
@@ -252,9 +253,10 @@ try {
         execute: async () => fetchCachedJson(runtimeContract.apiCatalogPath, "api catalog", validateApiCatalogPayload)
       }
     ]
-  })).catch(logToolRegistrationError);
-} catch (error) {
-  logToolRegistrationError(error);
+    })).catch(logToolRegistrationError);
+  } catch (error) {
+    logToolRegistrationError(error);
+  }
 }
 `]
   ]);

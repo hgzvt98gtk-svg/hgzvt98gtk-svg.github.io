@@ -2,20 +2,21 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+This is a static website without versioned releases. The latest content on the
+`main` branch is supported; older revisions are not maintained separately.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Version | Supported |
+| ------- | --------- |
+| `main` (latest) | :white_check_mark: |
+| Older revisions | :x: |
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+Please report suspected vulnerabilities privately by emailing
+[admin@hussamfaroug.com](mailto:admin@hussamfaroug.com) with “Security
+vulnerability” in the subject. Include the affected URL or file, the impact,
+and steps to reproduce. Please do not report vulnerabilities in public issues.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+We aim to acknowledge reports within five business days and provide updates
+about the assessment and any remediation. Please allow time for investigation
+and coordinated remediation before disclosing a vulnerability publicly.

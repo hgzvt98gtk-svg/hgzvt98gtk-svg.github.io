@@ -31,7 +31,7 @@ export function listSiteContentChecks(siteConfig, siteUrls) {
       value: siteConfig.assetPaths.icon,
       message: `${contentCheckFiles.index} missing icon link`
     },
-    { type: "runtimeBootstrap", file: contentCheckFiles.index, message: `${contentCheckFiles.index} missing modelContext-gated app script bootstrap` },
+    { type: "runtimeBootstrap", file: contentCheckFiles.index, message: `${contentCheckFiles.index} missing external app module script` },
     { type: "contains", file: contentCheckFiles.index, value: siteUrls.socialPreview, message: `${contentCheckFiles.index} missing social preview URL` },
     {
       type: "attribute",

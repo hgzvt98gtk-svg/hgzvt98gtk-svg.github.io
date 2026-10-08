@@ -1,5 +1,4 @@
 import { siteFilePaths } from "./site-paths.mjs";
-import { escapeJsString } from "./escape-js-string.mjs";
 
 function escapeHtml(value) {
   return String(value)
@@ -22,7 +21,7 @@ export function renderPageFiles(siteConfig, siteUrls) {
   const socialPreviewUrl = escapeHtml(siteUrls.socialPreview);
   const iconPath = escapeHtml(siteConfig.assetPaths.icon);
   const stylesheetPath = escapeHtml(siteConfig.assetPaths.stylesheet);
-  const appScriptImportPath = escapeJsString(siteConfig.assetPaths.appScript);
+  const appScriptPath = escapeHtml(siteConfig.assetPaths.appScript);
   const privacyLastUpdated = escapeHtml(siteConfig.privacyLastUpdated);
   const email = escapeHtml(siteConfig.email);
   const mailtoHref = escapeHtml(encodeURI(`mailto:${String(siteConfig.email)}`));
@@ -54,11 +53,7 @@ export function renderPageFiles(siteConfig, siteUrls) {
   <main class="landing" aria-label="${personName} personal website">
     <h1>${domain}</h1>
   </main>
-  <script type="module">
-    if ("modelContext" in navigator) {
-      import(${appScriptImportPath});
-    }
-  </script>
+  <script type="module" src="${appScriptPath}"></script>
 </body>
 </html>
 `],
