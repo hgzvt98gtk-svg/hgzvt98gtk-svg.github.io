@@ -22,22 +22,32 @@ function validatePathOnlyAssetPath(path, key) {
   assert(parsed.pathname === path, `siteConfig.assetPaths.${key} must be a normalized absolute path`);
 }
 
-function validateExternalAssetPath(path, key) {
+function validateExternalAssetPath(path, key, origin) {
+  let parsed;
   try {
-    const parsed = new URL(path);
-    assert(parsed.protocol === "https:", `siteConfig.assetPaths.${key} external URL must use HTTPS`);
+    parsed = new URL(path);
   } catch {
     assert(false, `siteConfig.assetPaths.${key} is not a valid URL`);
   }
+  assert(parsed.protocol === "https:", `siteConfig.assetPaths.${key} external URL must use HTTPS`);
+  assert(!parsed.username && !parsed.password, `siteConfig.assetPaths.${key} must not include credentials`);
+  assert(
+    ["icon", "background", "socialPreview", "bimiLogo"].includes(key),
+    `siteConfig.assetPaths.${key} must be a same-origin absolute path`
+  );
+  assert(
+    parsed.origin === origin || parsed.origin === "https://assets.hussamfaroug.com",
+    `siteConfig.assetPaths.${key} must use the site origin or https://assets.hussamfaroug.com`
+  );
 }
 
-function validateAssetPaths(assetPaths) {
+function validateAssetPaths(assetPaths, origin) {
   assert(typeof assetPaths === "object" && assetPaths !== null, "siteConfig.assetPaths must be an object");
 
   for (const key of requiredAssetPathKeys) {
     assert(typeof assetPaths[key] === "string" && assetPaths[key].length > 0, `siteConfig.assetPaths.${key} must be a non-empty string`);
     if (isExternalUrl(assetPaths[key])) {
-      validateExternalAssetPath(assetPaths[key], key);
+      validateExternalAssetPath(assetPaths[key], key, origin);
     } else {
       assert(assetPaths[key].startsWith("/"), `siteConfig.assetPaths.${key} must start with / or be an external URL`);
       validatePathOnlyAssetPath(assetPaths[key], key);
@@ -54,7 +64,7 @@ export function validateSiteConfig(siteConfig, siteUrls) {
   assert(typeof siteConfig.personName === "string" && siteConfig.personName.length > 0, "siteConfig.personName must be a non-empty string");
   assert(typeof siteConfig.siteStatus === "string" && siteConfig.siteStatus.length > 0, "siteConfig.siteStatus must be a non-empty string");
 
-  validateAssetPaths(siteConfig.assetPaths);
+  validateAssetPaths(siteConfig.assetPaths, siteConfig.origin);
 
   assert(siteConfig.origin === `https://${siteConfig.domain}`, "siteConfig.origin must match siteConfig.domain");
   assert(typeof siteUrls.home === "string" && siteUrls.home === `${siteConfig.origin}/`, "siteUrls.home must match siteConfig.origin/");

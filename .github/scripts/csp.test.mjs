@@ -4,12 +4,58 @@ import test from "node:test";
 import { parse } from "acorn";
 import { minify } from "terser";
 import { renderSiteFiles } from "./site-files.mjs";
-import { siteFilePaths } from "./site-paths.mjs";
+import { requiredAssetPathKeys, siteFilePaths } from "./site-paths.mjs";
 import { siteConfig } from "./site.config.mjs";
 import { siteUrls } from "./site-urls.mjs";
+import { validateSiteConfig } from "./validate-config.mjs";
 import { includesAttribute, validateRuntimeBootstrapScript } from "./validate-site-helpers.mjs";
 
 const files = renderSiteFiles(siteConfig, siteUrls);
+
+function configWithAsset(key, value) {
+  const config = {
+    ...siteConfig,
+    assetPaths: { ...siteConfig.assetPaths, [key]: value }
+  };
+  const urls = {
+    home: `${config.origin}/`,
+    privacy: new URL(config.assetPaths.privacyPage, config.origin).href,
+    socialPreview: new URL(config.assetPaths.socialPreview, config.origin).href,
+    sitemap: new URL(config.assetPaths.sitemap, config.origin).href
+  };
+  return [config, urls];
+}
+
+test("asset configuration rejects unapproved origins before generating browser resources", () => {
+  for (const key of requiredAssetPathKeys) {
+    for (const value of [
+      "https://example.test/asset",
+      "https://assets.hussamfaroug.com.example.test/asset",
+      "https://assets.hussamfaroug.com:8443/asset",
+      "http://assets.hussamfaroug.com/asset",
+      "//assets.hussamfaroug.com/asset",
+      "https://user@assets.hussamfaroug.com/asset"
+    ]) {
+      assert.throws(() => validateSiteConfig(...configWithAsset(key, value)), undefined, `${key}: ${value}`);
+    }
+    assert.doesNotThrow(() => validateSiteConfig(...configWithAsset(key, "/asset")));
+  }
+});
+
+test("only images may use approved HTTPS asset URLs; code and API paths remain local", () => {
+  assert.doesNotThrow(() => validateSiteConfig(siteConfig, siteUrls));
+  const imageKeys = new Set(["icon", "background", "socialPreview", "bimiLogo"]);
+  for (const key of requiredAssetPathKeys) {
+    for (const origin of [siteConfig.origin, "https://assets.hussamfaroug.com"]) {
+      const validate = () => validateSiteConfig(...configWithAsset(key, `${origin}/asset`));
+      if (imageKeys.has(key)) {
+        assert.doesNotThrow(validate, key);
+      } else {
+        assert.throws(validate, /must be a same-origin absolute path/, key);
+      }
+    }
+  }
+});
 
 test("generated pages contain no inline scripts, handlers, styles, or legacy CSP elements", () => {
   for (const [path, html] of files) {

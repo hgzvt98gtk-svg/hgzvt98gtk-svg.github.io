@@ -20,6 +20,8 @@ Static personal site with generated metadata files, build output in `dist/`, and
 
 The home page loads a same-origin external module (`/bootstrap.js`) which imports `/app.js` only when `navigator.modelContext` is available. Stylesheets and fonts are same-origin; images use the site origin or `https://assets.hussamfaroug.com`. Runtime API requests are restricted to same-origin URLs and reject redirects. No external API allowances are needed.
 
+Shared configuration validation rejects unapproved image origins and requires local absolute paths for scripts, stylesheets, API requests, and page URLs before generation or build.
+
 `_headers` defines the HTTP CSP without inline-script/style exceptions. Its `default-src 'self'` also restricts connections and frames to the site origin. The unused Cloudflare script/frame/connect sources are not enabled. GitHub Pages does not apply `_headers`; configure these response headers at the serving proxy/CDN and verify the deployed responses. With `Cross-Origin-Embedder-Policy: require-corp`, the approved image host must also provide compatible CORS or Cross-Origin-Resource-Policy headers.
 
 ## Local workflow
