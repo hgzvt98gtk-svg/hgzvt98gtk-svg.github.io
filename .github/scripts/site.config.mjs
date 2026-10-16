@@ -6,8 +6,8 @@ export const siteConfig = {
   origin: "https://hussamfaroug.com",
   email: "admin@hussamfaroug.com",
   themeColor: "#0b0b0d",
-  privacyLastUpdated: "September 19, 2026",
-  privacyLastModified: "2026-09-19",
+  privacyLastUpdated: "October 16, 2026",
+  privacyLastModified: "2026-10-16",
   siteStatus: "agent-ready",
   assetPaths: {
     icon: "/HF.svg",
