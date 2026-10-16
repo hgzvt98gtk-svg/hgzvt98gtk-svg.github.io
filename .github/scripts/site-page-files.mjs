@@ -83,6 +83,26 @@ export function renderPageFiles(siteConfig, siteUrls) {
   </main>
 </body>
 </html>
+`],
+    [siteFilePaths.notFound, `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="${escapeHtml(siteConfig.themeColor)}">
+  <meta name="robots" content="noindex">
+  <title>Page not found - ${personName}</title>
+  <link rel="icon" href="${iconPath}" type="image/svg+xml">
+  <link rel="stylesheet" href="${stylesheetPath}">
+</head>
+<body class="document">
+  <main class="policy" aria-labelledby="not-found-title">
+    <h1 id="not-found-title">Page not found</h1>
+    <p>The page you asked for does not exist on ${domain}.</p>
+    <p><a href="/">Go to the homepage</a></p>
+  </main>
+</body>
+</html>
 `]
   ]);
 }

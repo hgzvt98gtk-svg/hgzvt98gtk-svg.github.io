@@ -1,6 +1,7 @@
 export const siteFilePaths = Object.freeze({
   index: "index.html",
   privacy: "Privacy.html",
+  notFound: "404.html",
   appScript: "app.js",
   bootstrapScript: "bootstrap.js",
   robots: "robots.txt",
