@@ -11,6 +11,11 @@ export const siteConfig = {
   siteStatus: "agent-ready",
   assetPaths: {
     icon: "/HF.svg",
+    faviconIco: "/favicon.ico",
+    appleTouchIcon: "/apple-touch-icon.png",
+    webManifest: "/site.webmanifest",
+    icon192: "/icon-192.png",
+    icon512: "/icon-512.png",
     stylesheet: "/style.css",
     appScript: `/${siteFilePaths.appScript}`,
     background: "/Background.jpeg",

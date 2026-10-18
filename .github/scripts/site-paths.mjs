@@ -29,6 +29,11 @@ export const contentCheckFiles = Object.freeze({
 
 export const requiredAssetPathKeys = Object.freeze([
   "icon",
+  "faviconIco",
+  "appleTouchIcon",
+  "webManifest",
+  "icon192",
+  "icon512",
   "stylesheet",
   "appScript",
   "background",
@@ -43,6 +48,11 @@ export const requiredAssetPathKeys = Object.freeze([
 export const requiredStaticAssetPathKeys = Object.freeze([
   "stylesheet",
   "icon",
+  "faviconIco",
+  "appleTouchIcon",
+  "webManifest",
+  "icon192",
+  "icon512",
   "background",
   "socialPreview",
   "bimiLogo"

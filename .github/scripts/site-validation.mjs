@@ -34,6 +34,27 @@ export function listSiteContentChecks(siteConfig, siteUrls) {
     {
       type: "attribute",
       file: contentCheckFiles.index,
+      attribute: "href",
+      value: siteConfig.assetPaths.faviconIco,
+      message: `${contentCheckFiles.index} missing favicon.ico link`
+    },
+    {
+      type: "attribute",
+      file: contentCheckFiles.index,
+      attribute: "href",
+      value: siteConfig.assetPaths.appleTouchIcon,
+      message: `${contentCheckFiles.index} missing apple-touch-icon link`
+    },
+    {
+      type: "attribute",
+      file: contentCheckFiles.index,
+      attribute: "href",
+      value: siteConfig.assetPaths.webManifest,
+      message: `${contentCheckFiles.index} missing web manifest link`
+    },
+    {
+      type: "attribute",
+      file: contentCheckFiles.index,
       attribute: "src",
       value: `/${siteFilePaths.bootstrapScript}`,
       message: `${contentCheckFiles.index} missing external bootstrap script`
@@ -53,6 +74,27 @@ export function listSiteContentChecks(siteConfig, siteUrls) {
       attribute: "href",
       value: siteConfig.assetPaths.icon,
       message: `${contentCheckFiles.privacy} missing icon link`
+    },
+    {
+      type: "attribute",
+      file: contentCheckFiles.privacy,
+      attribute: "href",
+      value: siteConfig.assetPaths.faviconIco,
+      message: `${contentCheckFiles.privacy} missing favicon.ico link`
+    },
+    {
+      type: "attribute",
+      file: contentCheckFiles.privacy,
+      attribute: "href",
+      value: siteConfig.assetPaths.appleTouchIcon,
+      message: `${contentCheckFiles.privacy} missing apple-touch-icon link`
+    },
+    {
+      type: "attribute",
+      file: contentCheckFiles.privacy,
+      attribute: "href",
+      value: siteConfig.assetPaths.webManifest,
+      message: `${contentCheckFiles.privacy} missing web manifest link`
     },
     {
       type: "regex",

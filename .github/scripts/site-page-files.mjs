@@ -20,6 +20,9 @@ export function renderPageFiles(siteConfig, siteUrls) {
   const canonicalPrivacy = escapeHtml(siteUrls.privacy);
   const socialPreviewUrl = escapeHtml(siteUrls.socialPreview);
   const iconPath = escapeHtml(siteConfig.assetPaths.icon);
+  const faviconIcoPath = escapeHtml(siteConfig.assetPaths.faviconIco);
+  const appleTouchIconPath = escapeHtml(siteConfig.assetPaths.appleTouchIcon);
+  const webManifestPath = escapeHtml(siteConfig.assetPaths.webManifest);
   const stylesheetPath = escapeHtml(siteConfig.assetPaths.stylesheet);
   const privacyLastUpdated = escapeHtml(siteConfig.privacyLastUpdated);
   const email = escapeHtml(siteConfig.email);
@@ -45,7 +48,10 @@ export function renderPageFiles(siteConfig, siteUrls) {
   <meta name="twitter:title" content="${homeTitle}">
   <meta name="twitter:description" content="${homeDescription}">
   <meta name="twitter:image" content="${socialPreviewUrl}">
-  <link rel="icon" href="${iconPath}" type="image/svg+xml">
+  <link rel="icon" href="${faviconIcoPath}" sizes="48x48">
+  <link rel="icon" href="${iconPath}" type="image/svg+xml" sizes="any">
+  <link rel="apple-touch-icon" href="${appleTouchIconPath}">
+  <link rel="manifest" href="${webManifestPath}">
   <link rel="stylesheet" href="${stylesheetPath}">
 </head>
 <body>
@@ -65,7 +71,10 @@ export function renderPageFiles(siteConfig, siteUrls) {
   <title>${privacyTitle}</title>
   <meta name="description" content="${privacyDescription}">
   <link rel="canonical" href="${canonicalPrivacy}">
-  <link rel="icon" href="${iconPath}" type="image/svg+xml">
+  <link rel="icon" href="${faviconIcoPath}" sizes="48x48">
+  <link rel="icon" href="${iconPath}" type="image/svg+xml" sizes="any">
+  <link rel="apple-touch-icon" href="${appleTouchIconPath}">
+  <link rel="manifest" href="${webManifestPath}">
   <link rel="stylesheet" href="${stylesheetPath}">
 </head>
 <body class="document">
@@ -92,7 +101,10 @@ export function renderPageFiles(siteConfig, siteUrls) {
   <meta name="theme-color" content="${escapeHtml(siteConfig.themeColor)}">
   <meta name="robots" content="noindex">
   <title>Page not found - ${personName}</title>
-  <link rel="icon" href="${iconPath}" type="image/svg+xml">
+  <link rel="icon" href="${faviconIcoPath}" sizes="48x48">
+  <link rel="icon" href="${iconPath}" type="image/svg+xml" sizes="any">
+  <link rel="apple-touch-icon" href="${appleTouchIconPath}">
+  <link rel="manifest" href="${webManifestPath}">
   <link rel="stylesheet" href="${stylesheetPath}">
 </head>
 <body class="document">
