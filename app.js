@@ -22,19 +22,19 @@ function hasExactKeys(value, expectedKeys) {
 
 function isAgentCardPayload(value) {
   return isPlainObject(value)
-    && hasExactKeys(value, agentCardKeys)
     && typeof value.description === "string"
     && typeof value.name === "string"
-    && typeof value.status === "string"
+    && (value.status === undefined || typeof value.status === "string")
     && typeof value.url === "string";
 }
 
 function isApiCatalogPayload(value) {
-  return isPlainObject(value)
-    && hasExactKeys(value, apiCatalogKeys)
-    && Array.isArray(value.apis)
-    && value.apis.every(isPlainObject)
-    && typeof value.site === "string";
+  if (!isPlainObject(value)) {
+    return false;
+  }
+  const isSiteCatalog = typeof value.site === "string" && Array.isArray(value.apis) && value.apis.every(isPlainObject);
+  const isLinkset = Array.isArray(value.linkset) && value.linkset.every(isPlainObject);
+  return isSiteCatalog || isLinkset;
 }
 
 const fetchTimeoutMs = 8000;
@@ -65,9 +65,6 @@ function describeShapeMismatch(value, expectedKeys, fieldChecks) {
   if (!isPlainObject(value)) {
     return { reason: "Payload is not a JSON object", expected: "object", actual: describeType(value) };
   }
-  if (!hasExactKeys(value, expectedKeys)) {
-    return { reason: "Key mismatch", expected: [...expectedKeys].sort(), actual: Object.keys(value).sort() };
-  }
   for (const [key, expected, isValid] of fieldChecks) {
     if (!isValid(value[key])) {
       return { reason: `Invalid ${key}`, expected, actual: describeType(value[key]) };
@@ -84,13 +81,21 @@ function payloadValidationError(subject, reason, expected, actual, payload) {
   return error;
 }
 
+function isUrlOnThisSite(value) {
+  try {
+    return new URL(value).origin === new URL(runtimeContract.homeUrl).origin;
+  } catch {
+    return false;
+  }
+}
+
 function validateAgentCardPayload(value) {
   const subject = "Agent card";
   if (!isAgentCardPayload(value)) {
     const mismatch = describeShapeMismatch(value, agentCardKeys, [
       ["description", "string", (field) => typeof field === "string"],
       ["name", "string", (field) => typeof field === "string"],
-      ["status", "string", (field) => typeof field === "string"],
+      ["status", "string or missing", (field) => field === undefined || typeof field === "string"],
       ["url", "string", (field) => typeof field === "string"]
     ]);
     throw payloadValidationError(subject, mismatch.reason, mismatch.expected, mismatch.actual, value);
@@ -98,14 +103,8 @@ function validateAgentCardPayload(value) {
   if (value.name.length === 0) {
     throw payloadValidationError(subject, "Name mismatch", "non-empty string", value.name, value);
   }
-  if (value.description !== runtimeContract.agentCardDescription) {
-    throw payloadValidationError(subject, "Description mismatch", runtimeContract.agentCardDescription, value.description, value);
-  }
-  if (value.status !== runtimeContract.siteStatus) {
-    throw payloadValidationError(subject, "Status mismatch", runtimeContract.siteStatus, value.status, value);
-  }
-  if (value.url !== runtimeContract.homeUrl) {
-    throw payloadValidationError(subject, "URL mismatch", runtimeContract.homeUrl, value.url, value);
+  if (!isUrlOnThisSite(value.url)) {
+    throw payloadValidationError(subject, "URL is not on this site", runtimeContract.homeUrl, value.url, value);
   }
   return Object.freeze({ ...value });
 }
@@ -118,6 +117,11 @@ function validateApiCatalogPayload(value) {
       ["site", "string", (field) => typeof field === "string"]
     ]);
     throw payloadValidationError(subject, mismatch.reason, mismatch.expected, mismatch.actual, value);
+  }
+  if (Array.isArray(value.linkset)) {
+    return Object.freeze({
+      linkset: Object.freeze(value.linkset.map((entry) => Object.freeze({ ...entry })))
+    });
   }
   if (value.site !== runtimeContract.homeUrl) {
     throw payloadValidationError(subject, "Site mismatch", runtimeContract.homeUrl, value.site, value);
@@ -169,8 +173,8 @@ async function fetchJsonAttempt(url, label, validatePayload) {
     }
 
     const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.toLowerCase().includes("application/json")) {
-      throw fetchError(`Failed to fetch ${label}: expected application/json response, got ${JSON.stringify(contentType)}`, false);
+    if (!contentType.toLowerCase().includes("json")) {
+      throw fetchError(`Failed to fetch ${label}: expected a JSON response, got ${JSON.stringify(contentType)}`, false);
     }
 
     let payload;

@@ -13,17 +13,17 @@ export function hasExactKeys(value, expectedKeys) {
 
 export function isAgentCardPayload(value) {
   return isPlainObject(value)
-    && hasExactKeys(value, agentCardKeys)
     && typeof value.description === "string"
     && typeof value.name === "string"
-    && typeof value.status === "string"
+    && (value.status === undefined || typeof value.status === "string")
     && typeof value.url === "string";
 }
 
 export function isApiCatalogPayload(value) {
-  return isPlainObject(value)
-    && hasExactKeys(value, apiCatalogKeys)
-    && Array.isArray(value.apis)
-    && value.apis.every(isPlainObject)
-    && typeof value.site === "string";
+  if (!isPlainObject(value)) {
+    return false;
+  }
+  const isSiteCatalog = typeof value.site === "string" && Array.isArray(value.apis) && value.apis.every(isPlainObject);
+  const isLinkset = Array.isArray(value.linkset) && value.linkset.every(isPlainObject);
+  return isSiteCatalog || isLinkset;
 }
