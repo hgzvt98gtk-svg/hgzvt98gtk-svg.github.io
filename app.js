@@ -11,15 +11,6 @@ function isPlainObject(value) {
   return typeof value === "object" && value !== null && Object.getPrototypeOf(value) === Object.prototype;
 }
 
-const agentCardKeys = ["description","name","status","url"];
-const apiCatalogKeys = ["apis","site"];
-
-function hasExactKeys(value, expectedKeys) {
-  const actualKeys = Object.keys(value).sort();
-  const expected = [...expectedKeys].sort();
-  return actualKeys.length === expected.length && actualKeys.every((key, index) => key === expected[index]);
-}
-
 function isAgentCardPayload(value) {
   return isPlainObject(value)
     && typeof value.description === "string"
@@ -61,7 +52,7 @@ function describeType(value) {
   return Array.isArray(value) ? "array" : typeof value;
 }
 
-function describeShapeMismatch(value, expectedKeys, fieldChecks) {
+function describeShapeMismatch(value, fieldChecks) {
   if (!isPlainObject(value)) {
     return { reason: "Payload is not a JSON object", expected: "object", actual: describeType(value) };
   }
@@ -92,7 +83,7 @@ function isUrlOnThisSite(value) {
 function validateAgentCardPayload(value) {
   const subject = "Agent card";
   if (!isAgentCardPayload(value)) {
-    const mismatch = describeShapeMismatch(value, agentCardKeys, [
+    const mismatch = describeShapeMismatch(value, [
       ["description", "string", (field) => typeof field === "string"],
       ["name", "string", (field) => typeof field === "string"],
       ["status", "string or missing", (field) => field === undefined || typeof field === "string"],
@@ -112,7 +103,7 @@ function validateAgentCardPayload(value) {
 function validateApiCatalogPayload(value) {
   const subject = "API catalog";
   if (!isApiCatalogPayload(value)) {
-    const mismatch = describeShapeMismatch(value, apiCatalogKeys, [
+    const mismatch = describeShapeMismatch(value, [
       ["apis", "array of objects", (field) => Array.isArray(field) && field.every(isPlainObject)],
       ["site", "string", (field) => typeof field === "string"]
     ]);

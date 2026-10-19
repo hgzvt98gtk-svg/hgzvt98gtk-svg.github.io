@@ -1,8 +1,5 @@
 import { siteFilePaths } from "./site-paths.mjs";
 import {
-  agentCardKeys,
-  apiCatalogKeys,
-  hasExactKeys,
   isAgentCardPayload,
   isApiCatalogPayload,
   isPlainObject
@@ -25,11 +22,6 @@ export function renderRuntimeFiles(siteConfig, siteUrls) {
 const runtimeJsonCache = new Map();
 
 ${isPlainObject.toString()}
-
-const agentCardKeys = ${JSON.stringify(agentCardKeys)};
-const apiCatalogKeys = ${JSON.stringify(apiCatalogKeys)};
-
-${hasExactKeys.toString()}
 
 ${isAgentCardPayload.toString()}
 
@@ -59,7 +51,7 @@ function describeType(value) {
   return Array.isArray(value) ? "array" : typeof value;
 }
 
-function describeShapeMismatch(value, expectedKeys, fieldChecks) {
+function describeShapeMismatch(value, fieldChecks) {
   if (!isPlainObject(value)) {
     return { reason: "Payload is not a JSON object", expected: "object", actual: describeType(value) };
   }
@@ -90,7 +82,7 @@ function isUrlOnThisSite(value) {
 function validateAgentCardPayload(value) {
   const subject = "Agent card";
   if (!isAgentCardPayload(value)) {
-    const mismatch = describeShapeMismatch(value, agentCardKeys, [
+    const mismatch = describeShapeMismatch(value, [
       ["description", "string", (field) => typeof field === "string"],
       ["name", "string", (field) => typeof field === "string"],
       ["status", "string or missing", (field) => field === undefined || typeof field === "string"],
@@ -110,7 +102,7 @@ function validateAgentCardPayload(value) {
 function validateApiCatalogPayload(value) {
   const subject = "API catalog";
   if (!isApiCatalogPayload(value)) {
-    const mismatch = describeShapeMismatch(value, apiCatalogKeys, [
+    const mismatch = describeShapeMismatch(value, [
       ["apis", "array of objects", (field) => Array.isArray(field) && field.every(isPlainObject)],
       ["site", "string", (field) => typeof field === "string"]
     ]);
