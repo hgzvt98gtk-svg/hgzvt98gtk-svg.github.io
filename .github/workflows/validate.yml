@@ -27,6 +27,15 @@ jobs:
           set -euo pipefail
           npm run generate
           npm run build
+      - name: Check generated files are committed
+        shell: bash
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Generated files are out of date. Run 'npm run generate' and commit the result."
+            git status --short
+            git diff --stat
+            exit 1
+          fi
       - name: Validate tests, site files, XML/SVG, external assets, and dependencies in parallel
         shell: bash
         run: |
