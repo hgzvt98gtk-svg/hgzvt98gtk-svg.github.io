@@ -1,21 +1,37 @@
 # Security Policy
 
-## Supported Versions
+Thank you for helping keep this site and its visitors safe.
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+This repository is the source for my personal website, <https://hussamfaroug.com>.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+## Supported versions
 
-## Reporting a Vulnerability
+Only the current `main` branch and the live site are supported.
 
-Use this section to tell people how to report a vulnerability.
+## Reporting a vulnerability
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Please report suspected vulnerabilities privately by email to
+**admin@hussamfaroug.com**. Do not open a public issue.
+
+The same contact is published in
+<https://hussamfaroug.com/.well-known/security.txt>.
+
+Please include what you found, the affected page or file, and steps to reproduce it.
+
+## What to expect
+
+This is a personal project that I maintain on my own. I will read every report and
+reply when I can. I cannot promise a response time or a fix date, and there is no
+bug bounty.
+
+## Scope
+
+In scope: <https://hussamfaroug.com> and the code in this repository.
+
+Out of scope: denial-of-service or load testing, scanner output with no demonstrated
+impact, social engineering, and issues in third-party services such as Cloudflare or
+GitHub (please report those to the provider).
+
+## Good-faith testing
+
+Please test only against your own data and stop if you reach anything private.
