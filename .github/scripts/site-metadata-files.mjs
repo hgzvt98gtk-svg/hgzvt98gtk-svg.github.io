@@ -1,10 +1,25 @@
 import { siteFilePaths } from "./site-paths.mjs";
 
+// The live robots.txt is served by the hussamfaroug-live-worker Worker (src/discovery.js).
+// Keep this list and the rules below in step with it so the Pages copy matches.
+const trainingCrawlers = [
+  "Amazonbot", "Applebot-Extended", "Bytespider", "CCBot", "ClaudeBot", "Diffbot", "Google-Extended", "GPTBot",
+  "omgili", "anthropic-ai", "Claude-Web", "cohere-ai", "MistralAI-Training", "meta-externalagent", "GoogleOther",
+  "Baiduspider", "PetalBot", "AwarioSmartBot", "AwarioRssBot", "Google-CloudVertexBot", "QualifiedBot", "Cotoyogi",
+  "ICC-Crawler", "atlassian-bot", "FishBot", "BorderxBot", "NavuBot", "SemrushBot-SWA", "WARDBot", "magpie-crawler",
+  "KimiBot", "CitibotSiteCrawler"
+];
+
 export function renderMetadataFiles(siteConfig, siteUrls) {
   return new Map([
-    [siteFilePaths.robots, `User-agent: *
+    [siteFilePaths.robots, `# AI training crawlers
+${trainingCrawlers.map((bot) => `User-agent: ${bot}\nDisallow: /\n`).join("\n")}
+User-agent: *
 Allow: /
+Disallow: /api/
+Content-Signal: ai-train=no, search=yes, ai-input=no
 
+# Sitemap
 Sitemap: ${siteUrls.sitemap}
 `],
     [siteFilePaths.sitemap, `<?xml version="1.0" encoding="UTF-8"?>
