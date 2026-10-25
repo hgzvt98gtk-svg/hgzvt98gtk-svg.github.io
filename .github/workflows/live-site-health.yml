@@ -22,4 +22,6 @@ jobs:
         with:
           node-version: 22
       - name: Check live URLs, status codes and security headers
+        env:
+          HEALTH_CHECK_TOKEN: ${{ secrets.HEALTH_CHECK_TOKEN }}
         run: npm run check:live

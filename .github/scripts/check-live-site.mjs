@@ -1,28 +1,37 @@
 const timeoutMs = 15000;
 export const liveOrigin = "https://hussamfaroug.com";
 
-// Set by the zone Transform Rule "Security Headers v2", so every response should carry them.
-export const requiredSecurityHeaders = [
-  "strict-transport-security",
+// Every response must carry these.
+export const baseSecurityHeaders = ["strict-transport-security", "x-content-type-options"];
+
+// HTML pages must also carry the full set from the zone Transform Rule "Security Headers v2".
+export const pageSecurityHeaders = [
+  ...baseSecurityHeaders,
   "content-security-policy",
-  "x-content-type-options",
   "x-frame-options",
   "referrer-policy",
   "permissions-policy"
 ];
 
+// Sent so a zone WAF rule can let this check past bot protection; set from a repository secret.
+export const healthCheckHeader = "x-health-check";
+
 export const liveChecks = [
-  { path: "/", contentType: "text/html" },
-  { path: "/Privacy.html", contentType: "text/html" },
+  { path: "/", contentType: "text/html", headers: pageSecurityHeaders },
+  { path: "/Privacy.html", contentType: "text/html", headers: pageSecurityHeaders },
   { path: "/.well-known/health", contentType: "application/json", body: (text) => JSON.parse(text).status === "ok" },
   { path: "/.well-known/bimi/logo.svg", contentType: "image/svg+xml" },
   { path: "/.well-known/mta-sts.txt", contentType: "text/plain", body: (text) => /^version: STSv1$/m.test(text) && /^mode: enforce$/m.test(text) }
 ];
 
-export async function checkUrl({ path, contentType, body }, origin = liveOrigin) {
+export async function checkUrl({ path, contentType, body, headers = baseSecurityHeaders }, origin = liveOrigin, token = process.env.HEALTH_CHECK_TOKEN) {
   const url = origin + path;
   // Redirects count as failures: each URL should answer 200 directly.
-  const response = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(timeoutMs) });
+  const response = await fetch(url, {
+    headers: token ? { [healthCheckHeader]: token } : {},
+    redirect: "manual",
+    signal: AbortSignal.timeout(timeoutMs)
+  });
   const problems = [];
 
   if (response.status !== 200) {
@@ -34,7 +43,7 @@ export async function checkUrl({ path, contentType, body }, origin = liveOrigin)
     problems.push(`expected ${contentType} content type, received ${receivedType ?? "none"}`);
   }
 
-  const missing = requiredSecurityHeaders.filter((name) => !response.headers.get(name));
+  const missing = headers.filter((name) => !response.headers.get(name));
   if (missing.length > 0) {
     problems.push(`missing security headers: ${missing.join(", ")}`);
   }

@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { checkLiveSite, liveChecks, requiredSecurityHeaders } from "./check-live-site.mjs";
+import { checkLiveSite, liveChecks, pageSecurityHeaders } from "./check-live-site.mjs";
 
 const origin = "https://site.example";
-const securityHeaders = Object.fromEntries(requiredSecurityHeaders.map((name) => [name, "set"]));
+const securityHeaders = Object.fromEntries(pageSecurityHeaders.map((name) => [name, "set"]));
 const healthyResponses = {
   "/": { contentType: "text/html; charset=utf-8", body: "<!doctype html>" },
   "/Privacy.html": { contentType: "text/html", body: "<!doctype html>" },
@@ -16,6 +16,7 @@ function mockFetch(t, overrides = {}) {
   t.mock.method(console, "log", () => {});
   return t.mock.method(globalThis, "fetch", async (url, options) => {
     assert.equal(options.redirect, "manual");
+    assert.deepEqual(options.headers, process.env.HEALTH_CHECK_TOKEN ? { "x-health-check": process.env.HEALTH_CHECK_TOKEN } : {});
     assert.ok(options.signal instanceof AbortSignal);
     const path = new URL(url).pathname;
     const spec = { ...healthyResponses[path], ...overrides[path] };
@@ -36,12 +37,26 @@ test("passes when every URL is 200 with the expected type, body and security hea
   assert.equal(fetchMock.mock.callCount(), liveChecks.length);
 });
 
+test("only requires HSTS and nosniff on non-HTML URLs", async (t) => {
+  mockFetch(t, {
+    "/.well-known/health": { dropHeaders: ["content-security-policy", "permissions-policy", "x-frame-options", "referrer-policy"] }
+  });
+  await checkLiveSite(liveChecks, origin);
+});
+
+test("sends the health check header when the token is set", async (t) => {
+  process.env.HEALTH_CHECK_TOKEN = "secret";
+  t.after(() => { delete process.env.HEALTH_CHECK_TOKEN; });
+  mockFetch(t);
+  await checkLiveSite(liveChecks, origin);
+});
+
 test("reports status, redirect, header, type, body and network failures together", async (t) => {
   mockFetch(t, {
     "/": { dropHeaders: ["content-security-policy", "strict-transport-security"] },
     "/Privacy.html": { status: 301, body: null },
     "/.well-known/health": { body: '{"status":"down"}' },
-    "/.well-known/bimi/logo.svg": { contentType: "text/html" },
+    "/.well-known/bimi/logo.svg": { contentType: "text/html", dropHeaders: ["x-content-type-options"] },
     "/.well-known/mta-sts.txt": { error: new TypeError("fetch failed") }
   });
   await assert.rejects(checkLiveSite(liveChecks, origin), {
@@ -50,7 +65,7 @@ test("reports status, redirect, header, type, body and network failures together
       `${origin}/: missing security headers: strict-transport-security, content-security-policy`,
       `${origin}/Privacy.html: HTTP 301`,
       `${origin}/.well-known/health: unexpected response body`,
-      `${origin}/.well-known/bimi/logo.svg: expected image/svg+xml content type, received text/html`,
+      `${origin}/.well-known/bimi/logo.svg: expected image/svg+xml content type, received text/html; missing security headers: x-content-type-options`,
       `${origin}/.well-known/mta-sts.txt: fetch failed`
     ].join("\n")
   });
