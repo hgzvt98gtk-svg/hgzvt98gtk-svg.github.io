@@ -19,6 +19,7 @@ export const siteConfig = {
     stylesheet: "/style.css",
     appScript: `/${siteFilePaths.appScript}`,
     background: "/Background.jpeg",
+    backgroundPhone: "/Background-phone.jpeg",
     socialPreview: "/social-preview.svg",
     agentCard: `/${siteFilePaths.agentCard}`,
     apiCatalog: `/${siteFilePaths.apiCatalog}`,

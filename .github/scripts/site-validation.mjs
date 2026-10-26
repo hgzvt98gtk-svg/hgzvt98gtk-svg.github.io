@@ -102,6 +102,12 @@ export function listSiteContentChecks(siteConfig, siteUrls) {
       pattern: `url\\((["'])?${escapeRegex(siteConfig.assetPaths.background)}\\1?\\)`,
       message: `${contentCheckFiles.style} missing background asset`
     },
+    {
+      type: "regex",
+      file: contentCheckFiles.style,
+      pattern: `url\\((["'])?${escapeRegex(siteConfig.assetPaths.backgroundPhone)}\\1?\\)`,
+      message: `${contentCheckFiles.style} missing phone background asset`
+    },
     { type: "runtimeScript", file: contentCheckFiles.appScript, message: `${contentCheckFiles.appScript} missing expected runtime metadata wiring` },
     { type: "contains", file: contentCheckFiles.sitemap, value: siteUrls.privacy, message: `${contentCheckFiles.sitemap} missing privacy URL` },
     { type: "contains", file: contentCheckFiles.robots, value: `Sitemap: ${siteUrls.sitemap}`, message: `${contentCheckFiles.robots} missing sitemap URL` },

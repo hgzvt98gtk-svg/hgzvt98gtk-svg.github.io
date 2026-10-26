@@ -37,6 +37,7 @@ export const requiredAssetPathKeys = Object.freeze([
   "stylesheet",
   "appScript",
   "background",
+  "backgroundPhone",
   "socialPreview",
   "agentCard",
   "apiCatalog",
@@ -54,6 +55,7 @@ export const requiredStaticAssetPathKeys = Object.freeze([
   "icon192",
   "icon512",
   "background",
+  "backgroundPhone",
   "socialPreview",
   "bimiLogo"
 ]);
